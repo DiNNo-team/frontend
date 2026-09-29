@@ -28,8 +28,7 @@ cp .env.example .env.local
 | -------------- | ---------------------------- | ----------------------- |
 | `VITE_API_URL` | Origen del backend, **sin `/v1` y sin `/` final** | `http://localhost:3000` |
 
-Todas las rutas del backend llevan el prefijo `/v1`, así que las llamadas se construyen como
-`` `${import.meta.env.VITE_API_URL}/v1/...` `` (por ejemplo `/v1/health`).
+Todas las rutas del backend llevan el prefijo `/v1`. Tanto `VITE_API_URL` como el prefijo `/v1` se manejan de forma centralizada en [`src/lib/api.ts`](src/lib/api.ts): usa `apiFetch('/health')` (o `apiUrl('/health')`) y se resuelve a `${VITE_API_URL}/v1/health`. No hardcodees el origen ni `/v1` en las llamadas individuales.
 
 `.env.local` (y cualquier `.env*` salvo `.env.example`) no se versiona. Si agregas una variable nueva, añádela también a `.env.example` y a su tipado en `src/vite-env.d.ts`.
 
@@ -49,7 +48,8 @@ Todas las rutas del backend llevan el prefijo `/v1`, así que las llamadas se co
 1. `npm run dev` y abre http://localhost:5173: debe verse el título **DiNNo** con estilos de Tailwind (texto azul, grande y centrado).
 2. Con el backend corriendo en local, comprueba la conexión desde la consola del navegador:
    ```js
-   await fetch('http://localhost:3000/v1/health').then((r) => r.json()) // { status: 'ok' }
+   const { apiFetch } = await import('/src/lib/api.ts') // solo en `npm run dev`
+   await apiFetch('/health').then((r) => r.json()) // { status: 'ok' }
    ```
    Si aparece un error de CORS, revisa que `CORS_ORIGINS` del backend incluya `http://localhost:5173`.
 3. `npm run lint` y `npm run build` deben terminar sin errores.
