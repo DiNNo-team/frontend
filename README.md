@@ -10,7 +10,10 @@ Plataforma web de DiNNo: dashboard para la gestión del restaurante. Es una SPA 
 ## Instalación
 
 ```bash
-npm install
+git clone https://github.com/DiNNo-team/frontend.git
+cd frontend
+nvm use        # opcional, usa Node 24
+npm ci
 ```
 
 ## Variables de entorno
@@ -23,9 +26,12 @@ cp .env.example .env.local
 
 | Variable       | Descripción                  | Valor en local          |
 | -------------- | ---------------------------- | ----------------------- |
-| `VITE_API_URL` | URL base de la API (backend) | `http://localhost:3000` |
+| `VITE_API_URL` | Origen del backend, **sin `/v1` y sin `/` final** | `http://localhost:3000` |
 
-`.env.local` no se versiona (está cubierto por `*.local` en `.gitignore`). Si agregas una variable nueva, añádela también a `.env.example` y a su tipado en `src/vite-env.d.ts`.
+Todas las rutas del backend llevan el prefijo `/v1`, así que las llamadas se construyen como
+`` `${import.meta.env.VITE_API_URL}/v1/...` `` (por ejemplo `/v1/health`).
+
+`.env.local` (y cualquier `.env*` salvo `.env.example`) no se versiona. Si agregas una variable nueva, añádela también a `.env.example` y a su tipado en `src/vite-env.d.ts`.
 
 > Solo las variables con prefijo `VITE_` quedan expuestas al cliente. No pongas secretos en ellas.
 
@@ -38,11 +44,22 @@ cp .env.example .env.local
 | `npm run preview` | Sirve localmente el build de `dist/`                   |
 | `npm run lint`    | Ejecuta el linter (oxlint)                             |
 
+## Cómo verificar que funciona
+
+1. `npm run dev` y abre http://localhost:5173: debe verse el título **DiNNo** con estilos de Tailwind (texto azul, grande y centrado).
+2. Con el backend corriendo en local, comprueba la conexión desde la consola del navegador:
+   ```js
+   await fetch('http://localhost:3000/v1/health').then((r) => r.json()) // { status: 'ok' }
+   ```
+   Si aparece un error de CORS, revisa que `CORS_ORIGINS` del backend incluya `http://localhost:5173`.
+3. `npm run lint` y `npm run build` deben terminar sin errores.
+
 ## Despliegue en Vercel
 
 1. Importa el repositorio en Vercel. El framework se detecta como **Vite** (build: `npm run build`, salida: `dist`).
-2. En **Settings → Environment Variables** define `VITE_API_URL` con la URL pública del backend en Render.
-3. Cada push a la rama principal despliega a producción; los push a otras ramas y los PR generan despliegues de previsualización.
+2. En **Settings → Environment Variables** define `VITE_API_URL` con la URL pública del backend en Render (por ejemplo `https://dinno-backend.onrender.com`, sin `/v1` ni `/` final) para *Production* y *Preview*.
+3. Agrega la URL de producción de Vercel (por ejemplo `https://<proyecto>.vercel.app`) a `CORS_ORIGINS` en el backend de Render; si no, el navegador bloqueará las peticiones.
+4. Cada push a la rama principal despliega a producción; los push a otras ramas y los PR generan despliegues de previsualización.
 
 `vercel.json` reescribe todas las rutas hacia `/`, para que al recargar una ruta interna de la SPA no se obtenga un 404.
 
