@@ -19,6 +19,8 @@ export interface TableCardProps {
   selected?: boolean
   /** Click, Enter or Space on the card. Not called for inactive tables. */
   onSelect?: () => void
+  /** `id` of the selection button, to move focus back to the card (e.g. after Esc). */
+  toggleId?: string
   /** Items of the ⋯ menu. Without items the menu is not shown. */
   menuItems?: DropdownMenuItem[]
   /** Inactive tables show "Reactivar" at full opacity. */
@@ -38,6 +40,7 @@ export function TableCard({
   status,
   selected = false,
   onSelect,
+  toggleId,
   menuItems,
   onReactivate,
   reactivating,
@@ -64,6 +67,7 @@ export function TableCard({
           <h3 className="min-w-0 truncate text-h3 text-fg">
             {selectable ? (
               <button
+                id={toggleId}
                 type="button"
                 aria-pressed={selected}
                 aria-describedby={`${capacityId} ${statusId}`}

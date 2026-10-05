@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
-import { Button, EmptyState, PageHeader, useToast } from '@/components/ui'
+import { Alert, Button, EmptyState, PageHeader, useToast } from '@/components/ui'
 import { formatTableName } from '@/lib/format'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { TableFormDialog } from './components/TableFormDialog'
+import { TableStatusBar } from './components/TableStatusBar'
 import { TablesGrid } from './components/TablesGrid'
 import { TablesSkeleton } from './components/TablesSkeleton'
 import { TablesStats } from './components/TablesStats'
 import { useCreateTable, useTablesQuery } from './hooks'
 import { countTables, sortTables } from './table-status'
+import { useTableSelection } from './use-table-selection'
+import { useTableStatusChange } from './use-table-status-change'
 
 const TITLE = 'Mesas'
 const DESCRIPTION = 'Actualiza el estado de cada mesa en tiempo real'
@@ -22,6 +25,8 @@ export default function TablesPage() {
   const toast = useToast()
   const createTable = useCreateTable()
   const [createOpen, setCreateOpen] = useState(false)
+  const selection = useTableSelection(tables)
+  const statusChange = useTableStatusChange({ onTableInactive: selection.clear })
 
   const addTableButton = (
     <Button icon={Plus} onClick={() => setCreateOpen(true)}>
@@ -82,11 +87,39 @@ export default function TablesPage() {
     )
   }
 
+  const { error: statusError } = statusChange
+
   return (
     <>
+      {statusError && (
+        <Alert
+          type="error"
+          action={
+            statusError.retry && (
+              <Button size="sm" variant="outline" onClick={statusError.retry}>
+                Intentar de nuevo
+              </Button>
+            )
+          }
+        >
+          {statusError.message}
+        </Alert>
+      )}
       <PageHeader title={TITLE} description={DESCRIPTION} actions={addTableButton} />
       <TablesStats counts={counts} />
-      <TablesGrid tables={tables} />
+      <TablesGrid
+        tables={tables}
+        selectedId={selection.selectedId}
+        onSelect={selection.toggle}
+        toggleIdFor={selection.toggleIdFor}
+      />
+      {selection.selectedTable && (
+        <TableStatusBar
+          table={selection.selectedTable}
+          controlId={selection.controlId}
+          onChangeStatus={(table, status) => void statusChange.changeStatus(table, status)}
+        />
+      )}
       {createDialog}
     </>
   )

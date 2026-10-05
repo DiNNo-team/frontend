@@ -246,6 +246,20 @@ toast.show({ type: 'error', message: 'No pudimos conectarnos. Revisa tu conexió
 
 `Dialog`: modal sólido. `title` (Título 3), `description`, contenido, `footer` con las acciones (**el primario va de último**: queda a la derecha en escritorio y arriba en móvil). `size`: `sm` 480 | `md` 560. `preventClose` mientras guarda (Esc y clic afuera no cierran). El foco queda atrapado y vuelve al botón que lo abrió.
 
+Si las acciones viven dentro de tu propio `<form>` (para que Enter envíe), no uses `footer`: pon `<DialogFooter>` al final del formulario.
+
+```tsx
+<Dialog open={open} onOpenChange={setOpen} title="Agregar mesa" preventClose={saving}>
+  <form onSubmit={submit} className="flex flex-col gap-6">
+    …campos…
+    <DialogFooter>
+      <Button variant="outline" onClick={close}>Cancelar</Button>
+      <Button type="submit" loading={saving} loadingText="Agregando…">Agregar mesa</Button>
+    </DialogFooter>
+  </form>
+</Dialog>
+```
+
 `ConfirmDialog`: atajo para confirmar acciones destructivas o que afectan a comensales.
 
 ```tsx
@@ -300,7 +314,17 @@ Métrica: cifra `text-h1 tabular-nums` + etiqueta. `highlight` pone la cifra en 
 
 ## TableCard
 
-Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). Props: `name` ("Mesa 04"), `capacity`, `status` (`available | reserved | occupied | inactive`), `selected`, `onSelect`, `menuItems`, `onReactivate`.
+Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). Props: `name` ("Mesa 04"), `capacity`, `status` (`available | reserved | occupied | inactive`), `selected`, `onSelect`, `toggleId` (id del botón de selección, para devolverle el foco), `menuItems`, `onReactivate`.
+
+## FloatingBar
+
+Barra flotante abajo del contenido (barra de estado de la mesa seleccionada). **Va de último en la pantalla**: se queda visible al hacer scroll, no tapa el sidebar y ocupa su propio espacio, así que nunca esconde la última fila. Mientras está visible, los toasts suben para no taparla. En móvil los controles bajan debajo del título.
+
+```tsx
+<FloatingBar title="Mesa 04" description="2 personas">
+  <SegmentedControl aria-label="Estado de Mesa 04" options={options} value={status} onValueChange={change} fullWidth className="md:w-fit" />
+</FloatingBar>
+```
 
 ## DataTable
 
