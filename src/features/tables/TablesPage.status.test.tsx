@@ -117,6 +117,8 @@ describe('TablesPage · cambiar estado', () => {
     const { user } = await renderPage()
     card('Mesa 01').focus()
     await user.tab()
+    expect(screen.getByRole('button', { name: 'Más acciones de Mesa 01' })).toHaveFocus()
+    await user.tab()
     expect(card('Mesa 02')).toHaveFocus()
 
     await user.keyboard('{Enter}')

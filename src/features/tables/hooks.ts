@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { tablesApi } from './api'
-import type { CreateTableInput, Table, TableStatus } from './types'
+import type { CreateTableInput, Table, TableStatus, UpdateTableInput } from './types'
 
 export const tablesQueryKey = ['tables'] as const
 export const tableStatusMutationKey = ['tables', 'status'] as const
@@ -18,6 +18,38 @@ export function useCreateTable() {
     onSuccess: (created) => {
       queryClient.setQueryData<Table[]>(tablesQueryKey, (tables = []) => [...tables, created])
     },
+  })
+}
+
+/** Replaces one table in the cached list with the backend's version. */
+export function replaceCachedTable(queryClient: QueryClient, updated: Table) {
+  queryClient.setQueryData<Table[]>(tablesQueryKey, (tables) => tables?.map((table) => (table.id === updated.id ? updated : table)))
+}
+
+/** Edits identifier and/or capacity. */
+export function useUpdateTable() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateTableInput }) => tablesApi.update(id, input),
+    onSuccess: (updated) => replaceCachedTable(queryClient, updated),
+  })
+}
+
+/** Deactivates a table: it stops counting as operational and diners stop seeing it. */
+export function useDeactivateTable() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => tablesApi.deactivate(id),
+    onSuccess: (updated) => replaceCachedTable(queryClient, updated),
+  })
+}
+
+/** Reactivates a table (the backend brings it back as available). */
+export function useReactivateTable() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => tablesApi.reactivate(id),
+    onSuccess: (updated) => replaceCachedTable(queryClient, updated),
   })
 }
 

@@ -13,6 +13,7 @@ export function useTableSelection(tables: Table[]) {
   const focusControlOnRender = useRef(false)
   const controlId = `${baseId}-status-control`
   const toggleIdFor = useCallback((tableId: string) => `${baseId}-table-${tableId}`, [baseId])
+  const menuIdFor = useCallback((tableId: string) => `${baseId}-menu-${tableId}`, [baseId])
 
   const selectedTable = tables.find((table) => table.id === selectedId && table.isActive) ?? null
 
@@ -49,5 +50,5 @@ export function useTableSelection(tables: Table[]) {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [selectedId, toggleIdFor])
 
-  return { selectedId: selectedTable?.id ?? null, selectedTable, toggle, clear, controlId, toggleIdFor }
+  return { selectedId: selectedTable?.id ?? null, selectedTable, toggle, clear, controlId, toggleIdFor, menuIdFor }
 }
