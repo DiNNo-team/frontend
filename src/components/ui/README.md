@@ -51,7 +51,7 @@ Botón de solo ícono (⋯, cerrar, ver contraseña). `label` es **obligatorio**
 
 ## Spinner
 
-`LoaderCircle` girando, 16 o 20. Solo dentro de botones o áreas pequeñas; **nunca a pantalla completa** (para cargar contenido usa `Skeleton`, llega en el Día 2). Si va solo, pásale `label="Cargando"`.
+`LoaderCircle` girando, 16 o 20. Solo dentro de botones o áreas pequeñas; **nunca a pantalla completa** (para cargar contenido usa `Skeleton`). Si va solo, pásale `label="Cargando"`.
 
 ## TextField
 
@@ -140,6 +140,200 @@ Archivos de `src/assets/brand/`. **Nunca** recrees el logo con texto, emoji o í
 | `format.ts` | `formatTime12h('19:30')` → "7:30 p. m." · `formatDate` → "30 sept 2026" · `formatDateTime` → "30 sept · 7:30 p. m." · `formatCapacity(4)` → "4 personas" · `formatTableName('4')` → "Mesa 04" · `normalizeTableIdentifier` |
 | `theme.tsx` / `theme-context.ts` | `ThemeProvider` y `useTheme()` → `{ theme, setTheme, toggleTheme }`. Claro por defecto |
 
-## Próximos componentes (Día 2)
+## Select
 
-`Select`, `NumberStepper`, `TimeSelect`, `HoursEditor`, `Switch`, `SegmentedControl`, `Alert`, `Toast`, `Dialog`, `ConfirmDialog`, `DropdownMenu`, `EmptyState`, `Skeleton`, `StatTile`, `TableCard`, `DataTable`, `PageHeader` y el `AppShell`.
+Lista desplegable con la misma carcasa que `TextField` (label, ayuda, error, "(opcional)"). Basado en Radix Select.
+
+| Prop | Tipo | Notas |
+|---|---|---|
+| `options` | `{ value: string; label: string }[]` | |
+| `value` / `defaultValue` / `onValueChange` | `string` | Controlado o no controlado |
+| `placeholder` | `string` | Ejemplo mientras no hay valor |
+| `label`, `optional`, `helperText`, `error`, `disabled`, `icon` | | Igual que `TextField` |
+| `hideLabel` | `boolean` | Label solo para lector de pantalla (filas donde el contexto ya lo nombra) |
+
+```tsx
+<Select label="Categoría" placeholder="Elige una categoría" options={CATEGORIES} value={category} onValueChange={setCategory} error={errors.category} />
+<Select label="Mesa" options={[{ value: 'all', label: 'Todas las mesas' }, ...tables]} value={filter} onValueChange={setFilter} />
+```
+
+## TimeSelect
+
+`Select` de horas cada 30 min (00:00 … 23:30). **El valor es `"HH:mm"` en 24 h**; se muestra en 12 h ("7:30 p. m."). Mismas props que `Select` menos `options` e `icon`.
+
+## NumberStepper
+
+Número con − / + (capacidad). Se puede escribir; se valida y ajusta al rango al salir del campo. Teclado: ↑ ↓ Inicio Fin.
+
+| Prop | Tipo | Por defecto |
+|---|---|---|
+| `value` / `onValueChange` | `number` | — (controlado) |
+| `min` / `max` | `number` | `1` / `20` |
+| `decrementLabel` / `incrementLabel` | `string` | "Disminuir" / "Aumentar" |
+| `label`, `helperText`, `error`, `disabled` | | |
+
+```tsx
+<NumberStepper label="Capacidad" value={capacity} onValueChange={setCapacity} decrementLabel="Quitar una persona" incrementLabel="Agregar una persona" />
+```
+
+## Switch
+
+Interruptor con **la palabra siempre al lado**. Encendido verde (`ok`), apagado gris.
+
+| Prop | Tipo | Notas |
+|---|---|---|
+| `checked` / `defaultChecked` / `onCheckedChange` | `boolean` | |
+| `onLabel` / `offLabel` | `string` | "Abierto" / "Cerrado" |
+| `label` | `ReactNode` | Nombre visible antes del switch ("Estado del restaurante") |
+| `aria-label` | `string` | Nombre si no hay `label` visible (p. ej. "Lunes") |
+
+```tsx
+<Switch label="Estado del restaurante" checked={isOpen} onCheckedChange={setOpen} onLabel="Abierto" offLabel="Cerrado" />
+```
+
+## HoursEditor
+
+Horario semanal: 7 filas (Lun–Dom) con switch Abierto/Cerrado y apertura – cierre. Muestra "Cerrado todo el día", "(día siguiente)" y el botón "Copiar a todos los días" (copia el lunes). Se adapta al ancho de su contenedor.
+
+```ts
+type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+type DayHours = { day: DayOfWeek; isOpen: boolean; opensAt: string; closesAt: string } // 'HH:mm'
+type WeeklyHours = DayHours[]
+```
+
+```tsx
+<HoursEditor value={hours} onChange={setHours} errors={{ sat: 'Elige la hora de cierre del sábado' }} />
+```
+
+`errors` muestra un mensaje por fila, con el estilo de error de los campos. También se exportan `DAYS_OF_WEEK`, `DAY_LABELS`, `closesNextDay` y `copyMondayToAll`.
+
+## SegmentedControl
+
+Control segmentado para estados (**nunca naranja**). Las flechas mueven el foco; **Enter o Espacio aplican** (cada cambio puede llamar al backend). Pulsar el segmento activo no lo deselecciona.
+
+| Prop | Tipo |
+|---|---|
+| `options` | `{ value; label; status? }[]` (`status` pinta la forma del estado) |
+| `value` / `onValueChange` | |
+| `aria-label` | `string` (obligatorio: "Estado de Mesa 04") |
+| `fullWidth` | `boolean` |
+
+## Alert
+
+Aviso en línea. `type`: `success | info | warning | error`. Fondo del color al 12 %, sin sombra. `role="alert"` en error y `role="status"` en el resto. **Un error nunca desaparece solo.**
+
+```tsx
+<Alert type="info" action={<Button size="sm" variant="secondary">Abrir ahora</Button>}>
+  Tu restaurante está cerrado. Los comensales no lo ven en DiNNo.
+</Alert>
+<Alert type="error" title="Revisa los 3 campos marcados" />
+```
+
+Props: `title?`, `children`, `action?` (un `Button size="sm"`), `onClose?`.
+
+## Toast (`useToast`)
+
+Aviso temporal, **uno a la vez** (el nuevo reemplaza al anterior). 4 s; 6 s si trae acción. Se pausa con hover o foco. El `ToastProvider` ya está en `app/providers.tsx`.
+
+```tsx
+const toast = useToast()
+toast.show({ type: 'success', message: 'Cambios guardados' })
+toast.show({ message: 'Restaurante cerrado. Los comensales ya no lo ven', action: { label: 'Deshacer', onClick: undo } })
+toast.show({ type: 'error', message: 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.' })
+```
+
+## Dialog y ConfirmDialog
+
+`Dialog`: modal sólido. `title` (Título 3), `description`, contenido, `footer` con las acciones (**el primario va de último**: queda a la derecha en escritorio y arriba en móvil). `size`: `sm` 480 | `md` 560. `preventClose` mientras guarda (Esc y clic afuera no cierran). El foco queda atrapado y vuelve al botón que lo abrió.
+
+`ConfirmDialog`: atajo para confirmar acciones destructivas o que afectan a comensales.
+
+```tsx
+<ConfirmDialog
+  open={open}
+  onOpenChange={setOpen}
+  title="¿Cerrar el restaurante?"
+  description="…consecuencia…"
+  confirmLabel="Cerrar restaurante"
+  loadingText="Cerrando…"
+  confirmVariant="danger"
+  loading={saving}
+  error={errorText}
+  onConfirm={close}
+/>
+```
+
+## DropdownMenu
+
+Menú de acciones (⋯). Recibe el disparador y una lista de ítems; los `destructive` van en rojo y separados por una línea.
+
+```tsx
+<DropdownMenu
+  trigger={<IconButton icon={Ellipsis} label="Más acciones de Mesa 04" />}
+  items={[
+    { label: 'Editar', icon: Pencil, onSelect: edit },
+    { label: 'Desactivar', icon: Ban, onSelect: deactivate, destructive: true },
+  ]}
+/>
+```
+
+## EmptyState
+
+Símbolo DiNNo en contorno + título + texto + un botón opcional. `variant="error"` para errores de carga (mismo layout, se anuncia).
+
+```tsx
+<EmptyState title="Aún no hay cambios" description="Aquí verás cada cambio de estado de tus mesas." />
+```
+
+## Skeleton y useDelayedFlag
+
+Bloques con la forma del contenido real. Úsalos con `useDelayedFlag(isLoading)` (`@/lib/use-delayed-flag`): si la carga dura menos de 300 ms no se muestra nada.
+
+```tsx
+const showSkeleton = useDelayedFlag(query.isPending)
+{showSkeleton && <Skeleton radius="tile" className="h-24" />}
+```
+
+## StatTile
+
+Métrica: cifra `text-h1 tabular-nums` + etiqueta. `highlight` pone la cifra en naranja (solo "lo próximo").
+
+## TableCard
+
+Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). Props: `name` ("Mesa 04"), `capacity`, `status` (`available | reserved | occupied | inactive`), `selected`, `onSelect`, `menuItems`, `onReactivate`.
+
+## DataTable
+
+Tabla genérica (bitácora). En < 768 px se vuelve una lista compacta (label + valor).
+
+```tsx
+<DataTable
+  caption="Bitácora de cambios de mesas"
+  rows={entries}
+  getRowId={(entry) => entry.id}
+  loading={showSkeleton}
+  emptyState={<EmptyState title="Aún no hay cambios" description="Aquí verás cada cambio de estado de tus mesas." />}
+  columns={[
+    { key: 'at', header: 'Fecha y hora', cell: (e) => formatDateTime(e.createdAt), className: 'tabular-nums whitespace-nowrap' },
+    { key: 'table', header: 'Mesa', cell: (e) => formatTableName(e.tableIdentifier) },
+    { key: 'change', header: 'Cambio', cell: (e) => <>…StatusChip → StatusChip…</> },
+    { key: 'user', header: 'Usuario', cell: (e) => e.userName },
+  ]}
+/>
+```
+
+## PageHeader
+
+`<h1>` de la página + descripción + `actions` a la derecha (aquí va el único primario). En móvil las acciones bajan.
+
+```tsx
+<PageHeader title="Bitácora" description="Cambios de estado de tus mesas" />
+```
+
+---
+
+## Layout (`@/components/layout`)
+
+- **`AppShell`**: sidebar (≥ 1024) o drawer (< 1024), topbar y contenido de 1200 máx. Ya está montado en el router para `/mesas`, `/restaurante` y `/bitacora`: **tu pantalla solo renderiza su contenido** (empieza con `PageHeader`). Props: `restaurantName`, `userEmail`, `onSignOut`, `statusSlot` (switch de Sergio en el topbar), `banner` (aviso de cerrado arriba del contenido).
+- **`OnboardingShell`**: topbar solo con el logo y contenido centrado de 560 máx. Ya envuelve `/onboarding`.
+- Los datos de sesión de ejemplo ("Casa 72" · "admin@casa72.co") están en un solo lugar: `src/app/layouts.tsx`.
