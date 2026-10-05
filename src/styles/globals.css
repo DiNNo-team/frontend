@@ -42,3 +42,5 @@
 @utility border-field { border-width: 1.5px; }                                      /* borde de campos · manual 6 y 10 */
 @utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); } /* grilla de mesas · manual 12.3 */
 @layer base { [data-theme="dark"], .t-dark { color-scheme: dark; } }               /* controles nativos en oscuro */
+@theme { --animate-live-pulse: live-pulse 2s var(--ease) infinite; }              /* pulso del Active Dot "Abierto" / "En vivo" · manual 3.3 y 13.2 */
+@keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
