@@ -1,0 +1,44 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .t-dark, .t-dark *));
+
+@theme inline {
+  --font-sans: var(--font);
+  --color-bg: var(--bg);            --color-surface: var(--surface);   --color-surface-2: var(--surface-2);
+  --color-fg: var(--text);          --color-fg-2: var(--text-2);
+  --color-line: var(--border);      --color-line-strong: var(--border-strong);
+  --color-accent: var(--accent);    --color-accent-pressed: var(--accent-pressed);
+  --color-accent-text: var(--accent-text); --color-on-accent: var(--on-accent);
+  --color-brand: var(--brand);      --color-on-brand: var(--on-brand);
+  --color-ok: var(--ok); --color-limited: var(--limited); --color-reserved: var(--reserved);
+  --color-busy: var(--busy); --color-inactive: var(--inactive); --color-error: var(--error); --color-info: var(--info);
+  --color-nav: var(--nav-bg); --color-nav-active: var(--nav-active); --color-nav-fg: var(--nav-text); --color-nav-fg-2: var(--nav-text-2);
+  --color-inverse: var(--inverse-bg); --color-on-inverse: var(--inverse-text); --color-inverse-accent: var(--inverse-accent);
+  --radius-card: var(--r-card); --radius-tile: var(--r-tile); --radius-btn: var(--r-btn);
+  --radius-input: var(--r-input); --radius-sheet: var(--r-sheet);
+  --shadow-card: var(--shadow-soft); --shadow-lifted: var(--shadow-float);
+  --ease-dinno: var(--ease);
+  /* tipografía: text-display, text-h1, text-h2, text-h3, text-body, text-sec, text-label, text-figure */
+  --text-display: 48px; --text-display--line-height: 52px; --text-display--letter-spacing: -0.03em; --text-display--font-weight: 800;
+  --text-h1: 32px; --text-h1--line-height: 36px; --text-h1--letter-spacing: -0.03em; --text-h1--font-weight: 800;
+  --text-h2: 24px; --text-h2--line-height: 28px; --text-h2--letter-spacing: -0.02em; --text-h2--font-weight: 700;
+  --text-h3: 18px; --text-h3--line-height: 24px; --text-h3--letter-spacing: -0.01em; --text-h3--font-weight: 700;
+  --text-body: 16px; --text-body--line-height: 24px; --text-body--font-weight: 500;
+  --text-sec: 14px; --text-sec--line-height: 20px; --text-sec--font-weight: 500;
+  --text-label: 11px; --text-label--line-height: 14px; --text-label--letter-spacing: 0.08em; --text-label--font-weight: 700;
+  --text-figure: 54px; --text-figure--line-height: 54px; --text-figure--letter-spacing: -0.04em; --text-figure--font-weight: 800;
+}
+
+@layer base {
+  html { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+  :focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+}
+
+/* ===== Extensiones del kit: valores del manual que no tienen token ===== */
+@utility text-btn { font-size: 15px; line-height: 20px; font-weight: 700; }      /* texto de botón 15/20 700 · manual 4 y 6 */
+@utility border-field { border-width: 1.5px; }                                      /* borde de campos · manual 6 y 10 */
+@utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); } /* grilla de mesas · manual 12.3 */
+@layer base { [data-theme="dark"], .t-dark { color-scheme: dark; } }               /* controles nativos en oscuro */
