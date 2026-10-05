@@ -138,7 +138,7 @@ Una tarea está lista solo si:
 ## 10. Este repositorio: frontend (dashboard web del restaurante)
 
 ### Versiones (revisa antes de usar una API)
-React **19**, Vite **8**, Tailwind CSS **v4**, TypeScript **6**, Node **24**. Consulta https://react.dev, https://vite.dev y https://tailwindcss.com/docs para la versión instalada.
+React **19**, Vite **8**, Tailwind CSS **v4**, TypeScript **6**, Node **24**. Además: `lucide-react` (íconos), `@fontsource/plus-jakarta-sans`, `radix-ui` **sin estilos** (comportamiento accesible de diálogos, menús, select, switch, tooltip), `clsx` + `tailwind-merge` (vía `cn`), TanStack Query v5, React Router y Vitest + Testing Library. Alias `@/` → `src/`. Consulta https://react.dev, https://vite.dev y https://tailwindcss.com/docs para la versión instalada.
 **Tailwind v4 no usa `tailwind.config.js` ni las directivas `@tailwind`:** se configura con el plugin `@tailwindcss/vite` y CSS (`@import "tailwindcss";`, `@theme`). No crees un archivo de configuración de Tailwind.
 
 ### Comandos
@@ -147,22 +147,30 @@ npm ci            # instalar (o npm install después de cada pull)
 npm run dev       # http://localhost:5173
 npm run build     # chequeo de tipos + build a dist/
 npm run lint      # oxlint
+npm run typecheck # tsc -b
+npm test          # pruebas (Vitest + Testing Library); npm run test:watch para modo observación
+npm run check:ui  # reglas del manual: sin hex, sin valores arbitrarios, sin paleta/radios/sombras por defecto, sin íconos prohibidos, sin console.log
 npm run preview   # sirve el build
 ```
-**Antes de dar una tarea por terminada:** `npm run lint` y `npm run build` sin errores (`build` también revisa los tipos).
+**Antes de dar una tarea por terminada:** `npm run lint`, `npm run build`, `npm test` y `npm run check:ui` sin errores (`build` también revisa los tipos).
 
 ### Diseño: el manual de identidad v1.1 manda
 - Si no tienes el manual en el contexto, **pídelo antes de hacer cualquier pantalla o componente.**
-- Los tokens del manual van en `src/styles/tokens.css` (copiados tal cual) y se mapean a Tailwind con `@theme inline` (manual, sección 16). **No uses colores, radios, sombras ni tamaños sueltos, ni valores arbitrarios de Tailwind** (`bg-[#...]`, `rounded-[...]`). Las clases genéricas de Tailwind (`bg-blue-600`, `text-slate-...`) no se usan para colores: solo los tokens.
-- Tipografía Plus Jakarta Sans; íconos solo de `lucide-react` (sin íconos de comida ni pins genéricos).
+- El manual y los mockups están en `docs/DiNNo_Manual_Identidad_v1_1.md` y `docs/mockups/`; el reparto del sprint, en `docs/DiNNo_Sprint1_Reparto.md`. Si una imagen y el texto del manual difieren, manda el texto.
+- Los tokens del manual van en `src/styles/tokens.css` (copiados tal cual, **no se editan**) y se mapean a Tailwind con `@theme inline` en `src/styles/globals.css` (manual, sección 16). Lo que el manual define sin token va como `@utility` en el bloque de extensiones de `globals.css`, con la sección del manual en un comentario. **No uses colores, radios, sombras ni tamaños sueltos, ni valores arbitrarios de Tailwind** (`bg-[#...]`, `rounded-[...]`, `text-[13px]`). Las clases genéricas de Tailwind (`bg-blue-600`, `text-slate-...`, `bg-white`, `rounded-lg`, `shadow-md`) no se usan: solo los tokens (`bg-surface`, `text-fg-2`, `rounded-card`, `shadow-card`, `text-h1`…). La escala estándar de Tailwind solo vale cuando coincide exacta con el manual (`h-12` = 48, espaciados 1·2·3·4·6·8·12). Si un token no tiene clase: `bg-(--overlay)`, `z-(--z-modal)`. `npm run check:ui` lo revisa.
+- **Modo oscuro:** claro por defecto; oscuro con `data-theme="dark"` en `<html>` (`useTheme()` de `@/lib/theme-context`). Los tokens cambian solos: casi nunca hace falta `dark:`.
+- Tipografía Plus Jakarta Sans 500 / 700 / 800 (sin cursivas; mayúsculas completas solo en `text-label`; `tabular-nums` en números que cambian).
+- Íconos solo de `lucide-react` a través de `Icon` (`@/lib/icon`): trazo 1.75, tamaños 16 / 20 / 24, siempre con texto en navegación y botones. **Prohibidos:** `Utensils`, `ChefHat`, `Pizza`, `Coffee`, `Hamburger`, `MapPin` y cualquier pin genérico. Sin emojis.
+- Naranja = acción o "ahora": texto naranja sobre claro es `text-accent-text`; nunca texto blanco sobre naranja; **los estados nunca son naranja**. Una tarjeta nunca va dentro de otra.
 - Un solo botón principal naranja por pantalla, con texto oscuro.
 - Estados con **color + forma + palabra**. Sin vidrio ni gradientes en el dashboard (salvo el panel de marca del login).
 - Toda pantalla con estados de **carga, vacío y error**, y funcionando en **modo claro y oscuro**.
 - Antes del PR, pasa el **checklist del manual (sección 17)**.
 
 ### Kit de componentes: usar siempre el de Sebastián
-- **Antes de hacer una pantalla, revisa `src/components/ui/` y `src/components/layout/`** y una pantalla existente como referencia de espaciado y estructura.
-- **Las pantallas solo usan componentes del kit.** No crees botones, campos, tarjetas, chips, diálogos ni estilos propios dentro de una funcionalidad.
+- **Antes de hacer una pantalla, lee `src/components/ui/README.md`, abre http://localhost:5173/kit (solo en `npm run dev`)** y revisa `src/components/layout/` y una pantalla existente como referencia de espaciado y estructura.
+- **Las pantallas se arman solo con `@/components/ui`** (`import { Button, TextField } from '@/components/ui'`). Prohibido crear botones, campos, tarjetas, chips, diálogos, colores, sombras o estilos propios dentro de una funcionalidad.
+- Los nombres, colores y formas de los estados salen solo de `STATUS_META` (`@/components/ui`). Los textos y fechas se formatean con `@/lib/format` (`formatTime12h`, `formatDateTime`, `formatCapacity`, `formatTableName`).
 - Si falta un componente o una variante, **pídeselo a Sebastián o propónlo en un PR al kit**; no lo resuelvas dentro de tu pantalla.
 - Solo Sebastián modifica `components/ui` y `components/layout` (o con su revisión).
 
@@ -170,19 +178,23 @@ npm run preview   # sirve el build
 ```
 src/
 ├── styles/           tokens.css (del manual) + estilos globales
+├── assets/brand/     logo, símbolo y favicon (nunca se recrean)
+├── app/              providers y router
 ├── components/
-│   ├── ui/           kit de componentes base (Sebastián)
+│   ├── ui/           kit de componentes base + README (Sebastián)
 │   └── layout/       AppShell: sidebar y topbar (Sebastián)
+├── dev/kit/          página /kit, solo en desarrollo (Sebastián)
 ├── features/
 │   ├── auth/             login y sesión (Jacobo)
 │   ├── restaurant/       registro (Santiago) y ver/editar (Jacobo)
 │   ├── restaurant-status/ switch abierto/cerrado (Sergio)
 │   ├── tables/           mesas (Sebastián)
 │   └── activity-log/     bitácora (Sergio)
-└── lib/              utilidades compartidas (api.ts)
+└── lib/              utilidades compartidas (Sebastián): api.ts, cn.ts, icon.tsx, format.ts, theme.tsx
 ```
 - Cada funcionalidad en su carpeta de `features/`; nada de lógica de negocio en `App.tsx`.
-- **Router:** todavía no hay uno instalado. Las rutas del Sprint 1 son `/login`, `/onboarding`, `/mesas`, `/restaurante` y `/bitacora`. No instales un router ni una librería de estado sin que el equipo lo haya acordado.
+- Código en inglés (nombres, archivos, props, tipos); interfaz en español con el glosario del manual (14.1): Mesa ("Mesa 04"), Comensal, Restaurante, Disponible, Reservada, Ocupada, Inactiva, Abierto, Cerrado, Capacidad ("4 personas"), Bitácora, Iniciar sesión / Cerrar sesión. **Nunca:** "Libre" como estado, cliente, local, negocio, log, historial, pax, OK, Enviar, Aceptar. Mayúscula inicial, botones = verbo + objeto, sin signos de exclamación.
+- **Router y datos:** React Router y TanStack Query están acordados e instalados; las rutas viven en `src/app/router.tsx` (Sebastián). Las rutas del Sprint 1 son `/login`, `/onboarding`, `/mesas`, `/restaurante` y `/bitacora`. No agregues otra librería de estado sin acordarlo con el equipo.
 
 ### Conexión con el backend
 - **Toda llamada pasa por `src/lib/api.ts`** (`apiFetch('/ruta')` o `apiUrl('/ruta')`), que agrega el origen y el prefijo `/v1`. Nunca escribas la URL del backend ni `/v1` a mano.
