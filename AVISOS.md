@@ -5,6 +5,26 @@
 
 ---
 
+## 5 oct 2026 · Mesas conectadas al backend real (Sebastián)
+
+- **La pantalla `/mesas` ya funciona contra el backend de Elizabeth:** listar, crear y cambiar estado. Editar, desactivar y reactivar llegan con el backend del PBI 7 (Sebastián).
+- **Para usarlo en local:**
+  1. Corre el backend con `DEV_USER_ENABLED=true` en su `.env`.
+  2. En tu `.env.local` del front pon `VITE_USE_MOCKS=false` y `VITE_API_URL=http://localhost:3000`.
+  3. Abre el front en el puerto **5173**: es el único que el backend acepta por CORS por defecto.
+- **Errores del backend:**
+  - formato: `{ statusCode, message, error, errorCode? }`;
+  - el front lee `errorCode` en `ApiError.code`;
+  - en mesas, cada ruta tiene una sola causa por código HTTP, así que el front distingue por el código HTTP (409 al crear = repetido; al cambiar estado = mesa inactiva). **El `message` del backend nunca se muestra**: la interfaz usa los textos del manual.
+- **Jacobo:** cuando el backend responde 403 con `errorCode: RESTAURANT_REQUIRED` (usuario sin restaurante), `@/lib/api-client` emite el evento `RESTAURANT_REQUIRED_EVENT` (`'dinno:restaurant-required'`) en `window`. Escúchalo junto con `SESSION_EXPIRED_EVENT` para mandar al usuario a `/onboarding`.
+- **Elizabeth, sobre el nombre de las mesas:**
+  - El seed crea `identifier: "Mesa 1"`; el formulario del front envía el identificador corto ("04"), como dice el manual ("Mesa 04").
+  - El front muestra los dos igual: quita la palabra "Mesa" y rellena a 2 dígitos, así que "Mesa 4", "4" y "04" se ven como **Mesa 04** y el front los trata como la misma mesa.
+  - **Propuesta:** guardar el identificador corto ("1"…"8") en el seed y que el índice único trate "4" y "04" como iguales. Así el backend y el front aplican la misma regla. Si prefieres mantener el nombre completo, el front ya lo soporta.
+- `Table` en el front ya no tiene `updatedAt` (el backend no lo envía).
+
+---
+
 ## 5 oct 2026 · Editar, desactivar y reactivar mesas (Sebastián)
 
 - **Menú ⋯ de cada mesa** (tarjeta y barra de estado):
