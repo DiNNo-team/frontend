@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="DiNNo"><style>
+.pinG,.stem,.dot,.ring{transform-box:fill-box;transform-origin:center}
+.stem{transform-origin:bottom center}
+.pinG{animation:pd 2.8s cubic-bezier(.2,.8,.2,1) infinite}
+.stem{animation:sg 2.8s cubic-bezier(.2,.8,.2,1) infinite}
+.dot{animation:dp 2.8s cubic-bezier(.2,.8,.2,1) infinite}
+.r1{animation:r1 2.8s ease-out infinite}.r2{animation:r2 2.8s ease-out infinite}
+@keyframes pd{0%{transform:translateY(-15px);opacity:0}16.07%,100%{transform:none;opacity:1}}
+@keyframes sg{0%,4.29%{transform:scaleY(0)}15.71%,100%{transform:none}}
+@keyframes dp{0%,13.57%{transform:scale(0)}20.07%{transform:scale(1.15)}22.86%,100%{transform:scale(1)}}
+@keyframes r1{0%,17.13%{opacity:0;transform:scale(1)}17.14%{opacity:.95;transform:scale(1)}42.14%,100%{opacity:0;transform:scale(3.3)}}
+@keyframes r2{0%,24.28%{opacity:0;transform:scale(1)}24.29%{opacity:.95;transform:scale(1)}49.29%,100%{opacity:0;transform:scale(3.3)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}.ring{opacity:0}}
+</style><rect width="512" height="512" rx="117.76" fill="#FAF7F1"/><g transform="translate(150.40 102.40) scale(4.8000)"><rect class="stem" x="16.5" y="45" width="11" height="19" rx="5.5" fill="#10252B"/><g class="pinG"><path d="M22 40 L11.54 21.38 A12 12 0 1 1 32.46 21.38 Z" fill="none" stroke="#10252B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle class="ring r1" cx="22" cy="15.5" r="5" fill="none" stroke="#F46935" stroke-width="2.4"/><circle class="ring r2" cx="22" cy="15.5" r="5" fill="none" stroke="#F46935" stroke-width="2.4"/><circle class="dot" cx="22" cy="15.5" r="5" fill="#F46935"/></g></g></svg>

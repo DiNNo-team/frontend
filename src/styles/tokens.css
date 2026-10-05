@@ -1,0 +1,50 @@
+/* No editar: copia exacta del Manual de identidad v1.1, sección 16.3 */
+/* ===== DiNNo design tokens v1.1 ===== */
+:root{
+  /* marca: no cambian con el tema */
+  --petrol:#103B46; --petrol-mid:#1D5661; --petrol-deep:#0B2D36;
+  --orange:#F46935; --orange-deep:#B83F14; --orange-pressed:#DB5626; --orange-night:#FF8456; --amber:#F7A43B;
+  --cream:#FAF7F1; --white:#FFFFFF; --ink:#10252B;
+  --grad-petrol:linear-gradient(150deg,#0B2D36 0%,#12505A 60%,#1C6A6E 100%);
+  --grad-orange:linear-gradient(135deg,#F46935 0%,#F7A43B 100%);
+  /* forma */
+  --r-card:20px; --r-tile:16px; --r-btn:14px; --r-input:12px; --r-sheet:28px; --r-chip:999px;
+  /* espacio */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px;
+  /* tipografía */
+  --font:"Plus Jakarta Sans",system-ui,sans-serif;
+  /* motion */
+  --ease:cubic-bezier(.2,.8,.2,1); --dur-fast:150ms; --dur-base:200ms; --dur-slow:300ms;
+  /* capas */
+  --z-sticky:10; --z-dropdown:20; --z-drawer:30; --z-overlay:40; --z-modal:50; --z-toast:60;
+}
+/* semánticos: claro (por defecto) */
+:root, .t-light, [data-theme="light"]{
+  --bg:#FAF7F1; --surface:#FFFFFF; --surface-2:#F2EFE8;
+  --text:#10252B; --text-2:#5E6B70; --border:#E2E6E3; --border-strong:#8A9699;
+  --accent:#F46935; --accent-pressed:#DB5626; --accent-text:#B83F14; --on-accent:#10252B;
+  --brand:#103B46; --on-brand:#FAF7F1;
+  --ok:#2B8F62; --limited:#B7801F; --reserved:#4E66C9; --busy:#6E7C80; --inactive:#8A9699; --error:#C8453A; --info:#1D5661;
+  --nav-bg:#103B46; --nav-active:#1D5661; --nav-text:#FAF7F1; --nav-text-2:#A9BDC0;
+  --inverse-bg:#103B46; --inverse-text:#FAF7F1; --inverse-accent:#FF8456;
+  --overlay:rgba(11,45,54,.55); --focus-ring:0 0 0 3px rgba(244,105,53,.45);
+  --glass-bg:rgba(255,255,255,.70); --glass-border:rgba(255,255,255,.65);
+  --shadow-soft:0 1px 2px rgba(16,37,43,.05),0 10px 28px -12px rgba(16,37,43,.18);
+  --shadow-float:0 12px 32px -12px rgba(16,37,43,.28);
+  --m-ground:#E6E9E3; --m-block:#F6F4EE; --m-park:#D3E2D3; --m-water:#CBDFE3; --m-ave:#D5DCD7;
+}
+/* semánticos: oscuro */
+.t-dark, [data-theme="dark"]{
+  --bg:#0B2D36; --surface:#103B46; --surface-2:#164853;
+  --text:#FAF7F1; --text-2:#A9BDC0; --border:#24525D; --border-strong:#5E8A93;
+  --accent:#FF8456; --accent-pressed:#F46935; --accent-text:#FF8456; --on-accent:#0B2D36;
+  --brand:#103B46; --on-brand:#FAF7F1;
+  --ok:#3FBF86; --limited:#E0A93B; --reserved:#8DA2F0; --busy:#8DA0A4; --inactive:#6F8C92; --error:#FF7B6E; --info:#7FC1CB;
+  --nav-bg:#0B2D36; --nav-active:#164853; --nav-text:#FAF7F1; --nav-text-2:#A9BDC0;
+  --inverse-bg:#FAF7F1; --inverse-text:#10252B; --inverse-accent:#B83F14;
+  --overlay:rgba(0,0,0,.6); --focus-ring:0 0 0 3px rgba(255,132,86,.55);
+  --glass-bg:rgba(16,59,70,.62); --glass-border:rgba(255,255,255,.16);
+  --shadow-soft:0 1px 2px rgba(0,0,0,.25),0 10px 28px -12px rgba(0,0,0,.5);
+  --shadow-float:0 12px 32px -12px rgba(0,0,0,.6);
+  --m-ground:#0F3540; --m-block:#134451; --m-park:#14463F; --m-water:#0E4B5A; --m-ave:#1A5360;
+}

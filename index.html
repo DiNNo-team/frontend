@@ -1,10 +1,17 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-CO">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/src/assets/brand/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DiNNo</title>
+    <script>
+      try {
+        if (localStorage.getItem('dinno-theme') === 'dark') document.documentElement.dataset.theme = 'dark'
+      } catch {
+        /* Sin acceso a localStorage: se queda el tema claro por defecto */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

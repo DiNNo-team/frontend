@@ -1,0 +1,95 @@
+# Avisos del frontend
+
+> Lo que el equipo necesita saber de los cambios en `frontend`. **Lo más nuevo va arriba.**
+> Si algo no te queda claro o te falta un componente, escríbele a Sebastián o propónlo en un PR al kit.
+
+---
+
+## 4 oct 2026 · Kit visual completo, AppShell, router y pantalla de mesas (Sebastián)
+
+### 1. Después de hacer `git pull`
+
+- Corre **`npm install`**. Entraron dependencias nuevas: `lucide-react`, `@fontsource/plus-jakarta-sans`, `radix-ui`, `clsx`, `tailwind-merge`, `@tanstack/react-query`, `react-router`, y Vitest + Testing Library para las pruebas.
+- Hay alias **`@/` → `src/`**: `import { Button } from '@/components/ui'`.
+- Hay scripts nuevos:
+  - `npm test`: pruebas.
+  - `npm run typecheck`: revisa los tipos.
+  - `npm run check:ui`: revisa las reglas del manual. Antes de pedir revisión de un PR, tiene que decir "sin problemas".
+
+### 2. Cómo armar tu pantalla
+
+1. Abre **http://localhost:5173/kit** con `npm run dev`. Ahí está cada componente con sus estados, en claro y oscuro.
+2. Lee **`src/components/ui/README.md`**: props y ejemplos de cada componente.
+3. Usa solo `@/components/ui`. **No crees botones, campos, tarjetas, colores, sombras ni estilos propios.** Nada de `bg-white`, `text-gray-…`, `rounded-lg`, `bg-[#…]` ni `text-[13px]`: `check:ui` los detecta.
+4. Tu pantalla ya está dentro del `AppShell` (sidebar + topbar). **Solo renderiza su contenido**, empezando por `<PageHeader title="…" description="…" />`. Mira `src/features/tables/TablesPage.tsx` como referencia de estructura y de los estados de carga, vacío y error.
+
+Componentes disponibles:
+- **Acciones y campos:** `Button`, `IconButton`, `TextField`, `Select`, `TimeSelect`, `NumberStepper`, `Switch`, `HoursEditor`, `SegmentedControl`.
+- **Estados y datos:** `StatusChip`, `Card`, `StatTile`, `TableCard`, `DataTable`, `PageHeader`.
+- **Avisos y carga:** `Alert`, `useToast`, `Dialog`, `ConfirmDialog`, `DropdownMenu`, `EmptyState`, `Skeleton`, `Spinner`, `Logo`.
+
+Utilidades compartidas:
+- **Formatos:** `@/lib/format` → `formatTime12h` ("7:30 p. m."), `formatDate` ("30 sept 2026"), `formatDateTime` ("30 sept · 7:30 p. m."), `formatCapacity` ("4 personas"), `formatTableName` ("Mesa 04").
+- **Skeletons:** `useDelayedFlag(isLoading)` (`@/lib/use-delayed-flag`) evita mostrarlos en cargas de menos de 300 ms.
+- **Estados:** sus nombres, colores y formas salen **solo** de `STATUS_META` (`@/components/ui`).
+
+### 3. Rutas: cada uno reemplaza su placeholder
+
+Las rutas están en `src/app/router.tsx`. Cada placeholder vive en la carpeta de su dueño, así que nadie choca con nadie:
+
+| Ruta | Archivo | Dueño |
+|---|---|---|
+| `/login` | `src/features/auth/LoginPage.tsx` (sin AppShell) | Jacobo |
+| `/onboarding` | `src/features/restaurant/OnboardingPage.tsx` (ya va dentro de `OnboardingShell`) | Santiago |
+| `/restaurante` | `src/features/restaurant/RestaurantPage.tsx` | Jacobo |
+| `/bitacora` | `src/features/activity-log/ActivityLogPage.tsx` | Sergio |
+| `/mesas` | `src/features/tables/TablesPage.tsx` | Sebastián |
+
+`/` y cualquier ruta desconocida van a `/mesas`. `/kit` solo existe con `npm run dev`.
+
+### 4. Para cada uno
+
+**Jacobo**
+- **Datos de sesión:** los datos de ejemplo ("Casa 72" · "admin@casa72.co") y `onSignOut` están en un solo lugar, `src/app/layouts.tsx`, con `TODO(Jacobo)`.
+- **Guarda de rutas:** va donde está el `TODO(Jacobo)` de `src/app/router.tsx`.
+- **Token de Firebase:** pásalo con `setAuthTokenProvider(() => token)` de `@/lib/api-client`. Todas las llamadas lo envían como `Authorization: Bearer`.
+- **Sesión vencida:** cuando el backend responde 401, se emite el evento `SESSION_EXPIRED_EVENT` (`'dinno:session-expired'`) en `window`. Escúchalo para mandar al login.
+
+**Santiago**
+- Para el formulario tienes `TextField`, `Select`, `TimeSelect` (valor `"HH:mm"`, se muestra "7:30 p. m."), `Switch` y `HoursEditor`.
+- **Formato propuesto del horario. Confírmalo con Sebastián, porque el modelo del restaurante es tuyo:**
+  ```ts
+  type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+  type DayHours = { day: DayOfWeek; isOpen: boolean; opensAt: string; closesAt: string } // 'HH:mm'
+  type WeeklyHours = DayHours[]
+  ```
+- Tus validaciones por día se muestran con `errors={{ sat: 'Mensaje' }}`.
+
+**Sergio**
+- **Topbar:** el switch Abierto/Cerrado va en `statusSlot`, en `src/app/layouts.tsx` (`TODO(Sergio)`). Usa `<Switch label="Estado del restaurante" onLabel="Abierto" offLabel="Cerrado" />`.
+- **Aviso de cerrado:** va en `banner`, en el mismo archivo. Usa `<Alert type="info" action={<Button size="sm" variant="secondary">Abrir ahora</Button>}>…</Alert>`.
+- **Confirmar al cerrar con reservas:** `ConfirmDialog`.
+- **Bitácora:**
+  - Tabla: `DataTable` (en el README hay un ejemplo con columnas).
+  - Filtro "Todas las mesas": `Select`.
+  - Fechas: `formatDateTime`.
+  - Chips: `<StatusChip status={…} />`. Convierte los códigos del backend con `toTableDisplayStatus('OCCUPIED' | 'INACTIVE' | …)` de `@/features/tables/table-status`, para que los estados se vean igual que en mesas.
+- Tu carpeta para el estado del restaurante es `src/features/restaurant-status/`.
+
+**Elizabeth**
+- El contrato que asume el front para mesas está en `src/features/tables/types.ts` y `src/features/tables/api.ts`:
+  - rutas `GET/POST /tables`, `PATCH /tables/:id/status`, `PATCH /tables/:id`, `POST /tables/:id/deactivate` y `POST /tables/:id/reactivate`;
+  - errores `{ statusCode, code, message, fields? }` con los códigos `TABLE_IDENTIFIER_TAKEN`, `TABLE_INACTIVE`, `TABLE_ALREADY_INACTIVE` y `TABLE_ALREADY_ACTIVE`.
+- **Por confirmar con Sebastián:**
+  - largo máximo del identificador (propuesta: 10);
+  - si una mesa reactivada vuelve como Disponible.
+- El front nunca envía `restaurantId`.
+
+### 5. Variable nueva: `VITE_USE_MOCKS`
+
+- `VITE_USE_MOCKS=true` en tu `.env.local` usa datos de ejemplo de mesas, sin backend. Con cualquier otro valor, o sin la variable, usa el backend real.
+- **No se configura en Vercel.**
+- Para probar estados de la pantalla de mesas:
+  - `/mesas?mockEmpty`: sin mesas;
+  - `/mesas?mockError=list`: error de carga;
+  - `/mesas?mockLatency=3000`: carga lenta.
