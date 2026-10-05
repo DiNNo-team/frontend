@@ -5,6 +5,40 @@
 
 ---
 
+## 5 oct 2026 · Editar, desactivar y reactivar mesas (Sebastián)
+
+- **Menú ⋯ de cada mesa** (tarjeta y barra de estado):
+  - mesa activa: **Editar · Desactivar**;
+  - mesa inactiva: **Editar · Reactivar**.
+- **Desactivar** pide confirmación y ofrece "Deshacer". **Reactivar** no pide confirmación. Una mesa inactiva deja de contar en libres, reservadas y ocupadas.
+- **Kit:**
+  - `DropdownMenu` y `Select` ahora tienen borde (en oscuro la sombra casi no se ve; manual 3.6);
+  - un diálogo abierto desde un ítem del menú ⋯ devuelve el foco al ⋯ al cerrarse.
+- **Elizabeth y Sergio (backend de PBI 7):** el front llama `PATCH /tables/:id` con `{ identifier?, capacity? }` (solo los campos que cambiaron), `POST /tables/:id/deactivate` y `POST /tables/:id/reactivate`. Las tres responden la mesa.
+  - Errores esperados: `TABLE_IDENTIFIER_TAKEN`, `TABLE_ALREADY_INACTIVE` y `TABLE_ALREADY_ACTIVE` (409).
+  - **Pendiente de confirmar:** una mesa reactivada vuelve como **Disponible** (así está en el mock).
+  - Desactivar y reactivar deben quedar en la bitácora como `inactive` (PBI 9).
+
+---
+
+## 5 oct 2026 · Crear mesa y cambiar estado (Sebastián)
+
+- **Estados de mesa en minúscula**, igual que la columna `tables.status` del backend: `'available' | 'reserved' | 'occupied'`. Una mesa desactivada se muestra como `inactive`.
+  - **Sergio:** `toTableDisplayStatus()` acepta mayúsculas o minúsculas (`'occupied'`, `'OCCUPIED'`, `'inactive'`). Úsala para los chips de la bitácora.
+- **Nuevos en el kit:**
+  - `FloatingBar`: barra fija abajo del contenido; los toasts suben para no taparla.
+  - `DialogFooter`: acciones de un diálogo cuando van dentro de tu propio `<form>`, para que Enter envíe. Santiago y Jacobo pueden usarlo en sus formularios en diálogo.
+- **`SegmentedControl`** es un poco más compacto en pantallas de menos de 640 px, para que quepa a 360 px.
+- **Elizabeth, para alinear el contrato de mesas:**
+  - **Largo del identificador:** el front limita a **10 caracteres** ("Usa máximo 10 caracteres"); la columna admite 50. ¿Validas 10 en el DTO?
+  - **Repetidos:** el front considera iguales "4" y "04" (los dos se ven como "Mesa 04"). El índice único del backend compara `lower(trim(identifier))`, así que los aceptaría como distintos. ¿Normalizas los numéricos o lo dejamos solo en el front?
+  - **Lo que espera el front:**
+    - `POST /tables` responde `201` con la mesa;
+    - `PATCH /tables/:id/status` con `{ status }` responde la mesa;
+    - los errores llevan `code` (`TABLE_IDENTIFIER_TAKEN` = 409, `TABLE_INACTIVE` = 409).
+
+---
+
 ## 4 oct 2026 · Kit visual completo, AppShell, router y pantalla de mesas (Sebastián)
 
 ### 1. Después de hacer `git pull`
@@ -73,7 +107,7 @@ Las rutas están en `src/app/router.tsx`. Cada placeholder vive en la carpeta de
   - Tabla: `DataTable` (en el README hay un ejemplo con columnas).
   - Filtro "Todas las mesas": `Select`.
   - Fechas: `formatDateTime`.
-  - Chips: `<StatusChip status={…} />`. Convierte los códigos del backend con `toTableDisplayStatus('OCCUPIED' | 'INACTIVE' | …)` de `@/features/tables/table-status`, para que los estados se vean igual que en mesas.
+  - Chips: `<StatusChip status={…} />`. Convierte los códigos del backend con `toTableDisplayStatus('occupied' | 'inactive' | …)` de `@/features/tables/table-status`, para que los estados se vean igual que en mesas.
 - Tu carpeta para el estado del restaurante es `src/features/restaurant-status/`.
 
 **Elizabeth**

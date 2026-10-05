@@ -5,37 +5,26 @@ import type { Table, TableStatus } from './types'
 
 export type TableDisplayStatus = 'available' | 'reserved' | 'occupied' | 'inactive'
 
-/** Codes as they come from the API, plus `INACTIVE`, which the activity log uses for deactivations. */
-export type TableStatusCode = TableStatus | 'INACTIVE'
+const DISPLAY_STATUSES: readonly TableDisplayStatus[] = ['available', 'reserved', 'occupied', 'inactive']
 
-export const TABLE_STATUS_CODE_TO_DISPLAY: Record<TableStatusCode, TableDisplayStatus> = {
-  AVAILABLE: 'available',
-  RESERVED: 'reserved',
-  OCCUPIED: 'occupied',
-  INACTIVE: 'inactive',
-}
-
-export const TABLE_DISPLAY_TO_STATUS: Record<Exclude<TableDisplayStatus, 'inactive'>, TableStatus> = {
-  available: 'AVAILABLE',
-  reserved: 'RESERVED',
-  occupied: 'OCCUPIED',
-}
-
-/** `inactive` when the table is deactivated; otherwise its operational status. */
+/** `inactive` when the table is deactivated; otherwise its operational status (same word as the API). */
 export function getTableDisplayStatus(table: Pick<Table, 'status' | 'isActive'>): TableDisplayStatus {
-  return table.isActive ? TABLE_STATUS_CODE_TO_DISPLAY[table.status] : 'inactive'
+  return table.isActive ? table.status : 'inactive'
 }
 
-/** Tolerant mapping for codes coming from other modules ("OCCUPIED", "occupied", "INACTIVE"). */
+/**
+ * Tolerant mapping for status codes coming from other modules: "occupied", "OCCUPIED" and the
+ * activity log's "inactive" (deactivations) all map to the display status. Unknown codes → undefined.
+ */
 export function toTableDisplayStatus(code: string): TableDisplayStatus | undefined {
-  return TABLE_STATUS_CODE_TO_DISPLAY[code.toUpperCase() as TableStatusCode]
+  const normalized = code.trim().toLowerCase() as TableDisplayStatus
+  return DISPLAY_STATUSES.includes(normalized) ? normalized : undefined
 }
 
-/** Options of the status control, in the manual order: Disponible · Reservada · Ocupada. */
-export const TABLE_STATUS_OPTIONS = (['AVAILABLE', 'RESERVED', 'OCCUPIED'] as const).map((value) => {
-  const display = TABLE_STATUS_CODE_TO_DISPLAY[value]
-  return { value, label: STATUS_META[display].label, status: display }
-})
+/** Options of the status control, in the manual order: Disponible · Reservada · Ocupada. Never Inactiva. */
+export const TABLE_STATUS_OPTIONS: { value: TableStatus; label: string; status: TableStatus }[] = (
+  ['available', 'reserved', 'occupied'] as const
+).map((value) => ({ value, label: STATUS_META[value].label, status: value }))
 
 export interface TableCounts {
   available: number

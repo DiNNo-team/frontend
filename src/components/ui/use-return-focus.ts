@@ -9,7 +9,13 @@ export function useReturnFocus() {
   const previous = useRef<HTMLElement | null>(null)
 
   const onOpenAutoFocus = useCallback(() => {
-    previous.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    // Opened from a ⋯ menu item: the item disappears with the menu, so return to the menu's trigger.
+    const menu = active?.closest<HTMLElement>('[role="menu"]')
+    const canEscape = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+    const menuId = menu?.id && (canEscape ? CSS.escape(menu.id) : menu.id)
+    const menuTrigger = menuId ? document.querySelector<HTMLElement>(`[aria-controls="${menuId}"]`) : null
+    previous.current = menuTrigger ?? active
   }, [])
 
   const onCloseAutoFocus = useCallback((event: Event) => {

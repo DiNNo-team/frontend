@@ -10,14 +10,14 @@ import { TABLE_LIMITS, type Table, type TableErrorCode, type TableStatus } from 
 export type MockOperation = 'list' | 'create' | 'status' | 'update' | 'deactivate' | 'reactivate'
 
 const SEED: [identifier: string, capacity: number, status: TableStatus, isActive: boolean][] = [
-  ['01', 4, 'AVAILABLE', true],
-  ['02', 2, 'OCCUPIED', true],
-  ['03', 4, 'RESERVED', true],
-  ['04', 2, 'AVAILABLE', true],
-  ['05', 6, 'OCCUPIED', true],
-  ['06', 4, 'AVAILABLE', false],
-  ['07', 2, 'AVAILABLE', true],
-  ['08', 4, 'RESERVED', true],
+  ['01', 4, 'available', true],
+  ['02', 2, 'occupied', true],
+  ['03', 4, 'reserved', true],
+  ['04', 2, 'available', true],
+  ['05', 6, 'occupied', true],
+  ['06', 4, 'available', false],
+  ['07', 2, 'available', true],
+  ['08', 4, 'reserved', true],
 ]
 
 function seedTables(): Table[] {
@@ -113,7 +113,7 @@ export const mockTablesApi: TablesApi = {
       id: `mock-${nextId++}`,
       identifier: cleanIdentifier,
       capacity,
-      status: 'AVAILABLE',
+      status: 'available',
       isActive: true,
       updatedAt: new Date().toISOString(),
     }
@@ -148,6 +148,6 @@ export const mockTablesApi: TablesApi = {
     const table = findTable(id)
     if (table.isActive) fail(409, 'TABLE_ALREADY_ACTIVE')
     // Pending confirmation with Elizabeth: a reactivated table comes back as Disponible.
-    return save(table, { isActive: true, status: 'AVAILABLE' })
+    return save(table, { isActive: true, status: 'available' })
   },
 }

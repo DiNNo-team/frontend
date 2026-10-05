@@ -8,6 +8,7 @@ import {
   Dialog,
   DropdownMenu,
   EmptyState,
+  FloatingBar,
   HoursEditor,
   IconButton,
   NumberStepper,
@@ -244,6 +245,15 @@ function TableCardsDemo() {
   )
 }
 
+function FloatingBarDemo() {
+  const [value, setValue] = useState<TableStatusValue>('available')
+  return (
+    <FloatingBar title="Mesa 04" description="2 personas">
+      <SegmentedControl aria-label="Estado de Mesa 04 (ejemplo)" options={STATUS_OPTIONS} value={value} onValueChange={setValue} fullWidth className="md:w-fit" />
+    </FloatingBar>
+  )
+}
+
 export function KitDay2Sections() {
   const [hours, setHours] = useState(SAMPLE_HOURS)
 
@@ -324,6 +334,13 @@ export function KitDay2Sections() {
             </div>
           ))}
         </div>
+      </KitSection>
+
+      <KitSection
+        title="FloatingBar"
+        note="Va de último en la pantalla: queda fija abajo del contenido mientras haces scroll, sin tapar el sidebar ni la última fila. Los toasts suben para no taparla."
+      >
+        <FloatingBarDemo />
       </KitSection>
 
       <KitSection title="DataTable" note="En menos de 768 px se vuelve lista compacta.">
