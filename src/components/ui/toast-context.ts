@@ -25,3 +25,6 @@ export function useToast(): ToastApi {
   if (!context) throw new Error('useToast must be used inside <ToastProvider>')
   return context
 }
+
+/** Lets a FloatingBar tell the toasts to sit above it, so they never cover its controls. */
+export const ToastLayoutContext = createContext<(barVisible: boolean) => void>(() => undefined)

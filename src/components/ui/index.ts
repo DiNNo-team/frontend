@@ -7,6 +7,7 @@ export { DataTable, type DataTableColumn, type DataTableProps } from './DataTabl
 export { Dialog, DialogFooter, type DialogProps } from './Dialog'
 export { DropdownMenu, type DropdownMenuItem, type DropdownMenuProps } from './DropdownMenu'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
+export { FloatingBar, type FloatingBarProps } from './FloatingBar'
 export { HoursEditor, type HoursEditorProps } from './HoursEditor'
 export { closesNextDay, copyMondayToAll, DAY_LABELS, DAYS_OF_WEEK, type DayHours, type DayOfWeek, type WeeklyHours } from './hours'
 export { IconButton, type IconButtonProps } from './IconButton'

@@ -19,6 +19,7 @@ export interface SegmentedControlProps<T extends string> {
   disabled?: boolean
   /** Segments share the full width (mobile status bar). */
   fullWidth?: boolean
+  id?: string
   className?: string
 }
 
@@ -34,10 +35,12 @@ export function SegmentedControl<T extends string>({
   'aria-label': ariaLabel,
   disabled,
   fullWidth,
+  id,
   className,
 }: SegmentedControlProps<T>) {
   return (
     <ToggleGroup.Root
+      id={id}
       type="single"
       value={value}
       onValueChange={(next) => {
@@ -46,7 +49,7 @@ export function SegmentedControl<T extends string>({
       aria-label={ariaLabel}
       disabled={disabled}
       className={cn(
-        'h-11 items-stretch gap-1 rounded-btn bg-surface-2 p-1',
+        'h-11 items-stretch gap-0 rounded-btn bg-surface-2 p-1 sm:gap-1',
         fullWidth ? 'flex w-full' : 'inline-flex w-fit',
         className,
       )}
@@ -58,7 +61,7 @@ export function SegmentedControl<T extends string>({
             key={option.value}
             value={option.value}
             className={cn(
-              'inline-flex cursor-pointer items-center justify-center gap-2 rounded-input px-3 text-sec whitespace-nowrap text-fg-2',
+              'inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-input px-1.5 text-sec whitespace-nowrap text-fg-2 sm:gap-2 sm:px-3',
               'transition-colors duration-(--dur-base) ease-dinno enabled:hover:text-fg',
               'data-[state=on]:bg-surface data-[state=on]:font-bold data-[state=on]:text-fg data-[state=on]:shadow-card',
               'disabled:cursor-not-allowed disabled:opacity-45',
