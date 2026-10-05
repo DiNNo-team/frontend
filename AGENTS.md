@@ -5,7 +5,7 @@ This is a React + Vite web application (the DiNNo restaurant-management dashboar
 React 19, Vite 8, and Tailwind CSS v4 all changed significantly from what most training data reflects — don't assume old patterns still apply:
 
 1. Read the versions of `react`, `vite`, and `tailwindcss` in `package.json`.
-2. **Tailwind v4 has no `tailwind.config.js` and no `@tailwind base/components/utilities` directives.** Styling is wired via the `@tailwindcss/vite` plugin (`vite.config.ts`) and a single `@import "tailwindcss";` in `src/index.css`. Check https://tailwindcss.com/docs for v4-specific syntax (`@theme`, CSS-first config) before reaching for a config file that doesn't exist here.
+2. **Tailwind v4 has no `tailwind.config.js` and no `@tailwind base/components/utilities` directives.** Styling is wired via the `@tailwindcss/vite` plugin (`vite.config.ts`) and `src/styles/globals.css` (`@import "tailwindcss";` + the manual tokens in `src/styles/tokens.css`, mapped with `@theme inline`). Check https://tailwindcss.com/docs for v4-specific syntax (`@theme`, CSS-first config) before reaching for a config file that doesn't exist here.
 3. For React 19 APIs (hooks, `use`, Actions, etc.), check https://react.dev against the installed version.
 4. For Vite config/plugins, check https://vite.dev/config/ against the installed major version.
 
@@ -16,13 +16,16 @@ npm run dev       # dev server at http://localhost:5173
 npm run build      # tsc -b (typecheck) + vite build -> dist/
 npm run preview    # serve the dist/ build locally
 npm run lint        # oxlint
+npm run typecheck   # tsc -b
+npm test            # vitest run
+npm run check:ui    # identity-manual rules (no hex, no arbitrary values, no default palette…)
 ```
 
-Run `npm run lint` and `npm run build` before declaring any task done — `build` also typechecks.
+Run `npm run lint`, `npm run build`, `npm test` and `npm run check:ui` before declaring any task done — `build` also typechecks.
 
 ## Architecture
 
-This is an early-stage skeleton: `src/App.tsx`, `src/main.tsx`, `src/index.css`, `src/vite-env.d.ts` — no routing, state management, or component/page folder convention exists yet. When adding real features, establish a clear split (e.g. `src/components/`, `src/pages/`) rather than growing `App.tsx` monolithically, and check with the team before introducing a router or state library so all three DiNNo repos stay consistent in approach.
+This is an early-stage skeleton: `src/App.tsx`, `src/main.tsx`, `src/styles/`, `src/lib/`, `src/vite-env.d.ts` — no routing, state management, or component/page folder convention exists yet. When adding real features, establish a clear split (e.g. `src/components/`, `src/pages/`) rather than growing `App.tsx` monolithically, and check with the team before introducing a router or state library so all three DiNNo repos stay consistent in approach.
 
 ## Connecting to the backend
 
