@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Prompts personales de Claude Code (no se versionan)
+docs/claude/
