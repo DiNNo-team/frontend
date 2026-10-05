@@ -1,5 +1,4 @@
 import { apiRequest } from '@/lib/api-client'
-import { mockTablesApi } from './api.mock'
 import type { CreateTableInput, Table, TableStatus, UpdateTableInput } from './types'
 
 /** Tables endpoints (contract in types.ts). The restaurant always comes from the session, never from here. */
@@ -21,5 +20,17 @@ const httpTablesApi: TablesApi = {
   reactivate: (id) => apiRequest<Table>(`/tables/${encodeURIComponent(id)}/reactivate`, { method: 'POST' }),
 }
 
+// Loaded on demand so production builds (VITE_USE_MOCKS unset) never ship the sample data.
+const loadMock = () => import('./api.mock').then((module) => module.mockTablesApi)
+
+const lazyMockTablesApi: TablesApi = {
+  list: async () => (await loadMock()).list(),
+  create: async (input) => (await loadMock()).create(input),
+  updateStatus: async (id, status) => (await loadMock()).updateStatus(id, status),
+  update: async (id, input) => (await loadMock()).update(id, input),
+  deactivate: async (id) => (await loadMock()).deactivate(id),
+  reactivate: async (id) => (await loadMock()).reactivate(id),
+}
+
 /** `VITE_USE_MOCKS=true` switches to the in-memory mock; both follow the same contract. */
-export const tablesApi: TablesApi = import.meta.env.VITE_USE_MOCKS === 'true' ? mockTablesApi : httpTablesApi
+export const tablesApi: TablesApi = import.meta.env.VITE_USE_MOCKS === 'true' ? lazyMockTablesApi : httpTablesApi
