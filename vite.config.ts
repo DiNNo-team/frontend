@@ -12,5 +12,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    env: { VITE_API_URL: 'http://localhost:3000', VITE_USE_MOCKS: 'true' },
   },
 })
