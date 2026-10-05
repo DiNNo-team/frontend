@@ -42,17 +42,20 @@ Todas las rutas del backend llevan el prefijo `/v1`. Tanto `VITE_API_URL` como e
 | `npm run build`   | Chequeo de tipos (`tsc`) y build de producción a `dist/` |
 | `npm run preview` | Sirve localmente el build de `dist/`                   |
 | `npm run lint`    | Ejecuta el linter (oxlint)                             |
+| `npm run typecheck` | Chequeo de tipos (`tsc -b`) sin compilar             |
+| `npm test`        | Pruebas con Vitest + Testing Library (`npm run test:watch` en modo observación) |
+| `npm run check:ui` | Revisa `src/` contra las reglas del manual de identidad: sin hex, sin valores arbitrarios de Tailwind, sin paleta/radios/sombras por defecto, sin íconos prohibidos, sin `console.log` |
 
 ## Cómo verificar que funciona
 
-1. `npm run dev` y abre http://localhost:5173: debe verse el título **DiNNo** con estilos de Tailwind (texto azul, grande y centrado).
+1. `npm run dev` y abre http://localhost:5173: debe verse el logo de DiNNo centrado sobre fondo crema.
 2. Con el backend corriendo en local, comprueba la conexión desde la consola del navegador:
    ```js
    const { apiFetch } = await import('/src/lib/api.ts') // solo en `npm run dev`
    await apiFetch('/health').then((r) => r.json()) // { status: 'ok' }
    ```
    Si aparece un error de CORS, revisa que `CORS_ORIGINS` del backend incluya `http://localhost:5173`.
-3. `npm run lint` y `npm run build` deben terminar sin errores.
+3. `npm run lint`, `npm run build`, `npm test` y `npm run check:ui` deben terminar sin errores.
 
 ## Despliegue en Vercel
 
