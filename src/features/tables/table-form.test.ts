@@ -9,7 +9,6 @@ const table = (id: string, identifier: string, isActive = true): Table => ({
   capacity: 4,
   status: 'available',
   isActive,
-  updatedAt: '',
 })
 const EXISTING = [table('a', '04'), table('b', 'T1'), table('c', '06', false)]
 
