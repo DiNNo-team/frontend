@@ -58,12 +58,18 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
               <RadixDialog.Description className="mt-2 text-sec text-fg-2">{description}</RadixDialog.Description>
             )}
             {children && <div className="mt-6">{children}</div>}
-            {footer && (
-              <div className="mt-6 flex flex-col-reverse gap-3 *:w-full sm:flex-row sm:justify-end sm:*:w-auto">{footer}</div>
-            )}
+            {footer && <DialogFooter>{footer}</DialogFooter>}
           </RadixDialog.Content>
         </RadixDialog.Overlay>
       </RadixDialog.Portal>
     </RadixDialog.Root>
   )
+}
+
+/**
+ * Dialog actions row. Use it directly when the actions live inside your own `<form>` (children);
+ * otherwise pass them to `footer`. Put the primary last: right on desktop, on top on mobile.
+ */
+export function DialogFooter({ children }: { children: ReactNode }) {
+  return <div className="mt-6 flex flex-col-reverse gap-3 *:w-full sm:flex-row sm:justify-end sm:*:w-auto">{children}</div>
 }
