@@ -33,7 +33,7 @@ export function DropdownMenu({ trigger, items, align = 'end', side = 'bottom' }:
           align={align}
           side={side}
           sideOffset={4}
-          className="z-(--z-dropdown) min-w-48 animate-fade-in-fast rounded-input bg-surface p-1 shadow-lifted"
+          className="z-(--z-dropdown) min-w-48 animate-fade-in-fast rounded-input border border-line bg-surface p-1 shadow-lifted"
         >
           {items.map((item, index) => (
             <Fragment key={item.label}>
