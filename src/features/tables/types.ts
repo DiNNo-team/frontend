@@ -1,7 +1,7 @@
 // Provisional contract with the backend (Elizabeth). A contract change touches only this file and api.ts.
 
-/** Operational status kept by the backend; an inactive table keeps its last one. */
-export type TableStatus = 'AVAILABLE' | 'RESERVED' | 'OCCUPIED'
+/** Operational status kept by the backend (same values as the `tables.status` column); an inactive table keeps its last one. */
+export type TableStatus = 'available' | 'reserved' | 'occupied'
 
 export interface Table {
   id: string
@@ -31,7 +31,7 @@ export type TableErrorCode =
   | 'TABLE_NOT_FOUND'
   | 'VALIDATION_ERROR'
 
-/** Limits shared by the form and the mock. Identifier max length pending confirmation with Elizabeth. */
+/** Limits shared by the form and the mock. The column allows 50 characters; the UI keeps 10 (pending confirmation with Elizabeth). */
 export const TABLE_LIMITS = {
   identifierMaxLength: 10,
   minCapacity: 1,

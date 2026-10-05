@@ -1,11 +1,13 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
-import { Button, EmptyState, PageHeader } from '@/components/ui'
+import { Button, EmptyState, PageHeader, useToast } from '@/components/ui'
+import { formatTableName } from '@/lib/format'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
+import { TableFormDialog } from './components/TableFormDialog'
 import { TablesGrid } from './components/TablesGrid'
 import { TablesSkeleton } from './components/TablesSkeleton'
 import { TablesStats } from './components/TablesStats'
-import { useTablesQuery } from './hooks'
+import { useCreateTable, useTablesQuery } from './hooks'
 import { countTables, sortTables } from './table-status'
 
 const TITLE = 'Mesas'
@@ -17,9 +19,25 @@ export default function TablesPage() {
   const showSkeleton = useDelayedFlag(tablesQuery.isPending)
   const tables = useMemo(() => sortTables(tablesQuery.data ?? []), [tablesQuery.data])
   const counts = useMemo(() => countTables(tables), [tables])
+  const toast = useToast()
+  const createTable = useCreateTable()
+  const [createOpen, setCreateOpen] = useState(false)
 
-  // TODO(Sebastián): Fase 3 abre el diálogo "Agregar mesa".
-  const addTableButton = <Button icon={Plus}>Agregar mesa</Button>
+  const addTableButton = (
+    <Button icon={Plus} onClick={() => setCreateOpen(true)}>
+      Agregar mesa
+    </Button>
+  )
+  const createDialog = (
+    <TableFormDialog
+      open={createOpen}
+      onOpenChange={setCreateOpen}
+      existingTables={tables}
+      saving={createTable.isPending}
+      onSubmit={(values) => createTable.mutateAsync(values)}
+      onSaved={(table) => toast.show({ type: 'success', message: `${formatTableName(table.identifier)} agregada` })}
+    />
+  )
 
   if (tablesQuery.isPending) {
     return (
@@ -59,6 +77,7 @@ export default function TablesPage() {
       <>
         <PageHeader title={TITLE} description={DESCRIPTION} />
         <EmptyState title="Aún no tienes mesas" description="Agrega tus mesas para empezar a recibir comensales." action={addTableButton} />
+        {createDialog}
       </>
     )
   }
@@ -68,6 +87,7 @@ export default function TablesPage() {
       <PageHeader title={TITLE} description={DESCRIPTION} actions={addTableButton} />
       <TablesStats counts={counts} />
       <TablesGrid tables={tables} />
+      {createDialog}
     </>
   )
 }

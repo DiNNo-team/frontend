@@ -4,7 +4,7 @@ export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from '.
 export { Card, type CardProps } from './Card'
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog'
 export { DataTable, type DataTableColumn, type DataTableProps } from './DataTable'
-export { Dialog, type DialogProps } from './Dialog'
+export { Dialog, DialogFooter, type DialogProps } from './Dialog'
 export { DropdownMenu, type DropdownMenuItem, type DropdownMenuProps } from './DropdownMenu'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
 export { HoursEditor, type HoursEditorProps } from './HoursEditor'
