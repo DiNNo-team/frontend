@@ -41,17 +41,27 @@ export function formatCapacity(people: number): string {
 }
 
 const NUMERIC = /^\d+$/
+const TABLE_WORD = /^mesa\s+/i
 
-/** `'4'`, `'04'`, `'004'` → `'Mesa 04'` · `'123'` → `'Mesa 123'` · `'T1'` → `'Mesa T1'` */
-export function formatTableName(identifier: string): string {
+/**
+ * The identifier without a leading "Mesa": the backend may store the full name ("Mesa 4")
+ * while the form sends the short one ("04"); both mean the same table.
+ */
+export function tableIdentifierCore(identifier: string): string {
   const trimmed = identifier.trim()
-  if (NUMERIC.test(trimmed)) return `Mesa ${String(Number(trimmed)).padStart(2, '0')}`
-  return `Mesa ${trimmed}`
+  return trimmed.replace(TABLE_WORD, '').trim() || trimmed
 }
 
-/** Key to detect repeated identifiers: `'04'` and `'4'` collide, `' T1 '` and `'t1'` collide. */
+/** `'4'`, `'04'`, `'Mesa 4'` → `'Mesa 04'` · `'123'` → `'Mesa 123'` · `'T1'` → `'Mesa T1'` */
+export function formatTableName(identifier: string): string {
+  const core = tableIdentifierCore(identifier)
+  if (NUMERIC.test(core)) return `Mesa ${String(Number(core)).padStart(2, '0')}`
+  return `Mesa ${core}`
+}
+
+/** Key to detect repeated identifiers: `'04'`, `'4'` and `'Mesa 4'` collide; `' T1 '` and `'t1'` collide. */
 export function normalizeTableIdentifier(identifier: string): string {
-  const trimmed = identifier.trim()
-  if (NUMERIC.test(trimmed)) return String(Number(trimmed))
-  return trimmed.toLowerCase()
+  const core = tableIdentifierCore(identifier)
+  if (NUMERIC.test(core)) return String(Number(core))
+  return core.toLowerCase()
 }
