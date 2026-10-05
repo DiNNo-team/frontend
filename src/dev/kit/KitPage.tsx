@@ -14,6 +14,7 @@ import {
   type Status,
 } from '@/components/ui'
 import { useTheme } from '@/lib/theme-context'
+import { KitDay2Sections, KitSection } from './KitDay2Sections'
 
 const STATUSES = Object.keys(STATUS_META) as Status[]
 const VARIANTS: { variant: ButtonVariant; text: string; icon?: typeof Plus }[] = [
@@ -23,18 +24,6 @@ const VARIANTS: { variant: ButtonVariant; text: string; icon?: typeof Plus }[] =
   { variant: 'ghost', text: 'Copiar a todos los días' },
   { variant: 'danger', text: 'Desactivar mesa', icon: Ban },
 ]
-
-function KitSection({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-4 border-t border-line pt-8">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-label text-fg-2 uppercase">{title}</h2>
-        {note && <p className="text-sec text-fg-2">{note}</p>}
-      </div>
-      {children}
-    </section>
-  )
-}
 
 function Row({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap items-center gap-3">{children}</div>
@@ -186,6 +175,7 @@ export default function KitPage() {
             </Card>
           </div>
         </KitSection>
+        <KitDay2Sections />
       </main>
     </div>
   )

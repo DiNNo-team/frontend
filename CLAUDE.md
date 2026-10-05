@@ -190,7 +190,7 @@ src/
 │   ├── restaurant-status/ switch abierto/cerrado (Sergio)
 │   ├── tables/           mesas (Sebastián)
 │   └── activity-log/     bitácora (Sergio)
-└── lib/              utilidades compartidas (Sebastián): api.ts, cn.ts, icon.tsx, format.ts, theme.tsx
+└── lib/              utilidades compartidas (Sebastián): api.ts, cn.ts, icon.tsx, format.ts, theme.tsx, use-delayed-flag.ts
 ```
 - Cada funcionalidad en su carpeta de `features/`; nada de lógica de negocio en `App.tsx`.
 - Código en inglés (nombres, archivos, props, tipos); interfaz en español con el glosario del manual (14.1): Mesa ("Mesa 04"), Comensal, Restaurante, Disponible, Reservada, Ocupada, Inactiva, Abierto, Cerrado, Capacidad ("4 personas"), Bitácora, Iniciar sesión / Cerrar sesión. **Nunca:** "Libre" como estado, cliente, local, negocio, log, historial, pax, OK, Enviar, Aceptar. Mayúscula inicial, botones = verbo + objeto, sin signos de exclamación.

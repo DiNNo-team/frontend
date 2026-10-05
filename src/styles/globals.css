@@ -44,3 +44,13 @@
 @layer base { [data-theme="dark"], .t-dark { color-scheme: dark; } }               /* controles nativos en oscuro */
 @theme { --animate-live-pulse: live-pulse 2s var(--ease) infinite; }              /* pulso del Active Dot "Abierto" / "En vivo" · manual 3.3 y 13.2 */
 @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@theme { --animate-skeleton: skeleton-pulse 1.2s var(--ease) infinite; }        /* pulso de opacidad del skeleton 1,2 s · manual 9 */
+@keyframes skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@theme { --animate-rise-in: rise-in var(--dur-slow) var(--ease); }             /* diálogos: fade + subir 8 px, 300 ms · manual 13.2 */
+@theme { --animate-rise-in-fast: rise-in var(--dur-base) var(--ease); }        /* toasts y barras entrando, 200 ms · manual 13.2 */
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@theme { --animate-fade-in: fade-in var(--dur-slow) var(--ease); }             /* overlay de diálogos y drawer, 300 ms · manual 13.2 */
+@theme { --animate-fade-in-fast: fade-in var(--dur-base) var(--ease); }        /* menús, 200 ms · manual 13.2 */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@theme { --animate-drawer-in: drawer-in var(--dur-slow) var(--ease); }         /* drawer del sidebar en < 1024, 300 ms · manual 12.1 y 13.2 */
+@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
