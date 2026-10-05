@@ -23,6 +23,8 @@ export interface TableCardProps {
   toggleId?: string
   /** Items of the ⋯ menu. Without items the menu is not shown. */
   menuItems?: DropdownMenuItem[]
+  /** `id` of the ⋯ button, to move focus to it (e.g. after the card becomes inactive). */
+  menuTriggerId?: string
   /** Inactive tables show "Reactivar" at full opacity. */
   onReactivate?: () => void
   reactivating?: boolean
@@ -42,6 +44,7 @@ export function TableCard({
   onSelect,
   toggleId,
   menuItems,
+  menuTriggerId,
   onReactivate,
   reactivating,
   className,
@@ -84,7 +87,13 @@ export function TableCard({
             <DropdownMenu
               items={menuItems}
               trigger={
-                <IconButton icon={Ellipsis} label={`Más acciones de ${name}`} size="sm" className="relative z-1 -mt-2 -mr-2 text-fg-2" />
+                <IconButton
+                  id={menuTriggerId}
+                  icon={Ellipsis}
+                  label={`Más acciones de ${name}`}
+                  size="sm"
+                  className="relative z-1 -mt-2 -mr-2 text-fg-2"
+                />
               }
             />
           )}

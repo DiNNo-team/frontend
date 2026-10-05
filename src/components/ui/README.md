@@ -244,7 +244,7 @@ toast.show({ type: 'error', message: 'No pudimos conectarnos. Revisa tu conexió
 
 ## Dialog y ConfirmDialog
 
-`Dialog`: modal sólido. `title` (Título 3), `description`, contenido, `footer` con las acciones (**el primario va de último**: queda a la derecha en escritorio y arriba en móvil). `size`: `sm` 480 | `md` 560. `preventClose` mientras guarda (Esc y clic afuera no cierran). El foco queda atrapado y vuelve al botón que lo abrió.
+`Dialog`: modal sólido. Se puede abrir desde un ítem del menú ⋯: al cerrar, el foco vuelve al botón ⋯ que abrió el menú. `title` (Título 3), `description`, contenido, `footer` con las acciones (**el primario va de último**: queda a la derecha en escritorio y arriba en móvil). `size`: `sm` 480 | `md` 560. `preventClose` mientras guarda (Esc y clic afuera no cierran). El foco queda atrapado y vuelve al botón que lo abrió.
 
 Si las acciones viven dentro de tu propio `<form>` (para que Enter envíe), no uses `footer`: pon `<DialogFooter>` al final del formulario.
 
@@ -314,7 +314,7 @@ Métrica: cifra `text-h1 tabular-nums` + etiqueta. `highlight` pone la cifra en 
 
 ## TableCard
 
-Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). Props: `name` ("Mesa 04"), `capacity`, `status` (`available | reserved | occupied | inactive`), `selected`, `onSelect`, `toggleId` (id del botón de selección, para devolverle el foco), `menuItems`, `onReactivate`.
+Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). Props: `name` ("Mesa 04"), `capacity`, `status` (`available | reserved | occupied | inactive`), `selected`, `onSelect`, `toggleId` (id del botón de selección, para devolverle el foco), `menuItems`, `menuTriggerId` (id del botón ⋯), `onReactivate`, `reactivating`.
 
 ## FloatingBar
 

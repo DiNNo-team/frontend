@@ -5,6 +5,22 @@
 
 ---
 
+## 5 oct 2026 · Editar, desactivar y reactivar mesas (Sebastián)
+
+- **Menú ⋯ de cada mesa** (tarjeta y barra de estado):
+  - mesa activa: **Editar · Desactivar**;
+  - mesa inactiva: **Editar · Reactivar**.
+- **Desactivar** pide confirmación y ofrece "Deshacer". **Reactivar** no pide confirmación. Una mesa inactiva deja de contar en libres, reservadas y ocupadas.
+- **Kit:**
+  - `DropdownMenu` y `Select` ahora tienen borde (en oscuro la sombra casi no se ve; manual 3.6);
+  - un diálogo abierto desde un ítem del menú ⋯ devuelve el foco al ⋯ al cerrarse.
+- **Elizabeth y Sergio (backend de PBI 7):** el front llama `PATCH /tables/:id` con `{ identifier?, capacity? }` (solo los campos que cambiaron), `POST /tables/:id/deactivate` y `POST /tables/:id/reactivate`. Las tres responden la mesa.
+  - Errores esperados: `TABLE_IDENTIFIER_TAKEN`, `TABLE_ALREADY_INACTIVE` y `TABLE_ALREADY_ACTIVE` (409).
+  - **Pendiente de confirmar:** una mesa reactivada vuelve como **Disponible** (así está en el mock).
+  - Desactivar y reactivar deben quedar en la bitácora como `inactive` (PBI 9).
+
+---
+
 ## 5 oct 2026 · Crear mesa y cambiar estado (Sebastián)
 
 - **Estados de mesa en minúscula**, igual que la columna `tables.status` del backend: `'available' | 'reserved' | 'occupied'`. Una mesa desactivada se muestra como `inactive`.
