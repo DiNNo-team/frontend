@@ -17,10 +17,11 @@
   - el front lee `errorCode` en `ApiError.code`;
   - en mesas, cada ruta tiene una sola causa por código HTTP, así que el front distingue por el código HTTP (409 al crear = repetido; al cambiar estado = mesa inactiva). **El `message` del backend nunca se muestra**: la interfaz usa los textos del manual.
 - **Jacobo:** cuando el backend responde 403 con `errorCode: RESTAURANT_REQUIRED` (usuario sin restaurante), `@/lib/api-client` emite el evento `RESTAURANT_REQUIRED_EVENT` (`'dinno:restaurant-required'`) en `window`. Escúchalo junto con `SESSION_EXPIRED_EVENT` para mandar al usuario a `/onboarding`.
-- **Elizabeth, sobre el nombre de las mesas:**
-  - El seed crea `identifier: "Mesa 1"`; el formulario del front envía el identificador corto ("04"), como dice el manual ("Mesa 04").
-  - El front muestra los dos igual: quita la palabra "Mesa" y rellena a 2 dígitos, así que "Mesa 4", "4" y "04" se ven como **Mesa 04** y el front los trata como la misma mesa.
-  - **Propuesta:** guardar el identificador corto ("1"…"8") en el seed y que el índice único trate "4" y "04" como iguales. Así el backend y el front aplican la misma regla. Si prefieres mantener el nombre completo, el front ya lo soporta.
+- **Identificador de la mesa (decisión de Sebastián, aplicada en backend y web):**
+  - El campo se llama **"Identificador"**, como dice el manual en 12.4. Es corto ("04", "T1") y se muestra como **Mesa 04** (14.1).
+  - "4", "04" y "Mesa 4" son la misma mesa, con máximo 10 caracteres, en los dos lados.
+  - Las mesas del seed ("Mesa 1"…) se muestran como Mesa 01….
+  - El backend usa los mismos textos de error que la web.
 - `Table` en el front ya no tiene `updatedAt` (el backend no lo envía).
 
 ---
