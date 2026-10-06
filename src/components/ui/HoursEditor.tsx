@@ -3,9 +3,21 @@ import { CircleAlert } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Icon } from '@/lib/icon'
 import { Button } from './Button'
-import { closesNextDay, copyMondayToAll, DAY_LABELS, type DayHours, type DayOfWeek, type WeeklyHours } from './hours'
+import {
+  closesNextDay,
+  copyMondayToAll,
+  DAY_LABELS,
+  OPEN_24H_LABEL,
+  type DayHours,
+  type DayOfWeek,
+  type WeeklyHours,
+} from './hours'
 import { Switch } from './Switch'
 import { TimeSelect } from './TimeSelect'
+
+// Value of the "Abierto 24 horas" option inside the opening picker (never sent anywhere).
+const OPEN_24H = 'open-24h'
+const OPEN_24H_OPTION = [{ value: OPEN_24H, label: OPEN_24H_LABEL }]
 
 export interface HoursEditorProps {
   /** Seven entries, Monday to Sunday. */
@@ -19,7 +31,8 @@ export interface HoursEditorProps {
 
 /**
  * Weekly opening hours (manual 9): one row per day with an Abierto/Cerrado switch and
- * opening – closing hours. Below, "Copiar a todos los días" copies Monday to the rest.
+ * opening – closing hours. The opening picker's first option is "Abierto 24 horas", which hides
+ * the closing hour. Below, "Copiar a todos los días" copies Monday to the rest.
  */
 export function HoursEditor({ value, onChange, errors, disabled, className }: HoursEditorProps) {
   const baseId = useId()
@@ -55,26 +68,36 @@ export function HoursEditor({ value, onChange, errors, disabled, className }: Ho
                     <TimeSelect
                       label={`Apertura del ${labels.long.toLowerCase()}`}
                       hideLabel
-                      value={entry.opensAt}
-                      onValueChange={(opensAt) => updateDay(entry.day, { opensAt })}
+                      leadingOptions={OPEN_24H_OPTION}
+                      value={entry.isOpen24h ? OPEN_24H : entry.opensAt}
+                      onValueChange={(value) =>
+                        updateDay(
+                          entry.day,
+                          value === OPEN_24H ? { isOpen24h: true } : { isOpen24h: false, opensAt: value },
+                        )
+                      }
                       invalid={Boolean(error)}
                       aria-describedby={error ? errorId : undefined}
                       disabled={disabled}
-                      className="min-w-0 flex-1 @2xl:w-44 @2xl:flex-none"
+                      className={cn('min-w-0 flex-1 @2xl:flex-none', entry.isOpen24h ? '@2xl:w-60' : '@2xl:w-44')}
                     />
-                    <span className="text-fg-2" aria-hidden="true">
-                      –
-                    </span>
-                    <TimeSelect
-                      label={`Cierre del ${labels.long.toLowerCase()}`}
-                      hideLabel
-                      value={entry.closesAt}
-                      onValueChange={(closesAt) => updateDay(entry.day, { closesAt })}
-                      invalid={Boolean(error)}
-                      aria-describedby={error ? errorId : undefined}
-                      disabled={disabled}
-                      className="min-w-0 flex-1 @2xl:w-44 @2xl:flex-none"
-                    />
+                    {!entry.isOpen24h && (
+                      <>
+                        <span className="text-fg-2" aria-hidden="true">
+                          –
+                        </span>
+                        <TimeSelect
+                          label={`Cierre del ${labels.long.toLowerCase()}`}
+                          hideLabel
+                          value={entry.closesAt}
+                          onValueChange={(closesAt) => updateDay(entry.day, { closesAt })}
+                          invalid={Boolean(error)}
+                          aria-describedby={error ? errorId : undefined}
+                          disabled={disabled}
+                          className="min-w-0 flex-1 @2xl:w-44 @2xl:flex-none"
+                        />
+                      </>
+                    )}
                     {closesNextDay(entry) && <span className="text-sec whitespace-nowrap text-fg-2">(día siguiente)</span>}
                   </div>
                 ) : (

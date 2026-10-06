@@ -9,9 +9,13 @@ const TIME_OPTIONS: SelectOption[] = Array.from({ length: 48 }, (_, index) => {
   return { value, label: formatTime12h(value) }
 })
 
-export type TimeSelectProps = Omit<SelectProps, 'options' | 'icon'>
+export interface TimeSelectProps extends Omit<SelectProps, 'options' | 'icon'> {
+  /** Extra choices listed before the hours (HoursEditor uses it for "Abierto 24 horas"). */
+  leadingOptions?: SelectOption[]
+}
 
 /** Hour picker in 30 min steps (manual 9). Value is `"HH:mm"` in 24 h; the label is 12 h. */
-export function TimeSelect(props: TimeSelectProps) {
-  return <Select {...props} options={TIME_OPTIONS} icon={Clock} />
+export function TimeSelect({ leadingOptions = [], ...props }: TimeSelectProps) {
+  const options = leadingOptions.length > 0 ? [...leadingOptions, ...TIME_OPTIONS] : TIME_OPTIONS
+  return <Select {...props} options={options} icon={Clock} />
 }
