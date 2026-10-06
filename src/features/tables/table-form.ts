@@ -53,7 +53,8 @@ export interface TableSaveFailure {
 /** Translates a backend error into field errors or a dialog message. Never shows the raw backend text. */
 export function describeTableSaveError(error: unknown, values: TableFormValues): TableSaveFailure {
   if (error instanceof ApiError) {
-    if (error.code === 'TABLE_IDENTIFIER_TAKEN') {
+    // The only 409 of create and edit is a repeated identifier (the backend sends no errorCode for it).
+    if (error.status === 409) {
       return { fieldErrors: { identifier: TABLE_FORM_MESSAGES.identifierTaken(values.identifier.trim()) } }
     }
     if (error.status === 400 && error.fieldErrors) {

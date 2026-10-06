@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiRequest, getApiErrorMessage, SESSION_EXPIRED_EVENT, setAuthTokenProvider } from './api-client'
+import { ApiError, apiRequest, getApiErrorMessage, RESTAURANT_REQUIRED_EVENT, SESSION_EXPIRED_EVENT, setAuthTokenProvider } from './api-client'
 
 function mockFetch(response: Partial<Response> & { jsonBody?: unknown }) {
   const fn = vi.fn().mockResolvedValue({
@@ -37,6 +37,19 @@ describe('apiRequest', () => {
     const error = await apiRequest('/tables').catch((caught: unknown) => caught)
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).status).toBe(400)
+  })
+
+  it('reads the backend errorCode and announces RESTAURANT_REQUIRED for the auth feature', async () => {
+    mockFetch({
+      ok: false,
+      status: 403,
+      jsonBody: { statusCode: 403, message: 'Primero registra tu restaurante.', error: 'Forbidden', errorCode: 'RESTAURANT_REQUIRED' },
+    })
+    const listener = vi.fn()
+    window.addEventListener(RESTAURANT_REQUIRED_EVENT, listener)
+    await expect(apiRequest('/tables')).rejects.toMatchObject({ status: 403, code: 'RESTAURANT_REQUIRED' })
+    window.removeEventListener(RESTAURANT_REQUIRED_EVENT, listener)
+    expect(listener).toHaveBeenCalledTimes(1)
   })
 
   it('turns fetch failures into network errors', async () => {
