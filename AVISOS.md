@@ -5,6 +5,44 @@
 
 ---
 
+## 6 oct 2026 · Horario "Abierto 24 horas" en el HoursEditor (Sebastián)
+
+- **Santiago y Jacobo:** el `HoursEditor` ya soporta el `is_open_24h` del esquema de Santiago.
+  - **Uso:** "Abierto 24 horas" es la **primera opción del selector de apertura** de cada día. Al elegirla desaparece el selector de cierre y no se muestra "(día siguiente)". Al elegir una hora, el día vuelve a tener apertura y cierre, con las horas anteriores. "Copiar a todos los días" también copia el 24 horas.
+  - **Tipo:** `DayHours` tiene un campo nuevo y **obligatorio**:
+    ```ts
+    type DayHours = { day: DayOfWeek; isOpen: boolean; isOpen24h: boolean; opensAt: string; closesAt: string } // 'HH:mm'
+    ```
+  - **Correspondencia con `restaurant_schedules`** (una fila por día abierto):
+    - `isOpen: false` → sin fila;
+    - `isOpen24h: true` → `is_open_24h = true`, sin horas;
+    - si no → `opens_at` y `closes_at`;
+    - `day`: `mon`…`sun` = `day_of_week` 1…7.
+  - **Validación:** no aceptes apertura igual a cierre en un día que no es de 24 horas. El backend la rechaza (`CHK_restaurant_schedules_hours`); muéstrala con `errors={{ mon: '…' }}`.
+
+---
+
+## 5 oct 2026 · Mesas conectadas al backend real (Sebastián)
+
+- **La pantalla `/mesas` ya funciona contra el backend de Elizabeth:** listar, crear y cambiar estado. Editar, desactivar y reactivar llegan con el backend del PBI 7 (Sebastián).
+- **Para usarlo en local:**
+  1. Corre el backend con `DEV_USER_ENABLED=true` en su `.env`.
+  2. En tu `.env.local` del front pon `VITE_USE_MOCKS=false` y `VITE_API_URL=http://localhost:3000`.
+  3. Abre el front en el puerto **5173**: es el único que el backend acepta por CORS por defecto.
+- **Errores del backend:**
+  - formato: `{ statusCode, message, error, errorCode? }`;
+  - el front lee `errorCode` en `ApiError.code`;
+  - en mesas, cada ruta tiene una sola causa por código HTTP, así que el front distingue por el código HTTP (409 al crear = repetido; al cambiar estado = mesa inactiva). **El `message` del backend nunca se muestra**: la interfaz usa los textos del manual.
+- **Jacobo:** cuando el backend responde 403 con `errorCode: RESTAURANT_REQUIRED` (usuario sin restaurante), `@/lib/api-client` emite el evento `RESTAURANT_REQUIRED_EVENT` (`'dinno:restaurant-required'`) en `window`. Escúchalo junto con `SESSION_EXPIRED_EVENT` para mandar al usuario a `/onboarding`.
+- **Identificador de la mesa (decisión de Sebastián, aplicada en backend y web):**
+  - El campo se llama **"Identificador"**, como dice el manual en 12.4. Es corto ("04", "T1") y se muestra como **Mesa 04** (14.1).
+  - "4", "04" y "Mesa 4" son la misma mesa, con máximo 10 caracteres, en los dos lados.
+  - Las mesas del seed ("Mesa 1"…) se muestran como Mesa 01….
+  - El backend usa los mismos textos de error que la web.
+- `Table` en el front ya no tiene `updatedAt` (el backend no lo envía).
+
+---
+
 ## 5 oct 2026 · Editar, desactivar y reactivar mesas (Sebastián)
 
 - **Menú ⋯ de cada mesa** (tarjeta y barra de estado):

@@ -195,9 +195,11 @@ Interruptor con **la palabra siempre al lado**. Encendido verde (`ok`), apagado 
 
 Horario semanal: 7 filas (Lun–Dom) con switch Abierto/Cerrado y apertura – cierre. Muestra "Cerrado todo el día", "(día siguiente)" y el botón "Copiar a todos los días" (copia el lunes). Se adapta al ancho de su contenedor.
 
+**"Abierto 24 horas"** es la primera opción del selector de apertura: al elegirla, `isOpen24h` pasa a `true` y desaparece el cierre; al elegir una hora vuelve a `false`, con las horas anteriores. En el backend corresponde a `restaurant_schedules.is_open_24h`.
+
 ```ts
 type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
-type DayHours = { day: DayOfWeek; isOpen: boolean; opensAt: string; closesAt: string } // 'HH:mm'
+type DayHours = { day: DayOfWeek; isOpen: boolean; isOpen24h: boolean; opensAt: string; closesAt: string } // 'HH:mm'
 type WeeklyHours = DayHours[]
 ```
 

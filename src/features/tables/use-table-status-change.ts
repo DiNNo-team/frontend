@@ -49,7 +49,14 @@ export function useTableStatusChange({
             : { label: 'Deshacer', onClick: () => void change(updated, previousStatus, { isUndo: true }) },
         })
       } catch (caught) {
-        if (caught instanceof ApiError && caught.code === 'TABLE_INACTIVE') {
+        // 409 = the table is inactive (someone deactivated it); 404 = it no longer exists for this restaurant.
+        if (caught instanceof ApiError && caught.status === 404) {
+          onTableInactive(table.id)
+          void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
+          reportError({ tableId: table.id, message: `No pudimos cambiar el estado de ${name}. Revisa tu conexión e intenta de nuevo.` })
+          return
+        }
+        if (caught instanceof ApiError && caught.status === 409) {
           onTableInactive(table.id)
           void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
           reportError({ tableId: table.id, message: `${name} está inactiva. Reactívala para cambiar su estado.` })

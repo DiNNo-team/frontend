@@ -1,7 +1,7 @@
 import { ApiError } from '@/lib/api-client'
 import { normalizeTableIdentifier } from '@/lib/format'
 import type { TablesApi } from './api'
-import { TABLE_LIMITS, type Table, type TableErrorCode, type TableStatus } from './types'
+import { TABLE_LIMITS, type Table, type TableStatus } from './types'
 
 // In-memory stand-in for the tables backend while Elizabeth's endpoints land. Same contract, same rules.
 // Force errors from the URL: /mesas?mockError=list or ?mockError=create,status · start empty: /mesas?mockEmpty
@@ -21,14 +21,12 @@ const SEED: [identifier: string, capacity: number, status: TableStatus, isActive
 ]
 
 function seedTables(): Table[] {
-  const now = new Date().toISOString()
   return SEED.map(([identifier, capacity, status, isActive], index) => ({
     id: `mock-${index + 1}`,
     identifier,
     capacity,
     status,
     isActive,
-    updatedAt: now,
   }))
 }
 
@@ -70,33 +68,34 @@ async function simulate(operation: MockOperation) {
   }
 }
 
-function fail(status: number, code: TableErrorCode, fields?: Record<string, string>): never {
-  throw new ApiError({ status, code, fieldErrors: fields })
+// Same shape as the backend: status + Spanish message, no errorCode for tables errors.
+function fail(status: number, message: string): never {
+  throw new ApiError({ status, message })
 }
 
 function findTable(id: string): Table {
-  return tables.find((table) => table.id === id) ?? fail(404, 'TABLE_NOT_FOUND')
+  return tables.find((table) => table.id === id) ?? fail(404, 'No encontramos esta mesa. Actualiza la lista de mesas e intenta de nuevo.')
 }
 
 function validateIdentifier(identifier: string, ignoreId?: string): string {
   const trimmed = identifier.trim()
-  if (!trimmed) fail(400, 'VALIDATION_ERROR', { identifier: 'required' })
-  if (trimmed.length > TABLE_LIMITS.identifierMaxLength) fail(400, 'VALIDATION_ERROR', { identifier: 'maxLength' })
+  if (!trimmed) fail(400, 'Escribe un nombre para la mesa.')
+  if (trimmed.length > TABLE_LIMITS.identifierMaxLength) fail(400, 'El nombre de la mesa es muy largo.')
   const key = normalizeTableIdentifier(trimmed)
   if (tables.some((table) => table.id !== ignoreId && normalizeTableIdentifier(table.identifier) === key)) {
-    fail(409, 'TABLE_IDENTIFIER_TAKEN')
+    fail(409, 'Ya tienes una mesa con ese nombre. Usa uno diferente.')
   }
   return trimmed
 }
 
 function validateCapacity(capacity: number) {
   if (!Number.isInteger(capacity) || capacity < TABLE_LIMITS.minCapacity || capacity > TABLE_LIMITS.maxCapacity) {
-    fail(400, 'VALIDATION_ERROR', { capacity: 'range' })
+    fail(400, 'Escribe cuántas personas caben en la mesa, entre 1 y 20.')
   }
 }
 
 function save(table: Table, patch: Partial<Table>): Table {
-  Object.assign(table, patch, { updatedAt: new Date().toISOString() })
+  Object.assign(table, patch)
   return { ...table }
 }
 
@@ -115,7 +114,6 @@ export const mockTablesApi: TablesApi = {
       capacity,
       status: 'available',
       isActive: true,
-      updatedAt: new Date().toISOString(),
     }
     tables.push(table)
     return { ...table }
@@ -123,7 +121,9 @@ export const mockTablesApi: TablesApi = {
   async updateStatus(id, status) {
     await simulate('status')
     const table = findTable(id)
-    if (!table.isActive) fail(409, 'TABLE_INACTIVE')
+    if (!table.isActive) fail(409, 'Esta mesa está inactiva. Reactívala para cambiar su estado.')
+    // Like the backend: the same status is a valid no-op.
+    if (table.status === status) return { ...table }
     return save(table, { status })
   },
   async update(id, input) {
@@ -140,13 +140,13 @@ export const mockTablesApi: TablesApi = {
   async deactivate(id) {
     await simulate('deactivate')
     const table = findTable(id)
-    if (!table.isActive) fail(409, 'TABLE_ALREADY_INACTIVE')
+    if (!table.isActive) fail(409, 'Esta mesa ya está inactiva.')
     return save(table, { isActive: false })
   },
   async reactivate(id) {
     await simulate('reactivate')
     const table = findTable(id)
-    if (table.isActive) fail(409, 'TABLE_ALREADY_ACTIVE')
+    if (table.isActive) fail(409, 'Esta mesa ya está activa.')
     // Pending confirmation with Elizabeth: a reactivated table comes back as Disponible.
     return save(table, { isActive: true, status: 'available' })
   },
