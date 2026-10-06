@@ -47,13 +47,13 @@ const CATEGORIES = [
 ]
 
 const SAMPLE_HOURS: WeeklyHours = [
-  { day: 'mon', isOpen: true, opensAt: '12:00', closesAt: '22:00' },
-  { day: 'tue', isOpen: true, opensAt: '12:00', closesAt: '22:00' },
-  { day: 'wed', isOpen: true, opensAt: '12:00', closesAt: '22:00' },
-  { day: 'thu', isOpen: true, opensAt: '12:00', closesAt: '22:00' },
-  { day: 'fri', isOpen: true, opensAt: '12:00', closesAt: '01:00' },
-  { day: 'sat', isOpen: true, opensAt: '12:00', closesAt: '01:00' },
-  { day: 'sun', isOpen: false, opensAt: '12:00', closesAt: '22:00' },
+  { day: 'mon', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '22:00' },
+  { day: 'tue', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '22:00' },
+  { day: 'wed', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '22:00' },
+  { day: 'thu', isOpen: true, isOpen24h: true, opensAt: '12:00', closesAt: '22:00' },
+  { day: 'fri', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '01:00' },
+  { day: 'sat', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '01:00' },
+  { day: 'sun', isOpen: false, isOpen24h: false, opensAt: '12:00', closesAt: '22:00' },
 ]
 
 type TableStatusValue = 'available' | 'reserved' | 'occupied'
@@ -279,7 +279,7 @@ export function KitDay2Sections() {
         <SegmentedDemo />
       </KitSection>
 
-      <KitSection title="HoursEditor" note="Valor controlado: { day, isOpen, opensAt, closesAt }[] con horas HH:mm.">
+      <KitSection title="HoursEditor" note="Valor controlado: { day, isOpen, isOpen24h, opensAt, closesAt }[] con horas HH:mm. El jueves está en Abierto 24 horas (primera opción de la apertura).">
         <div className="max-w-140">
           <HoursEditor value={hours} onChange={setHours} errors={{ sat: 'La hora de cierre no puede ser igual a la de apertura' }} />
         </div>

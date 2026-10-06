@@ -6,13 +6,13 @@ import { HoursEditor } from './HoursEditor'
 import { closesNextDay, copyMondayToAll, type WeeklyHours } from './hours'
 
 const HOURS: WeeklyHours = [
-  { day: 'mon', isOpen: true, opensAt: '12:00', closesAt: '22:00' },
-  { day: 'tue', isOpen: true, opensAt: '09:00', closesAt: '17:00' },
-  { day: 'wed', isOpen: true, opensAt: '09:00', closesAt: '17:00' },
-  { day: 'thu', isOpen: true, opensAt: '09:00', closesAt: '17:00' },
-  { day: 'fri', isOpen: true, opensAt: '12:00', closesAt: '01:00' },
-  { day: 'sat', isOpen: true, opensAt: '09:00', closesAt: '17:00' },
-  { day: 'sun', isOpen: false, opensAt: '12:00', closesAt: '22:00' },
+  { day: 'mon', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '22:00' },
+  { day: 'tue', isOpen: true, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
+  { day: 'wed', isOpen: true, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
+  { day: 'thu', isOpen: true, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
+  { day: 'fri', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '01:00' },
+  { day: 'sat', isOpen: true, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
+  { day: 'sun', isOpen: false, isOpen24h: false, opensAt: '12:00', closesAt: '22:00' },
 ]
 
 function Harness({ errors }: { errors?: Partial<Record<'mon' | 'sat', string>> }) {
@@ -57,9 +57,37 @@ describe('HoursEditor', () => {
     expect(opening).toHaveAccessibleDescription('Revisa el horario del sábado')
   })
 
+  it('"Abierto 24 horas" is the first opening option: it hides the closing hour and can be undone', async () => {
+    const { user } = renderWithProviders(<Harness />)
+    const monday = screen.getAllByRole('listitem')[0]
+    await user.click(within(monday).getByRole('combobox', { name: 'Apertura del lunes' }))
+    const options = screen.getAllByRole('option')
+    expect(options[0]).toHaveTextContent('Abierto 24 horas')
+    await user.click(options[0])
+
+    expect(within(monday).getByRole('combobox', { name: 'Apertura del lunes' })).toHaveTextContent('Abierto 24 horas')
+    expect(within(monday).queryByRole('combobox', { name: 'Cierre del lunes' })).not.toBeInTheDocument()
+
+    await user.click(within(monday).getByRole('combobox', { name: 'Apertura del lunes' }))
+    await user.click(screen.getByRole('option', { name: '1:00 p. m.' }))
+    expect(within(monday).getByRole('combobox', { name: 'Cierre del lunes' })).toHaveTextContent('10:00 p. m.')
+  })
+
+  it('a 24 h day never shows "(día siguiente)" and is copied to every day', async () => {
+    const { user } = renderWithProviders(<Harness />)
+    const monday = screen.getAllByRole('listitem')[0]
+    await user.click(within(monday).getByRole('combobox', { name: 'Apertura del lunes' }))
+    await user.click(screen.getByRole('option', { name: 'Abierto 24 horas' }))
+    await user.click(screen.getByRole('button', { name: 'Copiar a todos los días' }))
+
+    expect(screen.queryByText('(día siguiente)')).not.toBeInTheDocument()
+    expect(screen.queryAllByRole('combobox', { name: /^Cierre del/ })).toHaveLength(0)
+    expect(screen.getAllByText('Abierto 24 horas')).toHaveLength(7)
+  })
+
   it('helpers', () => {
-    expect(closesNextDay({ day: 'fri', isOpen: true, opensAt: '12:00', closesAt: '01:00' })).toBe(true)
-    expect(closesNextDay({ day: 'fri', isOpen: false, opensAt: '12:00', closesAt: '01:00' })).toBe(false)
+    expect(closesNextDay({ day: 'fri', isOpen: true, isOpen24h: false, opensAt: '12:00', closesAt: '01:00' })).toBe(true)
+    expect(closesNextDay({ day: 'fri', isOpen: false, isOpen24h: false, opensAt: '12:00', closesAt: '01:00' })).toBe(false)
     expect(copyMondayToAll(HOURS).every((d) => d.opensAt === '12:00' && d.isOpen)).toBe(true)
     expect(copyMondayToAll(HOURS).map((d) => d.day)).toEqual(HOURS.map((d) => d.day))
   })

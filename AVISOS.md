@@ -5,6 +5,23 @@
 
 ---
 
+## 6 oct 2026 · Horario "Abierto 24 horas" en el HoursEditor (Sebastián)
+
+- **Santiago y Jacobo:** el `HoursEditor` ya soporta el `is_open_24h` del esquema de Santiago.
+  - **Uso:** "Abierto 24 horas" es la **primera opción del selector de apertura** de cada día. Al elegirla desaparece el selector de cierre y no se muestra "(día siguiente)". Al elegir una hora, el día vuelve a tener apertura y cierre, con las horas anteriores. "Copiar a todos los días" también copia el 24 horas.
+  - **Tipo:** `DayHours` tiene un campo nuevo y **obligatorio**:
+    ```ts
+    type DayHours = { day: DayOfWeek; isOpen: boolean; isOpen24h: boolean; opensAt: string; closesAt: string } // 'HH:mm'
+    ```
+  - **Correspondencia con `restaurant_schedules`** (una fila por día abierto):
+    - `isOpen: false` → sin fila;
+    - `isOpen24h: true` → `is_open_24h = true`, sin horas;
+    - si no → `opens_at` y `closes_at`;
+    - `day`: `mon`…`sun` = `day_of_week` 1…7.
+  - **Validación:** no aceptes apertura igual a cierre en un día que no es de 24 horas. El backend la rechaza (`CHK_restaurant_schedules_hours`); muéstrala con `errors={{ mon: '…' }}`.
+
+---
+
 ## 5 oct 2026 · Editar, desactivar y reactivar mesas (Sebastián)
 
 - **Menú ⋯ de cada mesa** (tarjeta y barra de estado):
