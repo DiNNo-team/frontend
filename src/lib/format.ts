@@ -52,9 +52,13 @@ export function tableIdentifierCore(identifier: string): string {
   return trimmed.replace(TABLE_WORD, '').trim() || trimmed
 }
 
-/** `'4'`, `'04'`, `'Mesa 4'` → `'Mesa 04'` · `'123'` → `'Mesa 123'` · `'T1'` → `'Mesa T1'` */
+/**
+ * `'4'`, `'04'`, `'Mesa 4'` → `'Mesa 04'` · `'123'` → `'Mesa 123'` · `'T1'` → `'Mesa T1'` · `'Mesa'` → `'Mesa'`.
+ * Same rule as the backend (`tables/table-identifier.ts`).
+ */
 export function formatTableName(identifier: string): string {
   const core = tableIdentifierCore(identifier)
+  if (core.toLowerCase() === 'mesa') return 'Mesa'
   if (NUMERIC.test(core)) return `Mesa ${String(Number(core)).padStart(2, '0')}`
   return `Mesa ${core}`
 }
