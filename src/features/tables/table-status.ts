@@ -1,4 +1,5 @@
 import { STATUS_META } from '@/components/ui'
+import { tableIdentifierCore } from '@/lib/format'
 import type { Table, TableStatus } from './types'
 
 // Single source of table statuses in the front. The activity log (Sergio) maps its codes with `toTableDisplayStatus`.
@@ -40,7 +41,9 @@ export function countTables(tables: Table[]): TableCounts {
   return counts
 }
 
-/** Natural order by identifier ("2" before "10"); inactive tables keep their place. */
+/** Natural order by identifier ("2" before "10", "Mesa 4" next to "04"); inactive tables keep their place. */
 export function sortTables(tables: Table[]): Table[] {
-  return [...tables].sort((a, b) => a.identifier.localeCompare(b.identifier, 'es', { numeric: true, sensitivity: 'base' }))
+  return [...tables].sort((a, b) =>
+    tableIdentifierCore(a.identifier).localeCompare(tableIdentifierCore(b.identifier), 'es', { numeric: true, sensitivity: 'base' }),
+  )
 }

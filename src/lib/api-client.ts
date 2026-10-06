@@ -29,8 +29,16 @@ export function setAuthTokenProvider(provider: TokenProvider | null) {
 /** Fired on `window` when the backend answers 401, so the auth feature can send the user to /login. */
 export const SESSION_EXPIRED_EVENT = 'dinno:session-expired'
 
+/** `errorCode` of the 403 for a session user without a restaurant yet. */
+export const RESTAURANT_REQUIRED_CODE = 'RESTAURANT_REQUIRED'
+
+/** Fired on `window` on that 403, so the auth feature can send the user to /onboarding. */
+export const RESTAURANT_REQUIRED_EVENT = 'dinno:restaurant-required'
+
 interface ErrorBody {
   statusCode?: number
+  /** The backend's reason, only when one status has several causes (e.g. RESTAURANT_REQUIRED). */
+  errorCode?: string
   code?: string
   error?: string
   message?: string | string[]
@@ -45,7 +53,7 @@ async function toApiError(response: Response): Promise<ApiError> {
     // Non-JSON error page (proxy, HTML 502…): the status is enough.
   }
   const message = Array.isArray(body.message) ? body.message.join('; ') : body.message
-  return new ApiError({ status: response.status, code: body.code, fieldErrors: body.fields, message })
+  return new ApiError({ status: response.status, code: body.errorCode ?? body.code, fieldErrors: body.fields, message })
 }
 
 export interface ApiRequestOptions {
@@ -75,7 +83,11 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, signal
   }
 
   if (response.status === 401) window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT))
-  if (!response.ok) throw await toApiError(response)
+  if (!response.ok) {
+    const error = await toApiError(response)
+    if (error.code === RESTAURANT_REQUIRED_CODE) window.dispatchEvent(new CustomEvent(RESTAURANT_REQUIRED_EVENT))
+    throw error
+  }
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }

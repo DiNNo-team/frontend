@@ -11,8 +11,6 @@ export interface Table {
   capacity: number
   status: TableStatus
   isActive: boolean
-  /** ISO 8601. */
-  updatedAt: string
 }
 
 export interface CreateTableInput {
@@ -22,14 +20,10 @@ export interface CreateTableInput {
 
 export type UpdateTableInput = Partial<CreateTableInput>
 
-/** Error codes the backend sends in `{ statusCode, code, message, fields? }`. */
-export type TableErrorCode =
-  | 'TABLE_IDENTIFIER_TAKEN'
-  | 'TABLE_INACTIVE'
-  | 'TABLE_ALREADY_INACTIVE'
-  | 'TABLE_ALREADY_ACTIVE'
-  | 'TABLE_NOT_FOUND'
-  | 'VALIDATION_ERROR'
+// Errors: `{ statusCode, message, error, errorCode? }` (NestJS default). Each tables route has a single
+// reason per status, so the front branches on the HTTP status: 409 on create/edit = repeated identifier,
+// on status change = inactive table, on deactivate/reactivate = already in that state; 404 = not found
+// (or another restaurant's table). `message` is never shown: the UI uses the manual's texts.
 
 /** Limits shared by the form and the mock. The column allows 50 characters; the UI keeps 10 (pending confirmation with Elizabeth). */
 export const TABLE_LIMITS = {

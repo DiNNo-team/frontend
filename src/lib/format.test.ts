@@ -62,6 +62,10 @@ describe('formatTableName', () => {
     ['123', 'Mesa 123'],
     ['T1', 'Mesa T1'],
     [' 7 ', 'Mesa 07'],
+    ['Mesa 4', 'Mesa 04'],
+    ['mesa 12', 'Mesa 12'],
+    ['Mesa T1', 'Mesa T1'],
+    ['Mesa', 'Mesa Mesa'],
   ])('%s → %s', (input, expected) => {
     expect(formatTableName(input)).toBe(expected)
   })
@@ -71,6 +75,11 @@ describe('normalizeTableIdentifier', () => {
   it('makes numeric identifiers collide regardless of leading zeros', () => {
     expect(normalizeTableIdentifier('4')).toBe(normalizeTableIdentifier('004'))
     expect(normalizeTableIdentifier('04')).toBe('4')
+  })
+
+  it('treats the backend full name ("Mesa 4") as the same table as "4" or "04"', () => {
+    expect(normalizeTableIdentifier('Mesa 4')).toBe(normalizeTableIdentifier('04'))
+    expect(normalizeTableIdentifier('mesa T1')).toBe(normalizeTableIdentifier('t1'))
   })
 
   it('trims and lowercases text identifiers', () => {

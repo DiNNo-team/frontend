@@ -35,7 +35,8 @@ export function useTableActivation({ reportError, clearErrorFor, onDeactivated }
         clearErrorFor(table.id)
         toast.show({ type: 'success', message: `${name} reactivada` })
       } catch (caught) {
-        if (caught instanceof ApiError && caught.code === 'TABLE_ALREADY_ACTIVE') {
+        // 409 = already active (someone else reactivated it); 404 = gone: in both cases show the current list.
+        if (caught instanceof ApiError && (caught.status === 409 || caught.status === 404)) {
           void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
           return
         }
@@ -65,7 +66,7 @@ export function useTableActivation({ reportError, clearErrorFor, onDeactivated }
           action: { label: 'Deshacer', onClick: () => void reactivate(updated) },
         })
       } catch (caught) {
-        if (caught instanceof ApiError && caught.code === 'TABLE_ALREADY_INACTIVE') {
+        if (caught instanceof ApiError && (caught.status === 409 || caught.status === 404)) {
           // Someone else already deactivated it: just show the current list.
           void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
           onDeactivated({ ...table, isActive: false })

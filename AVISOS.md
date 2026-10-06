@@ -22,6 +22,27 @@
 
 ---
 
+## 5 oct 2026 · Mesas conectadas al backend real (Sebastián)
+
+- **La pantalla `/mesas` ya funciona contra el backend de Elizabeth:** listar, crear y cambiar estado. Editar, desactivar y reactivar llegan con el backend del PBI 7 (Sebastián).
+- **Para usarlo en local:**
+  1. Corre el backend con `DEV_USER_ENABLED=true` en su `.env`.
+  2. En tu `.env.local` del front pon `VITE_USE_MOCKS=false` y `VITE_API_URL=http://localhost:3000`.
+  3. Abre el front en el puerto **5173**: es el único que el backend acepta por CORS por defecto.
+- **Errores del backend:**
+  - formato: `{ statusCode, message, error, errorCode? }`;
+  - el front lee `errorCode` en `ApiError.code`;
+  - en mesas, cada ruta tiene una sola causa por código HTTP, así que el front distingue por el código HTTP (409 al crear = repetido; al cambiar estado = mesa inactiva). **El `message` del backend nunca se muestra**: la interfaz usa los textos del manual.
+- **Jacobo:** cuando el backend responde 403 con `errorCode: RESTAURANT_REQUIRED` (usuario sin restaurante), `@/lib/api-client` emite el evento `RESTAURANT_REQUIRED_EVENT` (`'dinno:restaurant-required'`) en `window`. Escúchalo junto con `SESSION_EXPIRED_EVENT` para mandar al usuario a `/onboarding`.
+- **Identificador de la mesa (decisión de Sebastián, aplicada en backend y web):**
+  - El campo se llama **"Identificador"**, como dice el manual en 12.4. Es corto ("04", "T1") y se muestra como **Mesa 04** (14.1).
+  - "4", "04" y "Mesa 4" son la misma mesa, con máximo 10 caracteres, en los dos lados.
+  - Las mesas del seed ("Mesa 1"…) se muestran como Mesa 01….
+  - El backend usa los mismos textos de error que la web.
+- `Table` en el front ya no tiene `updatedAt` (el backend no lo envía).
+
+---
+
 ## 5 oct 2026 · Editar, desactivar y reactivar mesas (Sebastián)
 
 - **Menú ⋯ de cada mesa** (tarjeta y barra de estado):
