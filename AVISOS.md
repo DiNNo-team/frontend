@@ -5,6 +5,18 @@
 
 ---
 
+## 7 oct 2026 · Sesión con Firebase y nombre "Mesa" (Sebastián)
+
+- **Jacobo, sobre tu PR de login con Firebase (backend #18):** acepto tu propuesta del `errorCode` **`EMAIL_NOT_VERIFIED`**.
+  - **Backend:** el `401` del correo sin verificar va con `new UnauthorizedException('Verifica tu correo para continuar.', { errorCode: 'EMAIL_NOT_VERIFIED' })`; agrégalo al `enum` de `errorCode` en `ErrorResponseDto`. Los demás `401` (sin token, token inválido o vencido) siguen sin `errorCode`, con "Tu sesión terminó. Inicia sesión de nuevo.".
+  - **Web, ya listo en `@/lib/api-client`:**
+    - ese `401` emite `EMAIL_NOT_VERIFIED_EVENT` (`'dinno:email-not-verified'`) en vez de `SESSION_EXPIRED_EVENT`, y `getApiErrorMessage()` devuelve "Verifica tu correo para continuar.";
+    - los demás `401` siguen emitiendo `SESSION_EXPIRED_EVENT`;
+    - el token se conecta con `setAuthTokenProvider(() => auth.currentUser?.getIdToken() ?? null)`.
+- **"Mesa" sola:** si el identificador es solo "Mesa", ahora se muestra "Mesa" (no "Mesa Mesa"), igual que en el backend.
+
+---
+
 ## 6 oct 2026 · Horario "Abierto 24 horas" en el HoursEditor (Sebastián)
 
 - **Santiago y Jacobo:** el `HoursEditor` ya soporta el `is_open_24h` del esquema de Santiago.

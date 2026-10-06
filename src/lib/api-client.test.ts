@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiRequest, getApiErrorMessage, RESTAURANT_REQUIRED_EVENT, SESSION_EXPIRED_EVENT, setAuthTokenProvider } from './api-client'
+import {
+  ApiError,
+  apiRequest,
+  EMAIL_NOT_VERIFIED_EVENT,
+  getApiErrorMessage,
+  RESTAURANT_REQUIRED_EVENT,
+  SESSION_EXPIRED_EVENT,
+  setAuthTokenProvider,
+} from './api-client'
 
 function mockFetch(response: Partial<Response> & { jsonBody?: unknown }) {
   const fn = vi.fn().mockResolvedValue({
@@ -50,6 +58,24 @@ describe('apiRequest', () => {
     await expect(apiRequest('/tables')).rejects.toMatchObject({ status: 403, code: 'RESTAURANT_REQUIRED' })
     window.removeEventListener(RESTAURANT_REQUIRED_EVENT, listener)
     expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('a 401 for an unverified email announces EMAIL_NOT_VERIFIED, not an expired session', async () => {
+    mockFetch({
+      ok: false,
+      status: 401,
+      jsonBody: { statusCode: 401, message: 'Verifica tu correo.', error: 'Unauthorized', errorCode: 'EMAIL_NOT_VERIFIED' },
+    })
+    const expired = vi.fn()
+    const unverified = vi.fn()
+    window.addEventListener(SESSION_EXPIRED_EVENT, expired)
+    window.addEventListener(EMAIL_NOT_VERIFIED_EVENT, unverified)
+    const error = await apiRequest('/tables').catch((caught: unknown) => caught)
+    window.removeEventListener(SESSION_EXPIRED_EVENT, expired)
+    window.removeEventListener(EMAIL_NOT_VERIFIED_EVENT, unverified)
+    expect(unverified).toHaveBeenCalledTimes(1)
+    expect(expired).not.toHaveBeenCalled()
+    expect(getApiErrorMessage(error)).toBe('Verifica tu correo para continuar.')
   })
 
   it('turns fetch failures into network errors', async () => {
