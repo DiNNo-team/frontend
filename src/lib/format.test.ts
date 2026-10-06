@@ -65,7 +65,8 @@ describe('formatTableName', () => {
     ['Mesa 4', 'Mesa 04'],
     ['mesa 12', 'Mesa 12'],
     ['Mesa T1', 'Mesa T1'],
-    ['Mesa', 'Mesa Mesa'],
+    ['Mesa', 'Mesa'],
+    [' MESA ', 'Mesa'],
   ])('%s → %s', (input, expected) => {
     expect(formatTableName(input)).toBe(expected)
   })
