@@ -205,6 +205,13 @@ src/
 - Si aparece un error de CORS, la solución está en `CORS_ORIGINS` del backend (Render), no en este repo.
 - Mientras un endpoint no exista, trabaja con datos de ejemplo con la misma forma que el contrato acordado, y reemplázalos al integrar (no dejes datos de ejemplo en el PR final).
 
+### Estado del restaurante: Abierto / Cerrado (Sergio, PBI 8)
+- Vive en `src/features/restaurant-status/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). Contrato: `GET /restaurants/me/status` → `{ isOpen }` y `PATCH /restaurants/me/status` con `{ isOpen }`.
+- Se conecta en `src/app/layouts.tsx`: `statusSlot={<RestaurantStatusControl />}` (switch del topbar + diálogo de confirmación) y `banner={<RestaurantStatusBanner />}` (aviso de cerrado con "Abrir ahora" y errores de carga o guardado). Los dos se coordinan por la caché de React Query, sin contexto.
+- Para leer el estado en otra pantalla, usa `useRestaurantStatusQuery()` (query key `restaurantStatusQueryKey`). No llames al endpoint por tu cuenta.
+- Para contar las mesas reservadas antes de cerrar, usa `useTablesQuery` y `countTables` de `features/tables`, sin modificarlos.
+- Mock (con `VITE_USE_MOCKS=true`, en cualquier pantalla del dashboard): `?mockClosed` (empieza cerrado), `?mockError=restaurant-status-load` o `restaurant-status-save`, y `?mockLatency=`, que es compartido con mesas. Con `?mockEmpty` no hay mesas, así que el restaurante cierra sin pedir confirmación.
+
 ### Despliegue
 - **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
 - `VITE_API_URL` se configura en Vercel (Production y Preview) y se incrusta al compilar: si cambia, hay que volver a desplegar.

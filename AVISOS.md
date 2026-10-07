@@ -5,6 +5,45 @@
 
 ---
 
+## 7 oct 2026 · Sergio · PBI 8 · Switch Abierto/Cerrado e integración del cambio de estado
+
+**Qué quedó listo**
+- En el topbar está el switch **"Estado del restaurante"**, con la palabra Abierto / Cerrado siempre visible. Debajo de 640 px el nombre "Estado del restaurante" queda solo para lectores de pantalla.
+- Cuando el restaurante está cerrado, arriba del contenido aparece el aviso *"Tu restaurante está cerrado. Los comensales no lo ven en DiNNo."* con **"Abrir ahora"**.
+- **Cerrar sin mesas reservadas:** cierra de una vez y muestra el toast con "Deshacer".
+- **Cerrar con mesas reservadas:** pide confirmación ("¿Cerrar el restaurante?"). Si no se pudieron contar las mesas, también la pide.
+- **Abrir:** abre de una vez, con el toast *"Restaurante abierto. Los comensales ya lo ven"*.
+- **Si falla:** el estado vuelve atrás y arriba aparece un `Alert` de error con "Intentar de nuevo".
+- Mientras guarda, no se puede volver a pulsar.
+- Mientras el backend no esté desplegado, funciona con `VITE_USE_MOCKS=true`. Parámetros: `?mockClosed`, `?mockError=restaurant-status-load` o `restaurant-status-save`, y `?mockEmpty` para no tener reservadas.
+- Lo que se reutiliza está en `CLAUDE.md` (sección 10, "Estado del restaurante").
+
+**Para quién**
+- **Sebastián:**
+  - Falta la **variante de estado del `Switch`** (punto con pulso para Abierto y raya para Cerrado, manual 3.3). Hoy uso el `Switch` tal cual, con un `TODO(Sergio)` en `RestaurantStatusControl.tsx`. El PR depende de ese ajuste.
+  - Revisa también el label con `sr-only sm:not-sr-only`, que es para que quepa a 390 px.
+  - Leo `useTablesQuery` y `countTables` de `features/tables` sin modificarlos. Si los renombras, avísame.
+- **Jacobo, tres riesgos con la sesión real:**
+  1. **Layout antes del token:** el `DashboardLayout` debe mostrarse solo cuando el token de Firebase esté listo. Si no, `GET /restaurants/me/status` (y `/tables`) responden 401, se emite `SESSION_EXPIRED_EVENT` y el usuario puede terminar mandado al login en bucle.
+  2. **Limpiar la caché al cerrar sesión:** llama a `queryClient.clear()` al cerrar sesión. Si no, el siguiente usuario ve por un momento el estado y las mesas del anterior.
+  3. **`RESTAURANT_REQUIRED` repetido:** sin restaurante, el estado y las mesas emiten `RESTAURANT_REQUIRED_EVENT` casi al mismo tiempo. Tu redirección a `/onboarding` debe soportar recibirlo varias veces.
+  - En `layouts.tsx` solo cambié `statusSlot`, `banner` y dos imports. Tus `TODO(Jacobo)` siguen igual.
+- **Todos:** para leer el estado en otra pantalla, usa `useRestaurantStatusQuery()`. No llames al endpoint por tu cuenta.
+
+**Rama / PR**
+- `feat/sprint1-estado-restaurante-web` → `develop`.
+- Depende del backend `feat/sprint1-estado-restaurante-backend`, que no se ha mergeado, y del ajuste del `Switch` en el kit.
+
+**Pendiente**
+- **8.4 · Probar persistencia:** se prueba cuando el backend esté desplegado.
+- **Sprint 2, posible extracción:** el cambio optimista + "Deshacer" + vuelta atrás existe en mesas (`use-table-status-change.ts`) y en el estado del restaurante. Por ahora no se comparte código, solo el patrón (`useToast` con `action` y `getApiErrorMessage`). Si aparece un tercer caso, se puede extraer un hook común en `src/lib/`, con Sebastián.
+- **Documentación desactualizada** (la reporto, no la corrijo):
+  - `CLAUDE.md` dice que toda llamada pasa por `src/lib/api.ts`, pero en la práctica es `apiRequest` de `src/lib/api-client.ts`;
+  - la sección 8 de `CLAUDE.md` sigue diciendo que Firebase está "pendiente de confirmar";
+  - `AGENTS.md` dice que no hay router ni convención de carpetas.
+
+---
+
 ## 7 oct 2026 · Sesión con Firebase y nombre "Mesa" (Sebastián)
 
 - **Jacobo, sobre tu PR de login con Firebase (backend #18):** acepto tu propuesta del `errorCode` **`EMAIL_NOT_VERIFIED`**.

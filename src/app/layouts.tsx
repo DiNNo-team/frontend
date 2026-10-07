@@ -1,5 +1,7 @@
 import { Outlet, useNavigate } from 'react-router'
 import { AppShell, OnboardingShell } from '@/components/layout'
+import { RestaurantStatusBanner } from '@/features/restaurant-status/components/RestaurantStatusBanner'
+import { RestaurantStatusControl } from '@/features/restaurant-status/components/RestaurantStatusControl'
 
 // TODO(Jacobo): conectar con la sesión. Datos de ejemplo hasta que exista el login; cámbialos solo aquí.
 const SAMPLE_SESSION = {
@@ -15,10 +17,8 @@ export function DashboardLayout() {
       userEmail={SAMPLE_SESSION.userEmail}
       // TODO(Jacobo): cerrar la sesión de Firebase antes de ir al login.
       onSignOut={() => navigate('/login')}
-      // TODO(Sergio): "Estado del restaurante" + Switch Abierto/Cerrado.
-      statusSlot={undefined}
-      // TODO(Sergio): Alert info cuando el restaurante está cerrado.
-      banner={undefined}
+      statusSlot={<RestaurantStatusControl />}
+      banner={<RestaurantStatusBanner />}
     >
       <Outlet />
     </AppShell>
