@@ -114,7 +114,7 @@ Estos cambios rompen el trabajo de otras personas si no se comunican. Cuando los
 ---
 
 ## 8. Decisiones del equipo (no se cambian sin acordarlo)
-- **Autenticación:** se propone Firebase Authentication, **pendiente de confirmar** (lo define Jacobo). No instales ni configures un proveedor de autenticación hasta que el equipo lo confirme. El restaurante y el usuario actual se obtienen siempre de la sesión, nunca de lo que envía el cliente.
+- **Autenticación:** Firebase Authentication está confirmado por Jacobo para Sprint 1. El restaurante y el usuario actual se obtienen siempre de la sesión, nunca de lo que envía el cliente.
 - **Estados de mesa:** Disponible, Reservada y Ocupada. *Inactiva* es una mesa desactivada, no un estado del control. “Pocas mesas” es disponibilidad del restaurante para el comensal, no un estado de mesa.
 - **Estado del restaurante:** Abierto o Cerrado.
 - **Diseño:** el manual de identidad v1.1 manda sobre cualquier otra preferencia. Un solo kit de componentes; nadie crea estilos propios.
@@ -140,7 +140,7 @@ Una tarea está lista solo si:
 ## 10. Este repositorio: frontend (dashboard web del restaurante)
 
 ### Versiones (revisa antes de usar una API)
-React **19**, Vite **8**, Tailwind CSS **v4**, TypeScript **6**, Node **24**. Además: `lucide-react` (íconos), `@fontsource/plus-jakarta-sans`, `radix-ui` **sin estilos** (comportamiento accesible de diálogos, menús, select, switch, tooltip), `clsx` + `tailwind-merge` (vía `cn`), TanStack Query v5, React Router y Vitest + Testing Library. Alias `@/` → `src/`. Consulta https://react.dev, https://vite.dev y https://tailwindcss.com/docs para la versión instalada.
+React **19**, Vite **8**, Tailwind CSS **v4**, TypeScript **6**, Node **24**. Además: Firebase **13** (Authentication modular), `lucide-react` (íconos), `@fontsource/plus-jakarta-sans`, `radix-ui` **sin estilos** (comportamiento accesible de diálogos, menús, select, switch, tooltip), `clsx` + `tailwind-merge` (vía `cn`), TanStack Query v5, React Router y Vitest + Testing Library. Alias `@/` → `src/`. Consulta https://react.dev, https://vite.dev y https://tailwindcss.com/docs para la versión instalada.
 **Tailwind v4 no usa `tailwind.config.js` ni las directivas `@tailwind`:** se configura con el plugin `@tailwindcss/vite` y CSS (`@import "tailwindcss";`, `@theme`). No crees un archivo de configuración de Tailwind.
 
 ### Comandos
