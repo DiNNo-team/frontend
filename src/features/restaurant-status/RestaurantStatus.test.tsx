@@ -60,6 +60,28 @@ describe('RestaurantStatus', () => {
     expect(screen.getByRole('button', { name: 'Abrir ahora' })).toBeInTheDocument()
   })
 
+  it('shows the status shape next to the word: pulsing dot when open, dash when closed', async () => {
+    const shapeOf = (control: HTMLElement) => control.querySelector('[aria-hidden="true"]')
+    const { unmount } = renderStatus()
+    const open = await findSwitch()
+    expect(shapeOf(open)).toHaveClass('text-ok')
+    expect(open.querySelector('.animate-live-pulse')).not.toBeNull()
+    unmount()
+
+    mockRestaurantStatusControl.reset(false)
+    renderStatus()
+    const closed = await findSwitch()
+    expect(shapeOf(closed)).toHaveClass('text-inactive')
+    expect(closed.querySelector('.animate-live-pulse')).toBeNull()
+  })
+
+  it('keeps "Estado del restaurante" for screen readers when it is visually hidden on small screens', async () => {
+    renderStatus()
+    const control = await findSwitch()
+    expect(control).toHaveAccessibleName('Estado del restaurante Abierto')
+    expect(screen.getByText('Estado del restaurante')).toHaveClass('sr-only', 'sm:not-sr-only')
+  })
+
   it('closes at once without reserved tables, toasts with "Deshacer", and "Deshacer" opens again', async () => {
     keepReserved()
     const { user } = renderStatus()

@@ -103,11 +103,27 @@ function FieldsDemo() {
 
 function SwitchDemo() {
   const [open, setOpen] = useState(true)
+  const [restaurantOpen, setRestaurantOpen] = useState(true)
   return (
-    <div className="flex flex-wrap items-center gap-6">
-      <Switch label="Estado del restaurante" checked={open} onCheckedChange={setOpen} onLabel="Abierto" offLabel="Cerrado" />
-      <Switch aria-label="Domingo" onLabel="Abierto" offLabel="Cerrado" />
-      <Switch aria-label="Lunes" defaultChecked disabled onLabel="Abierto" offLabel="Cerrado" />
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-6">
+        <Switch label="Estado del restaurante" checked={open} onCheckedChange={setOpen} onLabel="Abierto" offLabel="Cerrado" />
+        <Switch aria-label="Domingo" onLabel="Abierto" offLabel="Cerrado" />
+        <Switch aria-label="Lunes" defaultChecked disabled onLabel="Abierto" offLabel="Cerrado" />
+      </div>
+      {/* Status variant (topbar): onStatus / offStatus add the shape of STATUS_META before the word. */}
+      <div className="flex flex-wrap items-center gap-6">
+        <Switch
+          label="Topbar · con forma de estado"
+          checked={restaurantOpen}
+          onCheckedChange={setRestaurantOpen}
+          onLabel="Abierto"
+          offLabel="Cerrado"
+          onStatus="open"
+          offStatus="closed"
+        />
+        <Switch aria-label="Restaurante cerrado, deshabilitado" disabled onLabel="Abierto" offLabel="Cerrado" onStatus="open" offStatus="closed" />
+      </div>
     </div>
   )
 }
