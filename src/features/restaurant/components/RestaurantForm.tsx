@@ -1,9 +1,10 @@
-import { useId, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { Alert, Button, Card, HoursEditor, Select, TextField, type WeeklyHours } from '@/components/ui'
 import {
   countRestaurantFormErrors,
   describeRestaurantSaveError,
+  hasRestaurantFormChanges,
   isRestaurantCategory,
   RESTAURANT_FORM_MESSAGES,
   validateAddress,
@@ -20,6 +21,7 @@ import { RESTAURANT_CATEGORIES, RESTAURANT_CATEGORY_LABELS } from '../types'
 const CATEGORY_OPTIONS = RESTAURANT_CATEGORIES.map((value) => ({ value, label: RESTAURANT_CATEGORY_LABELS[value] }))
 
 export interface RestaurantFormProps {
+  /** Read once, when the form mounts: `emptyRestaurantFormValues()` or `toRestaurantFormValues(profile)`. */
   initialValues: RestaurantFormValues
   /** Primary button: "Guardar y continuar" (registration) or "Guardar cambios" (edition). */
   submitLabel: string
@@ -28,22 +30,43 @@ export interface RestaurantFormProps {
   onSubmit: (values: ValidRestaurantFormValues) => Promise<void>
   /** Shows "Cancelar" before the primary button. */
   onCancel?: () => void
+  /** Called when the form starts or stops having unsaved changes ("¿Salir sin guardar?"). */
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 /**
  * Restaurant form (manual 10 and 12.4): Tu restaurante (Nombre, Categoría), Ubicación (Dirección)
- * and Horarios (HoursEditor), one card per group. Validates on blur and on submit.
+ * and Horarios (HoursEditor), one card per group. Validates on blur and on submit with the rules
+ * of restaurant-form.ts. Shared by the registration (/onboarding) and the edition (/restaurante):
+ *
+ * ```tsx
+ * <RestaurantForm
+ *   key={restaurant.id}
+ *   initialValues={toRestaurantFormValues(restaurant)}
+ *   submitLabel="Guardar cambios"
+ *   saving={saving}
+ *   onSubmit={save}
+ *   onCancel={() => setEditing(false)}
+ *   onDirtyChange={setDirty}
+ * />
+ * ```
  */
-export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, onCancel }: RestaurantFormProps) {
+export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, onCancel, onDirtyChange }: RestaurantFormProps) {
   const formId = useId()
   const nameId = `${formId}-name`
   const categoryId = `${formId}-category`
   const addressId = `${formId}-address`
   const hoursRef = useRef<HTMLDivElement>(null)
+  const [initial] = useState(initialValues)
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState<RestaurantFormErrors>({})
   const [formError, setFormError] = useState<string>()
   const errorCount = countRestaurantFormErrors(errors)
+  const dirty = hasRestaurantFormChanges(initial, values)
+
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
 
   /** Shows the errors right away (so the failing fields are marked) and focuses the first one (manual 10). */
   function showErrors(next: RestaurantFormErrors, nextFormError?: string) {

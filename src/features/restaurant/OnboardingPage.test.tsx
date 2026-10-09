@@ -112,7 +112,7 @@ describe('OnboardingPage · registro del restaurante', () => {
   it('saves: sends exactly the contract, shows "Guardando…", toasts and goes to the tables', async () => {
     let finish: (profile: RestaurantProfile) => void = () => undefined
     register.mockReturnValue(new Promise((resolve) => (finish = resolve)))
-    const { user, router } = renderOnboarding()
+    const { user, router, queryClient } = renderOnboarding()
     await fillValidForm(user)
     await user.click(submitButton())
 
@@ -130,6 +130,8 @@ describe('OnboardingPage · registro del restaurante', () => {
     expect(await screen.findByText('Pantalla de mesas')).toBeInTheDocument()
     expect(screen.getAllByText('Cambios guardados').length).toBeGreaterThan(0)
     expect(router.state.historyAction).toBe('REPLACE')
+    // /restaurante (Jacobo) starts with the registered restaurant, without another request.
+    expect(queryClient.getQueryData(['restaurant'])).toEqual(CREATED)
   })
 
   it('409: the user already has a restaurant: info toast and to the tables', async () => {

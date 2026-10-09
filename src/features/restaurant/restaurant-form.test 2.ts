@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { DayHours, WeeklyHours } from '@/components/ui'
-import { ApiError } from '@/lib/api-client'
 import {
   countRestaurantFormErrors,
-  describeRestaurantSaveError,
   emptyRestaurantFormValues,
-  hasRestaurantFormChanges,
   SUGGESTED_HOURS,
   toRegisterRestaurantInput,
-  toRestaurantFormValues,
   validateAddress,
   validateCategory,
   validateDay,
@@ -130,87 +126,5 @@ describe('restaurant form: body of POST /restaurants', () => {
         { dayOfWeek: 6, isOpen24h: true },
       ],
     })
-  })
-})
-
-describe('restaurant form: backend errors in the web texts', () => {
-  it('400: marks the fields with the web rules, never the backend text', () => {
-    const failure = describeRestaurantSaveError(new ApiError({ status: 400, message: 'name should not be empty' }), {
-      ...VALID,
-      name: ' ',
-    })
-    expect(failure).toEqual({ fieldErrors: { name: 'Escribe el nombre de tu restaurante.' } })
-  })
-
-  it('400 the web rules do not catch: a general alert that says what to check', () => {
-    expect(describeRestaurantSaveError(new ApiError({ status: 400 }), VALID)).toEqual({
-      fieldErrors: {},
-      formError: 'No pudimos guardar tu restaurante. Revisa el nombre, la categoría, la dirección y los horarios e intenta de nuevo.',
-    })
-  })
-
-  it('network, session and access errors use the manual 14.2 texts', () => {
-    expect(describeRestaurantSaveError(new ApiError({ status: 0, isNetworkError: true }), VALID).formError).toBe(
-      'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.',
-    )
-    expect(describeRestaurantSaveError(new ApiError({ status: 401 }), VALID).formError).toBe('Tu sesión terminó. Inicia sesión de nuevo.')
-    expect(describeRestaurantSaveError(new ApiError({ status: 403 }), VALID).formError).toBe('No tienes acceso a esta sección.')
-  })
-
-  it('anything else (500, unexpected errors): try again later', () => {
-    const text = 'No pudimos guardar tu restaurante. Intenta de nuevo en un momento.'
-    expect(describeRestaurantSaveError(new ApiError({ status: 500 }), VALID).formError).toBe(text)
-    expect(describeRestaurantSaveError(new Error('boom'), VALID).formError).toBe(text)
-  })
-})
-
-describe('restaurant form: edition (GET /restaurants/me → form)', () => {
-  const profile = {
-    id: 'restaurant-1',
-    name: 'Casa 72',
-    category: 'grill' as const,
-    address: 'Calle 72 # 10-34, Bogotá',
-    schedules: [
-      { dayOfWeek: 1, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
-      { dayOfWeek: 5, isOpen24h: false, opensAt: '18:00', closesAt: '02:00' },
-      { dayOfWeek: 6, isOpen24h: true, opensAt: null, closesAt: null },
-    ],
-  }
-
-  it('opens the days with schedule, closes the rest and keeps the suggestion where there are no hours', () => {
-    const values = toRestaurantFormValues(profile)
-    expect(values).toMatchObject({ name: 'Casa 72', category: 'grill', address: 'Calle 72 # 10-34, Bogotá' })
-    expect(values.hours).toEqual([
-      { day: 'mon', isOpen: true, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
-      { day: 'tue', isOpen: false, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' },
-      { day: 'wed', isOpen: false, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' },
-      { day: 'thu', isOpen: false, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' },
-      { day: 'fri', isOpen: true, isOpen24h: false, opensAt: '18:00', closesAt: '02:00' },
-      { day: 'sat', isOpen: true, isOpen24h: true, opensAt: '12:00', closesAt: '21:00' },
-      { day: 'sun', isOpen: false, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' },
-    ])
-    expect(validateRestaurantForm(values)).toEqual({})
-  })
-
-  it('old restaurants without category or address: the form asks for them', () => {
-    const values = toRestaurantFormValues({ ...profile, category: null, address: null })
-    expect(values).toMatchObject({ category: '', address: '' })
-    expect(validateRestaurantForm(values)).toMatchObject({
-      category: 'Elige la categoría de tu restaurante de la lista.',
-      address: 'Escribe la dirección de tu restaurante.',
-    })
-  })
-
-  it('detects unsaved changes, ignoring spaces at the ends and hours kept in closed days', () => {
-    const initial = toRestaurantFormValues(profile)
-    expect(hasRestaurantFormChanges(initial, { ...initial, name: ' Casa 72 ' })).toBe(false)
-    expect(hasRestaurantFormChanges(initial, { ...initial, name: 'Casa 73' })).toBe(true)
-    expect(hasRestaurantFormChanges(initial, { ...initial, category: 'cafe' })).toBe(true)
-    const hiddenHours = initial.hours.map((day) => (day.day === 'tue' ? { ...day, opensAt: '08:00' } : day))
-    expect(hasRestaurantFormChanges(initial, { ...initial, hours: hiddenHours })).toBe(false)
-    const openTuesday = initial.hours.map((day) => (day.day === 'tue' ? { ...day, isOpen: true } : day))
-    expect(hasRestaurantFormChanges(initial, { ...initial, hours: openTuesday })).toBe(true)
-    const mondayCloses = initial.hours.map((day) => (day.day === 'mon' ? { ...day, closesAt: '18:00' } : day))
-    expect(hasRestaurantFormChanges(initial, { ...initial, hours: mondayCloses })).toBe(true)
   })
 })
