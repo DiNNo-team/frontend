@@ -5,6 +5,29 @@
 
 ---
 
+## 9 oct 2026 · Sergio · PBI 9 · Pantalla de bitácora (`/bitacora`)
+
+**Qué quedó listo**
+- `/bitacora` ya no es un placeholder: `PageHeader`, filtro **Mesa** ("Todas las mesas" + cada mesa, inactivas incluidas) y `DataTable` con **Fecha y hora · Mesa · Cambio · Usuario**, más reciente primero. En menos de 768 px se ve como la lista compacta del kit.
+- Cambio con los mismos chips de mesas, incluido **Inactiva** (desactivar y reactivar). El lector de pantalla oye "Disponible a Ocupada".
+- Estados: skeleton (después de 300 ms), vacío ("Aún no hay cambios"; con una mesa filtrada, "Mesa 04 todavía no tiene cambios de estado.") y error ("No pudimos cargar la bitácora" + "Intentar de nuevo"; sesión o permiso con el texto de `getApiErrorMessage`, sin botón). Con 200 filas, aviso de que se ven los 200 más recientes.
+- Consume `GET /v1/table-logs` (`?tableId=` al filtrar) y la vuelve a pedir cada vez que se abre la pantalla (`refetchOnMount: 'always'`). Detalle en el `CLAUDE.md` ("Bitácora de mesas").
+- Mock con datos fijos: `/bitacora?mockError=table-logs-load`, `?mockTableLogsFull`, `?mockEmpty`, `?mockLatency=`.
+
+**Para quién**
+- **Sebastián:** uso sin modificarlos `useTablesQuery`, `sortTables` y `toTableDisplayStatus` de `features/tables`, y el mock de mesas en las pruebas. Si los renombras, avísame. No toqué el kit.
+- **Sebastián, en tu `src/lib/api-client.ts`:** agregué `isAccessError(error)` junto a `getApiErrorMessage`. Responde `true` para un `401` o un `403`: en esos casos va el texto de `getApiErrorMessage`, sin "Intentar de nuevo". La usan la bitácora y el estado del restaurante. En mesas (`use-table-status-change.ts`, `use-table-activation.ts`) sigue el mismo chequeo escrito a mano; si quieres, puedes cambiarlo por esta función.
+- **Jacobo:** `403 RESTAURANT_REQUIRED` en la bitácora emite el mismo evento que el resto; tu `AuthEventHandler` lleva a `/onboarding`. No hice nada propio.
+- **Elizabeth (demo):** la bitácora se prueba con el backend real; el mock no refleja los cambios hechos en `/mesas`.
+
+**Rama / PR**
+- `feat/sprint1-pantalla-bitacora` → `develop`.
+
+**Pendiente**
+- Verificar en el ambiente desplegado (Render + Vercel, con login real) que cada cambio de estado, desactivación y reactivación aparece en la bitácora (PBI 9.4).
+
+---
+
 ## 8 oct 2026 · Sergio · PBI 8 · Variante de estado del `Switch` (kit)
 
 **Qué quedó listo**

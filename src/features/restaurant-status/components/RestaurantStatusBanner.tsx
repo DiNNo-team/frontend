@@ -1,8 +1,8 @@
 import { Alert, Button } from '@/components/ui'
-import { getApiErrorMessage } from '@/lib/api-client'
+import { getApiErrorMessage, isAccessError } from '@/lib/api-client'
 import { useRestaurantStatusQuery } from '../hooks'
 import { RESTAURANT_STATUS_TEXT } from '../messages'
-import { isAccessError, useRestaurantStatusChange } from '../use-restaurant-status-change'
+import { useRestaurantStatusChange } from '../use-restaurant-status-change'
 
 /**
  * Above the content (manual 3.3 and 11.1): the error Alert when loading or saving the status failed,
