@@ -1,6 +1,8 @@
 import { useId, useState, type ReactNode } from 'react'
 import { Switch as RadixSwitch } from 'radix-ui'
 import { cn } from '@/lib/cn'
+import { STATUS_META, TONE_TEXT, type Status } from './status'
+import { StatusShape } from './StatusShape'
 
 export interface SwitchProps {
   checked?: boolean
@@ -10,6 +12,10 @@ export interface SwitchProps {
   onLabel: string
   /** Word shown when off ("Cerrado"). */
   offLabel: string
+  /** Status shape drawn before the word when on (`'open'`: pulsing dot in `ok`). Without it, no shape. */
+  onStatus?: Status
+  /** Status shape drawn before the word when off (`'closed'`: dash in `inactive`). Without it, no shape. */
+  offStatus?: Status
   /** Visible name before the switch ("Estado del restaurante"). */
   label?: ReactNode
   /** Accessible name when there is no visible `label` ("Lunes"). One of the two is required for screen readers. */
@@ -30,6 +36,8 @@ export function Switch({
   onCheckedChange,
   onLabel,
   offLabel,
+  onStatus,
+  offStatus,
   label,
   'aria-label': ariaLabel,
   disabled,
@@ -43,11 +51,18 @@ export function Switch({
   const wordId = `${switchId}-state`
   const [innerChecked, setInnerChecked] = useState(defaultChecked)
   const isOn = checked ?? innerChecked
+  const status = isOn ? onStatus : offStatus
 
   function handleChange(next: boolean) {
     if (checked === undefined) setInnerChecked(next)
     onCheckedChange?.(next)
   }
+
+  const word = (
+    <span id={wordId} className="text-sec font-bold whitespace-nowrap text-fg">
+      {isOn ? onLabel : offLabel}
+    </span>
+  )
 
   return (
     <div className={cn('inline-flex items-center gap-3', className)}>
@@ -71,9 +86,15 @@ export function Switch({
         <span className="inline-flex h-6.5 w-11 shrink-0 items-center rounded-full bg-line-strong transition-colors duration-(--dur-fast) ease-dinno group-data-[state=checked]:bg-ok">
           <RadixSwitch.Thumb className="block size-5 translate-x-0.75 rounded-full bg-(--white) shadow-card transition-transform duration-(--dur-fast) ease-dinno data-[state=checked]:translate-x-5.25" />
         </span>
-        <span id={wordId} className="text-sec font-bold whitespace-nowrap text-fg">
-          {isOn ? onLabel : offLabel}
-        </span>
+        {status ? (
+          // Color + shape + word (manual 3.3), spaced like StatusChip. The shape is decorative: the word is what screen readers hear.
+          <span className="inline-flex items-center gap-1.5">
+            <StatusShape shape={STATUS_META[status].shape} className={TONE_TEXT[STATUS_META[status].tone]} />
+            {word}
+          </span>
+        ) : (
+          word
+        )}
       </RadixSwitch.Root>
     </div>
   )

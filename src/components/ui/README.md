@@ -186,10 +186,16 @@ Interruptor con **la palabra siempre al lado**. Encendido verde (`ok`), apagado 
 | `onLabel` / `offLabel` | `string` | "Abierto" / "Cerrado" |
 | `label` | `ReactNode` | Nombre visible antes del switch ("Estado del restaurante") |
 | `aria-label` | `string` | Nombre si no hay `label` visible (p. ej. "Lunes") |
+| `onStatus` / `offStatus` | `Status` (opcional) | Forma de estado de `STATUS_META` antes de la palabra, en el color de su tono: `'open'` = punto que pulsa en `ok`, `'closed'` = raya en `inactive` (manual 3.3). Sin ellas, no hay forma |
 
 ```tsx
 <Switch label="Estado del restaurante" checked={isOpen} onCheckedChange={setOpen} onLabel="Abierto" offLabel="Cerrado" />
+
+// Topbar (Abierto / Cerrado del restaurante): color + forma + palabra
+<Switch label="Estado del restaurante" checked={isOpen} onCheckedChange={setOpen} onLabel="Abierto" offLabel="Cerrado" onStatus="open" offStatus="closed" />
 ```
+
+La forma es decorativa (el lector de pantalla oye la palabra), el pulso se detiene con "reducir movimiento" y con `disabled` se atenúa con el resto del control.
 
 ## HoursEditor
 
