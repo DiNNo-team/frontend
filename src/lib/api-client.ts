@@ -111,3 +111,8 @@ export function getApiErrorMessage(error: unknown, fallback = 'No pudimos conect
   }
   return fallback
 }
+
+/** 401 (session ended, email not verified) or 403 (no access): show `getApiErrorMessage`, and retrying makes no sense. */
+export function isAccessError(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 401 || error.status === 403)
+}

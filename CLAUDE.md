@@ -202,6 +202,7 @@ src/
 - **Toda llamada pasa por `src/lib/api.ts`** (`apiFetch('/ruta')` o `apiUrl('/ruta')`), que agrega el origen y el prefijo `/v1`. Nunca escribas la URL del backend ni `/v1` a mano.
 - `VITE_API_URL` es el origen del backend **sin `/v1` y sin `/` final**. Toda variable nueva va en `.env.example` y se tipa en `src/vite-env.d.ts`.
 - Las variables `VITE_*` terminan en el navegador: **nunca pongas secretos en ellas.**
+- **Errores de la API → textos del manual:** `getApiErrorMessage(error, fallback)` y `isAccessError(error)`, los dos en `src/lib/api-client.ts`. `isAccessError` dice si es un `401` (sesión vencida o correo sin verificar) o un `403` (sin permiso o sin restaurante): en esos casos se muestra el texto de `getApiErrorMessage` y no se ofrece "Intentar de nuevo". Úsala en vez de comparar `status` a mano.
 - Si aparece un error de CORS, la solución está en `CORS_ORIGINS` del backend (Render), no en este repo.
 - Mientras un endpoint no exista, trabaja con datos de ejemplo con la misma forma que el contrato acordado, y reemplázalos al integrar (no dejes datos de ejemplo en el PR final).
 
@@ -213,6 +214,14 @@ src/
 - Para contar las mesas reservadas antes de cerrar, usa `useTablesQuery` y `countTables` de `features/tables`, sin modificarlos.
 - Mock (con `VITE_USE_MOCKS=true`, en cualquier pantalla del dashboard): `?mockClosed` (empieza cerrado), `?mockError=restaurant-status-load` o `restaurant-status-save`, y `?mockLatency=`, que es compartido con mesas. Con `?mockEmpty` no hay mesas, así que el restaurante cierra sin pedir confirmación.
 
+
+### Bitácora de mesas (Sergio, PBI 9)
+- Vive en `src/features/activity-log/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). La pantalla es `/bitacora` (`ActivityLogPage.tsx`).
+- **Consume `GET /v1/table-logs`** (contrato en el `CLAUDE.md` del backend, "Bitácora de mesas"): `[{ id, tableId, tableIdentifier, previousStatus, newStatus, changedAt, userEmail }]`, más reciente primero, máximo 200 filas, sin paginación. El filtro por mesa manda `?tableId=<id>`; sin filtro no manda nada. El restaurante sale de la sesión.
+- `useTableLogsQuery(tableId?)` (query key `['table-logs', tableId ?? 'all']`) lleva **`refetchOnMount: 'always'`**: cada vez que se abre la pantalla vuelve a pedir la bitácora, así un cambio hecho en `/mesas` aparece aunque el `staleTime` global (30 s) no haya vencido. No toca `features/tables`.
+- Reutiliza de mesas, sin modificarlos: `useTablesQuery` + `sortTables` para el filtro (todas las mesas, inactivas incluidas; si fallan, el filtro queda deshabilitado con "Todas las mesas") y `toTableDisplayStatus` para los chips (incluido `inactive`).
+- El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
+- Mock (con `VITE_USE_MOCKS=true`, datos fijos con las mesas del mock de mesas): `?mockError=table-logs-load`, `?mockTableLogsFull` (200 filas) y `?mockEmpty` / `?mockLatency=` (compartidos con mesas). No refleja los cambios hechos en `/mesas`: para eso, el backend real.
 ### Despliegue
 - **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
 - `VITE_API_URL` se configura en Vercel (Production y Preview) y se incrusta al compilar: si cambia, hay que volver a desplegar.

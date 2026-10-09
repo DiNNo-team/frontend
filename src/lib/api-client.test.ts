@@ -4,6 +4,7 @@ import {
   apiRequest,
   EMAIL_NOT_VERIFIED_EVENT,
   getApiErrorMessage,
+  isAccessError,
   RESTAURANT_REQUIRED_EVENT,
   SESSION_EXPIRED_EVENT,
   setAuthTokenProvider,
@@ -101,5 +102,23 @@ describe('getApiErrorMessage', () => {
     expect(getApiErrorMessage(new ApiError({ status: 401 }))).toBe('Tu sesión terminó. Inicia sesión de nuevo.')
     expect(getApiErrorMessage(new ApiError({ status: 403 }))).toBe('No tienes acceso a esta sección.')
     expect(getApiErrorMessage(new ApiError({ status: 500, message: 'stack trace' }), 'Texto propio')).toBe('Texto propio')
+  })
+})
+
+describe('isAccessError', () => {
+  it('is true for 401 (session, unverified email) and 403 (no access, no restaurant)', () => {
+    expect(isAccessError(new ApiError({ status: 401 }))).toBe(true)
+    expect(isAccessError(new ApiError({ status: 401, code: 'EMAIL_NOT_VERIFIED' }))).toBe(true)
+    expect(isAccessError(new ApiError({ status: 403 }))).toBe(true)
+    expect(isAccessError(new ApiError({ status: 403, code: 'RESTAURANT_REQUIRED' }))).toBe(true)
+  })
+
+  it('is false for network, validation, conflict and server errors, and for anything that is not an ApiError', () => {
+    expect(isAccessError(new ApiError({ status: 0, isNetworkError: true }))).toBe(false)
+    expect(isAccessError(new ApiError({ status: 400 }))).toBe(false)
+    expect(isAccessError(new ApiError({ status: 409 }))).toBe(false)
+    expect(isAccessError(new ApiError({ status: 500 }))).toBe(false)
+    expect(isAccessError(new Error('403'))).toBe(false)
+    expect(isAccessError(undefined)).toBe(false)
   })
 })
