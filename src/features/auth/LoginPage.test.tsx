@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { renderWithProviders } from '@/test/render'
 import LoginPage from './LoginPage'
 
@@ -9,13 +10,21 @@ vi.mock('./auth-context', () => ({
   useAuth: () => ({ signIn: mocks.signIn }),
 }))
 
+function renderLoginPage() {
+  return renderWithProviders(
+    <MemoryRouter>
+      <LoginPage />
+    </MemoryRouter>,
+  )
+}
+
 describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('renders the login form with the kit password visibility control', () => {
-    renderWithProviders(<LoginPage />)
+    renderLoginPage()
 
     expect(screen.getByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
     expect(screen.getByLabelText('Correo')).toHaveAttribute('type', 'email')
@@ -25,7 +34,7 @@ describe('LoginPage', () => {
   })
 
   it('validates email format and requires a password without calling signIn', async () => {
-    const { user } = renderWithProviders(<LoginPage />)
+    const { user } = renderLoginPage()
     await user.type(screen.getByLabelText('Correo'), 'correo-invalido')
     await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
@@ -36,7 +45,7 @@ describe('LoginPage', () => {
 
   it('shows the generic credentials error returned by auth-errors', async () => {
     mocks.signIn.mockRejectedValue(new Error('Correo o contraseña incorrectos. Revisa e intenta de nuevo.'))
-    const { user } = renderWithProviders(<LoginPage />)
+    const { user } = renderLoginPage()
     await user.type(screen.getByLabelText('Correo'), 'admin@restaurante.co')
     await user.type(screen.getByLabelText('Contraseña'), 'incorrecta')
     await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
@@ -52,7 +61,7 @@ describe('LoginPage', () => {
     mocks.signIn.mockReturnValue(new Promise<void>((resolve) => {
       resolveSignIn = resolve
     }))
-    const { user } = renderWithProviders(<LoginPage />)
+    const { user } = renderLoginPage()
     await user.type(screen.getByLabelText('Correo'), 'admin@restaurante.co')
     await user.type(screen.getByLabelText('Contraseña'), 'correcta')
     await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))

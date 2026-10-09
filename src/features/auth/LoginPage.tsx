@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { Alert, Button, Logo, TextField } from '@/components/ui'
 import { getFirebaseAuthErrorMessage } from './auth-errors'
+import { getSafeReturnTo } from './auth-navigation'
 import { useAuth } from './auth-context'
 
 export default function LoginPage() {
   const { signIn } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string>()
@@ -35,6 +39,7 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       await signIn(email.trim(), password)
+      navigate(getSafeReturnTo(location.state) ?? '/mesas', { replace: true })
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : getFirebaseAuthErrorMessage(error))
     } finally {
