@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/components/ui'
-import { ApiError, getApiErrorMessage } from '@/lib/api-client'
+import { getApiErrorMessage, isAccessError } from '@/lib/api-client'
 import {
   restaurantStatusMutationKey,
   useIsSavingRestaurantStatus,
@@ -9,11 +9,6 @@ import {
   useUpdateRestaurantStatus,
 } from './hooks'
 import { RESTAURANT_STATUS_TEXT } from './messages'
-
-/** 401 and 403 show the manual's session / permission text; retrying them makes no sense. */
-export function isAccessError(error: unknown): boolean {
-  return error instanceof ApiError && (error.status === 401 || error.status === 403)
-}
 
 /** Manual texts for network, session and permission; the approved text for anything else. */
 export function getSaveErrorMessage(error: unknown): string {
