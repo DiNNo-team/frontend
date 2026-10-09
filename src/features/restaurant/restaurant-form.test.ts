@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { DayHours, WeeklyHours } from '@/components/ui'
+import { ApiError } from '@/lib/api-client'
 import {
   countRestaurantFormErrors,
+  describeRestaurantSaveError,
   emptyRestaurantFormValues,
   SUGGESTED_HOURS,
   toRegisterRestaurantInput,
@@ -126,5 +128,36 @@ describe('restaurant form: body of POST /restaurants', () => {
         { dayOfWeek: 6, isOpen24h: true },
       ],
     })
+  })
+})
+
+describe('restaurant form: backend errors in the web texts', () => {
+  it('400: marks the fields with the web rules, never the backend text', () => {
+    const failure = describeRestaurantSaveError(new ApiError({ status: 400, message: 'name should not be empty' }), {
+      ...VALID,
+      name: ' ',
+    })
+    expect(failure).toEqual({ fieldErrors: { name: 'Escribe el nombre de tu restaurante.' } })
+  })
+
+  it('400 the web rules do not catch: a general alert that says what to check', () => {
+    expect(describeRestaurantSaveError(new ApiError({ status: 400 }), VALID)).toEqual({
+      fieldErrors: {},
+      formError: 'No pudimos guardar tu restaurante. Revisa el nombre, la categoría, la dirección y los horarios e intenta de nuevo.',
+    })
+  })
+
+  it('network, session and access errors use the manual 14.2 texts', () => {
+    expect(describeRestaurantSaveError(new ApiError({ status: 0, isNetworkError: true }), VALID).formError).toBe(
+      'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.',
+    )
+    expect(describeRestaurantSaveError(new ApiError({ status: 401 }), VALID).formError).toBe('Tu sesión terminó. Inicia sesión de nuevo.')
+    expect(describeRestaurantSaveError(new ApiError({ status: 403 }), VALID).formError).toBe('No tienes acceso a esta sección.')
+  })
+
+  it('anything else (500, unexpected errors): try again later', () => {
+    const text = 'No pudimos guardar tu restaurante. Intenta de nuevo en un momento.'
+    expect(describeRestaurantSaveError(new ApiError({ status: 500 }), VALID).formError).toBe(text)
+    expect(describeRestaurantSaveError(new Error('boom'), VALID).formError).toBe(text)
   })
 })

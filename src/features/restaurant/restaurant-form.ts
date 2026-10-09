@@ -1,4 +1,5 @@
 import { DAY_LABELS, DAYS_OF_WEEK, type DayHours, type DayOfWeek, type WeeklyHours } from '@/components/ui'
+import { ApiError, getApiErrorMessage, isAccessError } from '@/lib/api-client'
 import { RESTAURANT_CATEGORIES, RESTAURANT_LIMITS, type RegisterRestaurantInput, type RestaurantCategory } from './types'
 
 // Single source of the restaurant form rules and texts, shared by the registration (Santiago, /onboarding)
@@ -47,6 +48,10 @@ export const RESTAURANT_FORM_MESSAGES = {
     `${dayLabel(day)}: la hora de cierre debe ser distinta de la de apertura. Si abres todo el día, marca Abierto 24 horas.`,
   /** Alert above the form when more than two fields fail (manual 10). */
   reviewFields: (count: number) => `Revisa los ${count} campos marcados.`,
+  /** 400 the web rules did not catch (they drifted from the backend's). */
+  invalidData: 'No pudimos guardar tu restaurante. Revisa el nombre, la categoría, la dirección y los horarios e intenta de nuevo.',
+  /** 500 or any other failure. */
+  saveFailed: 'No pudimos guardar tu restaurante. Intenta de nuevo en un momento.',
 } as const
 
 // HH:MM in 24 h, the same pattern as the backend.
@@ -125,6 +130,29 @@ export function validateRestaurantForm(values: RestaurantFormValues): Restaurant
 export function countRestaurantFormErrors(errors: RestaurantFormErrors): number {
   const fields = [errors.name, errors.category, errors.address, errors.hours].filter(Boolean).length
   return fields + Object.keys(errors.days ?? {}).length
+}
+
+export interface RestaurantSaveFailure {
+  fieldErrors: RestaurantFormErrors
+  /** Shown as an error Alert above the form, keeping what was typed. */
+  formError?: string
+}
+
+/**
+ * Translates a backend error into the form's own texts: the backend message is never shown.
+ * A 400 is checked again with the web rules (the same as the backend's) to mark the failing fields.
+ */
+export function describeRestaurantSaveError(error: unknown, values: RestaurantFormValues): RestaurantSaveFailure {
+  if (error instanceof ApiError) {
+    if (error.status === 400) {
+      const fieldErrors = validateRestaurantForm(values)
+      if (countRestaurantFormErrors(fieldErrors) > 0) return { fieldErrors }
+      return { fieldErrors: {}, formError: RESTAURANT_FORM_MESSAGES.invalidData }
+    }
+    // Network, session ended, email not verified or no access: manual 14.2 texts.
+    if (error.isNetworkError || isAccessError(error)) return { fieldErrors: {}, formError: getApiErrorMessage(error) }
+  }
+  return { fieldErrors: {}, formError: RESTAURANT_FORM_MESSAGES.saveFailed }
 }
 
 /** Body of POST /restaurants: one element per open day; a 24-hour day goes without hours. */
