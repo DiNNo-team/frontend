@@ -57,6 +57,8 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
   const categoryId = `${formId}-category`
   const addressId = `${formId}-address`
   const hoursRef = useRef<HTMLDivElement>(null)
+  // `saving` arrives one render late: a fast double click would send the form twice.
+  const submittingRef = useRef(false)
   const [initial] = useState(initialValues)
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState<RestaurantFormErrors>({})
@@ -85,15 +87,17 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
     if (next.hours || next.days) target?.focus()
   }
 
+  // A field without error is checked on blur (manual 10). One that already shows an error follows each
+  // change, so the message goes away as soon as it is fixed: if it went away on blur instead, the form
+  // would move under the pointer and the click on the next control would be lost.
   function handleHoursChange(hours: WeeklyHours) {
     setValues((current) => ({ ...current, hours }))
-    // Once the hours show errors, they follow each change until fixed.
     if (errors.hours || errors.days) setErrors((current) => ({ ...current, hours: undefined, days: undefined, ...validateHours(hours) }))
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (saving) return
+    if (saving || submittingRef.current) return
     setFormError(undefined)
 
     const nextErrors = validateRestaurantForm(values)
@@ -103,11 +107,14 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
     }
     setErrors({})
 
+    submittingRef.current = true
     try {
       await onSubmit({ ...values, category: values.category })
     } catch (error) {
       const failure = describeRestaurantSaveError(error, values)
       showErrors(failure.fieldErrors, failure.formError)
+    } finally {
+      submittingRef.current = false
     }
   }
 
@@ -125,7 +132,11 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
             autoComplete="organization"
             value={values.name}
             error={errors.name}
-            onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
+            onChange={(event) => {
+              const name = event.target.value
+              setValues((current) => ({ ...current, name }))
+              if (errors.name) setErrors((current) => ({ ...current, name: validateName(name) }))
+            }}
             onBlur={() => setErrors((current) => ({ ...current, name: validateName(values.name) }))}
           />
           {/* Validated on change, not on blur: opening the list already moves the focus out of the field. */}
@@ -153,7 +164,11 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
           autoComplete="street-address"
           value={values.address}
           error={errors.address}
-          onChange={(event) => setValues((current) => ({ ...current, address: event.target.value }))}
+          onChange={(event) => {
+            const address = event.target.value
+            setValues((current) => ({ ...current, address }))
+            if (errors.address) setErrors((current) => ({ ...current, address: validateAddress(address) }))
+          }}
           onBlur={() => setErrors((current) => ({ ...current, address: validateAddress(values.address) }))}
         />
       </Card>

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '@/test/render'
 import { toRestaurantFormValues } from '../restaurant-form'
 import type { RestaurantProfile } from '../types'
@@ -69,6 +69,21 @@ describe('RestaurantForm · reutilizado en la edición', () => {
     await user.type(address, 'Carrera 7 # 45-10')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ name: 'Casa 72', category: 'grill', address: 'Carrera 7 # 45-10' }))
+  })
+
+  it('a fast double submit sends the form only once', async () => {
+    let finish: () => void = () => undefined
+    const onSubmit = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)))
+    renderEdition({ onSubmit })
+    const form = screen.getByRole('button', { name: 'Guardar cambios' }).closest('form') as HTMLFormElement
+    fireEvent.submit(form)
+    fireEvent.submit(form)
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    finish()
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    // Once the first one settles, saving again works.
+    fireEvent.submit(form)
+    expect(onSubmit).toHaveBeenCalledTimes(2)
   })
 
   it('while saving: "Guardando…" and "Cancelar" disabled', () => {

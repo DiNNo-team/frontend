@@ -90,6 +90,20 @@ describe('OnboardingPage · registro del restaurante', () => {
     expect(name).toHaveAccessibleDescription('El nombre del restaurante es muy largo. Usa máximo 120 caracteres.')
   })
 
+  it('a field that already shows an error clears while it is fixed, so nothing moves on the next click', async () => {
+    const { user } = renderOnboarding()
+    await user.click(submitButton())
+    const name = screen.getByLabelText('Nombre')
+    await user.type(name, 'Casa 72')
+    expect(screen.queryByText('Escribe el nombre de tu restaurante.')).not.toBeInTheDocument()
+    expect(name).toHaveFocus()
+    // Fixed once, it is back to the rule for fields without error: checked again on blur.
+    await user.clear(name)
+    expect(screen.queryByText('Escribe el nombre de tu restaurante.')).not.toBeInTheDocument()
+    await user.tab()
+    expect(name).toHaveAccessibleDescription('Escribe el nombre de tu restaurante.')
+  })
+
   it('only the hours fail: focus on the failing day and the error follows the fix', async () => {
     const { user } = renderOnboarding()
     await fillValidForm(user)
