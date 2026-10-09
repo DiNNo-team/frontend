@@ -5,12 +5,15 @@ import '@/styles/globals.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Providers } from '@/app/providers'
+import { AuthProvider } from '@/features/auth/AuthProvider'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Providers>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </Providers>
   </StrictMode>,
 )

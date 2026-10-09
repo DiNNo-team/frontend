@@ -84,7 +84,6 @@ export function RestaurantStatusControl() {
 
   return (
     <>
-      {/* TODO(Sergio): falta la variante de estado del Switch en el kit (punto con pulso para Abierto, raya para Cerrado; manual 3.3). Pedida a Sebastián. */}
       <Switch
         id={SWITCH_ID}
         label={<span className="sr-only sm:not-sr-only">{RESTAURANT_STATUS_TEXT.switchLabel}</span>}
@@ -92,6 +91,8 @@ export function RestaurantStatusControl() {
         onCheckedChange={handleCheckedChange}
         onLabel={STATUS_META.open.label}
         offLabel={STATUS_META.closed.label}
+        onStatus="open"
+        offStatus="closed"
         disabled={saving}
       />
       <ConfirmDialog

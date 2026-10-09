@@ -5,6 +5,44 @@
 
 ---
 
+## 8 oct 2026 · Sergio · PBI 8 · Variante de estado del `Switch` (kit)
+
+**Qué quedó listo**
+- **`Switch` tiene dos props opcionales nuevas: `onStatus` y `offStatus`** (tipo `Status` de `STATUS_META`). Dibujan la forma del estado antes de la palabra, en el color de su tono: `'open'` = punto que pulsa en `ok`, `'closed'` = raya en `inactive` (manual 3.3: color + forma + palabra).
+  ```tsx
+  <Switch label="Estado del restaurante" checked={isOpen} onCheckedChange={setOpen}
+          onLabel="Abierto" offLabel="Cerrado" onStatus="open" offStatus="closed" />
+  ```
+- La forma es decorativa: el nombre accesible sigue siendo "Estado del restaurante Abierto". El pulso se detiene con "reducir movimiento" y con `disabled` la forma se atenúa con el resto del control.
+- **Sin esas props el `Switch` queda idéntico** (mismo DOM): `HoursEditor` y los ejemplos de `/kit` no cambian. En `/kit` hay un ejemplo nuevo, "Topbar · con forma de estado". Props en `src/components/ui/README.md`.
+- El switch del topbar ya la usa: se cerró el `TODO(Sergio)` de `RestaurantStatusControl.tsx`.
+
+**Para quién**
+- **Sebastián:** la variante está en tu kit (`Switch.tsx`, `Switch.test.tsx`, README y `/kit`), con tu aprobación; revisas el PR. **Mi dependencia del PR #21 (la forma del estado en el switch) queda cerrada.**
+- **Jacobo:** revisé el topbar con tu login. `statusSlot` y `banner` siguen funcionando dentro de `DashboardLayout` con la sesión (prueba nueva `RestaurantStatus.layout.test.tsx`). De los tres riesgos que te anoté el 7 oct, los tres quedaron resueltos con tu PR #23:
+  - el token espera a `authStateReady()`;
+  - `signOut()` limpia la caché;
+  - un `RESTAURANT_REQUIRED_EVENT` repetido no causa problemas: `AuthEventHandler` limpia el evento y solo navega si no está ya en `/onboarding`. Falta una prueba con el evento repetido, si quieres agregarla.
+- **Todos:** después de este pull, agrega `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN` y `VITE_FIREBASE_PROJECT_ID` a tu `.env.local` (están en `.env.example`). Sin ellas la app, incluida `/kit`, queda en blanco con `auth/invalid-api-key`.
+
+**Rama / PR**
+- `feat/sprint1-switch-estado` → `develop`.
+
+**Pendiente**
+- PBI 8.4: probar en el ambiente desplegado que el estado persiste al volver a entrar, ahora que existe el login.
+
+---
+
+## 8 oct 2026 · Jacobo · PBI 2 · Sesión Firebase (paso 1/3)
+
+- Se añadió `firebase@13.0.0` y el `AuthProvider` modular con `useAuth`: usuario, carga inicial, correo verificado, inicio/cierre de sesión, eventos de auth y token ID para `api-client`.
+- `signOut()` limpia la caché de TanStack Query. `authStateReady()` evita que el token provider responda antes de que Firebase resuelva la sesión inicial.
+- Configuración web pública requerida: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN` y `VITE_FIREBASE_PROJECT_ID`; están documentadas como ejemplos en `.env.example` y tipadas en `src/vite-env.d.ts`. No son secretos.
+- Este paso no incluye pantalla de login, guarda de rutas, redirecciones ni navegación al expirar la sesión; quedan para los pasos siguientes del PBI.
+- Avisar en el PR: nueva dependencia `firebase` y tres variables `VITE_FIREBASE_*` requeridas en local/Vercel.
+
+---
+
 ## 7 oct 2026 · Sergio · PBI 8 · Switch Abierto/Cerrado e integración del cambio de estado
 
 **Qué quedó listo**

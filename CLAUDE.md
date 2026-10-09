@@ -208,6 +208,7 @@ src/
 ### Estado del restaurante: Abierto / Cerrado (Sergio, PBI 8)
 - Vive en `src/features/restaurant-status/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). Contrato: `GET /restaurants/me/status` → `{ isOpen }` y `PATCH /restaurants/me/status` con `{ isOpen }`.
 - Se conecta en `src/app/layouts.tsx`: `statusSlot={<RestaurantStatusControl />}` (switch del topbar + diálogo de confirmación) y `banner={<RestaurantStatusBanner />}` (aviso de cerrado con "Abrir ahora" y errores de carga o guardado). Los dos se coordinan por la caché de React Query, sin contexto.
+- El switch del topbar usa la variante de estado del kit: `<Switch … onStatus="open" offStatus="closed" />` (punto que pulsa en `ok` / raya en `inactive`, de `STATUS_META`). Para un switch de estado en otra pantalla, usa esas dos props; no dibujes la forma a mano.
 - Para leer el estado en otra pantalla, usa `useRestaurantStatusQuery()` (query key `restaurantStatusQueryKey`). No llames al endpoint por tu cuenta.
 - Para contar las mesas reservadas antes de cerrar, usa `useTablesQuery` y `countTables` de `features/tables`, sin modificarlos.
 - Mock (con `VITE_USE_MOCKS=true`, en cualquier pantalla del dashboard): `?mockClosed` (empieza cerrado), `?mockError=restaurant-status-load` o `restaurant-status-save`, y `?mockLatency=`, que es compartido con mesas. Con `?mockEmpty` no hay mesas, así que el restaurante cierra sin pedir confirmación.
