@@ -9,8 +9,11 @@ export interface AuthContextValue {
   emailVerified: boolean
   authEvent: AuthEvent | null
   clearAuthEvent: () => void
+  emailVerificationRetried: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  reenviarVerificacion: () => Promise<void>
+  refrescarSesion: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

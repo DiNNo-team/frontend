@@ -5,6 +5,17 @@ function getErrorCode(error: unknown): string | undefined {
   return typeof error.code === 'string' ? error.code : undefined
 }
 
+export function getFirebaseActionErrorMessage(error: unknown, fallback: string): string {
+  switch (getErrorCode(error)) {
+    case 'auth/too-many-requests':
+      return 'Hay demasiados intentos. Espera un momento e inténtalo de nuevo.'
+    case 'auth/network-request-failed':
+      return 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'
+    default:
+      return fallback
+  }
+}
+
 export function getFirebaseAuthErrorMessage(error: unknown): string {
   switch (getErrorCode(error)) {
     case 'auth/invalid-credential':
