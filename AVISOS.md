@@ -5,6 +5,16 @@
 
 ---
 
+## 8 oct 2026 · Jacobo · PBI 2 · Sesión Firebase (paso 1/3)
+
+- Se añadió `firebase@13.0.0` y el `AuthProvider` modular con `useAuth`: usuario, carga inicial, correo verificado, inicio/cierre de sesión, eventos de auth y token ID para `api-client`.
+- `signOut()` limpia la caché de TanStack Query. `authStateReady()` evita que el token provider responda antes de que Firebase resuelva la sesión inicial.
+- Configuración web pública requerida: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN` y `VITE_FIREBASE_PROJECT_ID`; están documentadas como ejemplos en `.env.example` y tipadas en `src/vite-env.d.ts`. No son secretos.
+- Este paso no incluye pantalla de login, guarda de rutas, redirecciones ni navegación al expirar la sesión; quedan para los pasos siguientes del PBI.
+- Avisar en el PR: nueva dependencia `firebase` y tres variables `VITE_FIREBASE_*` requeridas en local/Vercel.
+
+---
+
 ## 7 oct 2026 · Sergio · PBI 8 · Switch Abierto/Cerrado e integración del cambio de estado
 
 **Qué quedó listo**
