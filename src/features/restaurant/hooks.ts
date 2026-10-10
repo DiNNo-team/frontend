@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { restaurantStatusQueryKey } from '@/features/restaurant-status/hooks'
 import { tablesQueryKey } from '@/features/tables/hooks'
 import { restaurantApi } from './api'
+import type { UpdateRestaurantInput } from './api'
 import type { RegisterRestaurantInput, RestaurantProfile } from './types'
 
 export const restaurantQueryKey = ['restaurant'] as const
@@ -26,5 +27,14 @@ export function useRegisterRestaurant() {
       void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
       void queryClient.invalidateQueries({ queryKey: restaurantStatusQueryKey })
     },
+  })
+}
+
+/** Updates the session's restaurant and writes the complete PATCH response into the query cache. */
+export function useUpdateRestaurant() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: UpdateRestaurantInput) => restaurantApi.update(input),
+    onSuccess: (updated) => queryClient.setQueryData<RestaurantProfile>(restaurantQueryKey, updated),
   })
 }
