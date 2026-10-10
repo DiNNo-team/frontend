@@ -5,6 +5,30 @@
 
 ---
 
+## 9 oct 2026 · Santiago · PBI 3 · Registro del restaurante (`/onboarding`)
+
+**Qué quedó listo**
+- `/onboarding` ya no es un placeholder: "Configura tu restaurante" con tres tarjetas, **Tu restaurante** (Nombre, Categoría), **Ubicación** (Dirección) y **Horarios** (`HoursEditor`), y el primario "Guardar y continuar".
+- Integrado con `POST /v1/restaurants`: "Guardando…", toast "Cambios guardados" y paso a `/mesas`. Si el usuario ya tiene restaurante (`409`), toast "Ya registraste tu restaurante. Para cambiar sus datos, entra a Restaurante." y también a `/mesas`. Los errores (`400`, `401`, `403`, red, `500`) se muestran con textos de la web en un `Alert`, sin perder lo escrito; el texto del backend nunca se muestra.
+- Validaciones iguales a las del backend, en un solo archivo: `src/features/restaurant/restaurant-form.ts`. Detalle en el `CLAUDE.md` ("Registro del restaurante").
+- **Decisión (Santiago):** los 7 días empiezan en Cerrado; al abrir un día trae **12:00 p. m. – 9:00 p. m.**, que la persona cambia (`SUGGESTED_HOURS`).
+
+**Para quién**
+- **Jacobo (`/restaurante`):** usa el mismo formulario, sin duplicarlo: `RestaurantForm` + `toRestaurantFormValues(restaurante)` + `useRestaurantQuery()` (`GET /v1/restaurants/me`, query key `restaurantQueryKey`), con `submitLabel="Guardar cambios"`, `onCancel` y `onDirtyChange` para "¿Salir sin guardar?". Ejemplo en el comentario de `RestaurantForm.tsx` y en `RestaurantForm.test.tsx`. Para errores del `PATCH`, `describeRestaurantSaveError` ya traduce `400`, `401`, `403` y red. **Los horarios todavía no se editan en el backend** (`PATCH` sin `schedules`): decide si en la edición van deshabilitados u ocultos; si necesitas una prop para eso, la agregamos.
+- **Jacobo y Sebastián:** en `/onboarding` no hay forma de cerrar sesión (el topbar es "solo con logo", manual 12.4), así que quien entra con la cuenta equivocada y no tiene restaurante queda atrapado. ¿Agregamos un "Cerrar sesión" en el topbar del onboarding?
+- **Sebastián (kit), dos cosas que no toqué:**
+  - a 390 px el `HoursEditor` corta las horas ("12:0…") y, con "(día siguiente)", solo deja ver el reloj y la flecha;
+  - el manual (10) pide en móvil las acciones del formulario "a lo ancho y fijas abajo"; hoy van a lo ancho al final, porque el kit no tiene una pieza para eso.
+- **Sergio y Sebastián:** leo `tablesQueryKey` y `restaurantStatusQueryKey` sin modificarlos, para refrescar mesas y estado después del registro. Si los renombran, avísenme.
+
+**Rama / PR**
+- `feat/sprint1-formulario-registro` → `develop`.
+
+**Pendiente**
+- Probar el recorrido en el ambiente desplegado (Vercel + Render) con el usuario de onboarding y el login real, después de reiniciarlo en Neon.
+
+---
+
 ## 9 oct 2026 · Sergio · PBI 9 · Pantalla de bitácora (`/bitacora`)
 
 **Qué quedó listo**
