@@ -222,6 +222,15 @@ src/
 - Reutiliza de mesas, sin modificarlos: `useTablesQuery` + `sortTables` para el filtro (todas las mesas, inactivas incluidas; si fallan, el filtro queda deshabilitado con "Todas las mesas") y `toTableDisplayStatus` para los chips (incluido `inactive`).
 - El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
 - Mock (con `VITE_USE_MOCKS=true`, datos fijos con las mesas del mock de mesas): `?mockError=table-logs-load`, `?mockTableLogsFull` (200 filas) y `?mockEmpty` / `?mockLatency=` (compartidos con mesas). No refleja los cambios hechos en `/mesas`: para eso, el backend real.
+
+### Registro del restaurante (Santiago, PBI 3)
+- Vive en `src/features/restaurant/` (carpeta compartida con la pantalla `/restaurante` de Jacobo): `types.ts`, `api.ts`, `hooks.ts`, `restaurant-form.ts`, `components/RestaurantForm.tsx` y `OnboardingPage.tsx` (`/onboarding`). Sin mock: el endpoint ya existe.
+- **Contrato:** `POST /v1/restaurants` con `{ name, category, address, schedules: [{ dayOfWeek 1–7 (1 = lunes), isOpen24h, opensAt "HH:MM", closesAt "HH:MM" }] }`: un elemento por día abierto, sin horas si abre 24 horas. Responde `201` con la misma forma que `GET /v1/restaurants/me`.
+- **Reglas y textos en un solo lugar:** `restaurant-form.ts`, iguales a `RestaurantFieldsDto`, `RegisterRestaurantDto` y `RestaurantScheduleDto` del backend. Si el backend cambia una regla, se cambia ahí. Los errores de la API pasan por `describeRestaurantSaveError`: el texto del backend nunca se muestra (un `400` se vuelve a revisar con las reglas de la web).
+- **Para la edición (`/restaurante`):** `<RestaurantForm initialValues={toRestaurantFormValues(restaurante)} submitLabel="Guardar cambios" onCancel={…} onDirtyChange={…} />` con los datos de `useRestaurantQuery()` (query key `restaurantQueryKey`). No dupliques el formulario ni sus validaciones.
+- **Horario inicial (decisión de Santiago):** los 7 días empiezan en Cerrado; al abrir uno trae 12:00 p. m. – 9:00 p. m. (`SUGGESTED_HOURS`), que la persona cambia.
+- Después del `201` (o de un `409`, que ya tiene restaurante) va a `/mesas` con `replace`; el registro refresca la caché de mesas y del estado del restaurante, que tenían el `403 RESTAURANT_REQUIRED` anterior.
+
 ### Despliegue
 - **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
 - `VITE_API_URL` se configura en Vercel (Production y Preview) y se incrusta al compilar: si cambia, hay que volver a desplegar.
