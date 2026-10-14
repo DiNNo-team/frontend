@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { screen } from '@testing-library/react'
+import { Mail } from 'lucide-react'
 import { renderWithProviders } from '@/test/render'
 import { TextField } from './TextField'
 
@@ -10,6 +11,13 @@ describe('TextField', () => {
     const helper = screen.getByText('Así la verás: Mesa 04')
     expect(input).toHaveAttribute('aria-describedby', helper.id)
     expect(input).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('puts the icon on the right with iconPosition="end", leaving room for it', () => {
+    renderWithProviders(<TextField label="Correo" icon={Mail} iconPosition="end" />)
+    const input = screen.getByLabelText('Correo')
+    expect(input).toHaveClass('pr-12')
+    expect(input).not.toHaveClass('pl-12')
   })
 
   it('marks "(opcional)" in the label and never uses asterisks', () => {
