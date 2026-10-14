@@ -14,8 +14,10 @@ export interface TextFieldProps extends Omit<ComponentPropsWithRef<'input'>, 'si
   helperText?: ReactNode
   /** What to do to fix it. Replaces the helper text and marks the field invalid. */
   error?: string
-  /** Lucide icon on the left, 20 px. */
+  /** Lucide icon, 20 px. */
   icon?: LucideIcon
+  /** Side of the icon. `end` is ignored with `type="password"`, where the show/hide button takes that side. */
+  iconPosition?: 'start' | 'end'
   /** Layout classes for the whole field (label + input + texts). */
   className?: string
 }
@@ -30,6 +32,7 @@ export function TextField({
   helperText,
   error,
   icon,
+  iconPosition = 'start',
   className,
   id,
   type = 'text',
@@ -42,12 +45,17 @@ export function TextField({
   const [passwordVisible, setPasswordVisible] = useState(false)
   const isPassword = type === 'password'
   const hasError = Boolean(error)
+  const iconAtEnd = iconPosition === 'end' && !isPassword
 
   return (
     <FieldWrapper ids={ids} label={label} optional={optional} helperText={helperText} error={error} className={className}>
       <div className="relative">
         {icon && (
-          <Icon icon={icon} size={20} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-fg-2" />
+          <Icon
+            icon={icon}
+            size={20}
+            className={cn('pointer-events-none absolute top-1/2 -translate-y-1/2 text-fg-2', iconAtEnd ? 'right-4' : 'left-4')}
+          />
         )}
         <input
           id={ids.id}
@@ -65,7 +73,7 @@ export function TextField({
                 ? 'border-transparent'
                 : 'border-line-strong hover:border-fg-2 focus:border-accent',
             'disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-fg-2 disabled:hover:border-line-strong',
-            icon && 'pl-12',
+            icon && (iconAtEnd ? 'pr-12' : 'pl-12'),
             isPassword && 'pr-12',
           )}
           {...props}

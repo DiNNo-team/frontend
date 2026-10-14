@@ -63,7 +63,8 @@ Campo de texto con label arriba, ayuda o error abajo. El `ref` y las props nativ
 | `optional` | `boolean` | Agrega " (opcional)". **Nunca asteriscos** |
 | `helperText` | `ReactNode` | Ayuda debajo |
 | `error` | `string` | Reemplaza la ayuda, pone `aria-invalid` y lo enlaza con `aria-describedby`. Dice qué hacer: "Escribe el nombre del restaurante", no "Campo requerido" |
-| `icon` | `LucideIcon` | A la izquierda, 20 px |
+| `icon` | `LucideIcon` | 20 px, a la izquierda por defecto |
+| `iconPosition` | `'start' \| 'end'` | `'end'` lo pone a la derecha (correo del login). Con `type="password"` se ignora: ese lado es del botón del ojo |
 | `type="password"` | | Agrega el botón Mostrar / Ocultar contraseña |
 | `className` | `string` | Solo para layout del bloque (p. ej. ocupar dos columnas) |
 
