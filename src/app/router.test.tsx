@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import type { User } from 'firebase/auth'
 import { renderWithProviders } from '@/test/render'
@@ -12,6 +12,8 @@ vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () =>
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
+  signUp: vi.fn(),
+  sendPasswordReset: vi.fn(),
   signOut: vi.fn(),
   reenviarVerificacion: vi.fn(),
   refrescarSesion: vi.fn(),
@@ -63,7 +65,16 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
     setState((current) => ({ ...current, authEvent: null }))
   }, [])
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, signIn, signOut, clearAuthEvent, reenviarVerificacion, refrescarSesion }),
+    () => ({
+      ...state,
+      signIn,
+      signUp: mocks.signUp,
+      sendPasswordReset: mocks.sendPasswordReset,
+      signOut,
+      clearAuthEvent,
+      reenviarVerificacion,
+      refrescarSesion,
+    }),
     [state, signIn, signOut, clearAuthEvent, reenviarVerificacion, refrescarSesion],
   )
 
@@ -95,9 +106,10 @@ describe('authentication routes', () => {
     expect(router.state.location.pathname).toBe('/login')
     expect(router.state.location.state).toEqual({ from: '/bitacora?period=week' })
 
-    await user.type(screen.getByLabelText('Correo'), 'admin@casa72.co')
-    await user.type(screen.getByLabelText('Contraseña'), 'secreta')
-    await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+    const signInPanel = within(screen.getByRole('tabpanel', { name: 'Iniciar sesión' }))
+    await user.type(signInPanel.getByLabelText('Correo'), 'admin@casa72.co')
+    await user.type(signInPanel.getByLabelText('Contraseña'), 'secreta')
+    await user.click(signInPanel.getByRole('button', { name: 'Iniciar sesión' }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/bitacora'))
     expect(router.state.location.search).toBe('?period=week')

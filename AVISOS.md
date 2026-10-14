@@ -5,6 +5,26 @@
 
 ---
 
+## 14 oct 2026 · Sebastián · Rediseño de `/login` (en curso)
+
+**Qué cambió**
+- `/login` es ahora una tarjeta de vidrio sobre dos formas de marca (naranja arriba a la izquierda, petróleo abajo a la derecha), con navegación lateral **Iniciar sesión / Crear cuenta** y panel de marca. Al cambiar de pestaña, los formularios y el panel se deslizan (300 ms, `--dur-slow`); con "reducir movimiento" solo cambian. El vidrio cae a sólido sin `backdrop-filter` o con "reducir transparencia".
+- La pantalla quedó partida en `features/auth/components/` (`AuthNav`, `AuthHero`, `AuthBackdrop`, `AuthLink`, `SignInForm`, `SignUpForm`) y `features/auth/auth-view.ts`. `LoginPage.tsx` solo los arma.
+- Nuevas utilidades en `globals.css`: `glass-login`, `login-blob-start` y `login-blob-end`. Son solo para el login.
+
+**Para quién**
+- **Jacobo:** `useAuth()` trae dos funciones nuevas: `signUp(email, password)` (crea la cuenta en Firebase y envía el correo de verificación) y `sendPasswordReset(email)` (no dice si la cuenta existe). Los textos de error del registro están en `getFirebaseSignUpErrorMessage`. La lógica de iniciar sesión es la misma que tenías, solo se movió a `SignInForm`.
+- **Todos los que mockean `AuthContextValue` en pruebas:** agreguen `signUp` y `sendPasswordReset` (ya lo hice en `router.test.tsx` y `RestaurantStatus.layout.test.tsx`).
+- **Equipo:** "Crear cuenta" abre el registro público, y el reparto del Sprint 1 decía "No hay registro público". Hay que confirmarlo antes de subirlo a `main`. Si no se aprueba, se quita la pestaña sin tocar el resto.
+
+**Rama / PR**
+- `refactor/sprint1-pantalla-login` (local, sin PR todavía).
+
+**Pendiente**
+- Imagen del panel de marca (por ahora `--grad-petrol`) y el documento de "Términos y condiciones" (por ahora es solo texto).
+
+---
+
 ## 9 oct 2026 · Santiago · PBI 3 · Registro del restaurante (`/onboarding`)
 
 **Qué quedó listo**

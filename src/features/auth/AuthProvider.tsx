@@ -1,12 +1,15 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
   reload,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   type User,
+  type UserCredential,
 } from 'firebase/auth'
 import {
   EMAIL_NOT_VERIFIED_EVENT,
@@ -15,7 +18,12 @@ import {
   setAuthTokenProvider,
 } from '@/lib/api-client'
 import { AuthContext, type AuthEvent } from './auth-context'
-import { getFirebaseActionErrorMessage, getFirebaseAuthErrorMessage } from './auth-errors'
+import {
+  getFirebaseActionErrorMessage,
+  getFirebaseAuthErrorMessage,
+  getFirebaseErrorCode,
+  getFirebaseSignUpErrorMessage,
+} from './auth-errors'
 import { auth } from './firebase'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -68,6 +76,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function signUp(email: string, password: string): Promise<void> {
+    let credential: UserCredential
+    try {
+      credential = await createUserWithEmailAndPassword(auth, email, password)
+      setEmailVerificationRetried(false)
+    } catch (error) {
+      throw new Error(getFirebaseSignUpErrorMessage(error))
+    }
+    try {
+      await sendEmailVerification(credential.user)
+    } catch (error) {
+      // The account already exists: the verification screen lets the person resend the email.
+      throw new Error(getFirebaseActionErrorMessage(error, 'Creamos tu cuenta, pero no pudimos enviar el correo de verificación. Reenvíalo desde la siguiente pantalla.'))
+    }
+  }
+
+  async function sendPasswordReset(email: string): Promise<void> {
+    try {
+      await sendPasswordResetEmail(auth, email)
+    } catch (error) {
+      // Never reveal whether an account exists for that email.
+      if (getFirebaseErrorCode(error) === 'auth/user-not-found') return
+      throw new Error(getFirebaseActionErrorMessage(error, 'No pudimos enviar el correo. Intenta de nuevo.'))
+    }
+  }
+
   async function signOut(): Promise<void> {
     await firebaseSignOut(auth)
     queryClient.clear()
@@ -110,6 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailVerificationRetried,
         clearAuthEvent: () => setAuthEvent(null),
         signIn,
+        signUp,
+        sendPasswordReset,
         signOut,
         reenviarVerificacion,
         refrescarSesion,

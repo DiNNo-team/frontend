@@ -1,110 +1,65 @@
-import { useState, type FormEvent } from 'react'
-import { useLocation, useNavigate } from 'react-router'
-import { Alert, Button, Logo, TextField } from '@/components/ui'
-import { getFirebaseAuthErrorMessage } from './auth-errors'
-import { getSafeReturnTo } from './auth-navigation'
-import { useAuth } from './auth-context'
+import { useEffect, useRef, useState } from 'react'
+import { authPanelId, authTabId, SLIDE_CLASSES, type AuthView } from './auth-view'
+import { AuthBackdrop } from './components/AuthBackdrop'
+import { AuthHero } from './components/AuthHero'
+import { AuthNav } from './components/AuthNav'
+import { SignInForm } from './components/SignInForm'
+import { SignUpForm } from './components/SignUpForm'
 
+/**
+ * `/login`: glass card over two brand shapes, with "Iniciar sesión" and "Crear cuenta" in the same card.
+ * Switching slides the forms and the brand panel; the hidden form is `inert`.
+ */
 export default function LoginPage() {
-  const { signIn } = useAuth()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [emailError, setEmailError] = useState<string>()
-  const [passwordError, setPasswordError] = useState<string>()
-  const [submitError, setSubmitError] = useState<string>()
-  const [submitting, setSubmitting] = useState(false)
+  const [view, setView] = useState<AuthView>('signin')
+  const panels = useRef<Record<AuthView, HTMLDivElement | null>>({ signin: null, signup: null })
+  const focusPending = useRef(false)
 
-  function validateEmail(value: string): string | undefined {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
-      ? undefined
-      : 'Escribe un correo válido para iniciar sesión.'
-  }
+  useEffect(() => {
+    if (!focusPending.current) return
+    focusPending.current = false
+    // The link that switched the view is now inside an inert panel: move focus to the new form.
+    panels.current[view]?.querySelector('input')?.focus({ preventScroll: true })
+  }, [view])
 
-  function validatePassword(value: string): string | undefined {
-    return value.length > 0 ? undefined : 'Escribe tu contraseña para iniciar sesión.'
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setSubmitError(undefined)
-
-    const nextEmailError = validateEmail(email)
-    const nextPasswordError = validatePassword(password)
-    setEmailError(nextEmailError)
-    setPasswordError(nextPasswordError)
-    if (nextEmailError || nextPasswordError) return
-
-    setSubmitting(true)
-    try {
-      await signIn(email.trim(), password)
-      navigate(getSafeReturnTo(location.state) ?? '/mesas', { replace: true })
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : getFirebaseAuthErrorMessage(error))
-    } finally {
-      setSubmitting(false)
-    }
+  function switchFromForm(next: AuthView) {
+    focusPending.current = true
+    setView(next)
   }
 
   return (
-    <main className="grid min-h-screen bg-bg lg:grid-cols-2">
-      <section className="hidden items-center justify-center bg-(--grad-petrol) px-8 py-12 text-on-brand lg:flex">
-        <div className="flex max-w-120 flex-col items-center gap-8 text-center">
-          <Logo variant="onDark" className="w-24" />
-          <div className="flex flex-col gap-4">
-            <h1 className="text-display">Dile no a la espera.</h1>
-            <p className="text-body">Microreservas de mesas con disponibilidad inmediata.</p>
-          </div>
-        </div>
-      </section>
+    <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-bg px-4 py-12">
+      <AuthBackdrop />
 
-      <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex w-full max-w-100 flex-col gap-8">
-          <Logo variant="auto" className="w-24 lg:hidden" />
-          <header className="flex flex-col gap-2">
-            <h1 className="text-h1">Inicia sesión</h1>
-            <p className="text-sec text-fg-2">Administra tu restaurante en DiNNo</p>
-          </header>
+      <div
+        data-view={view}
+        className="group glass-login relative flex w-full max-w-120 flex-col rounded-card shadow-lifted md:max-w-150 md:flex-row lg:min-h-140 lg:max-w-200"
+      >
+        <AuthNav view={view} onSelect={setView} />
+        <AuthHero />
 
-          {submitError && <Alert type="error">{submitError}</Alert>}
-
-          <form className="flex flex-col gap-6" noValidate onSubmit={handleSubmit}>
-            <TextField
-              label="Correo"
-              name="email"
-              type="email"
-              autoComplete="username"
-              placeholder="nombre@restaurante.com"
-              value={email}
-              error={emailError}
-              disabled={submitting}
-              onChange={(event) => {
-                setEmail(event.target.value)
-                if (emailError) setEmailError(undefined)
+        <div className="grid min-w-0 flex-1 overflow-hidden">
+          {(['signin', 'signup'] as const).map((panel) => (
+            <div
+              key={panel}
+              ref={(element) => {
+                panels.current[panel] = element
               }}
-              onBlur={() => setEmailError(validateEmail(email))}
-            />
-            <TextField
-              label="Contraseña"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              error={passwordError}
-              disabled={submitting}
-              onChange={(event) => {
-                setPassword(event.target.value)
-                if (passwordError) setPasswordError(undefined)
-              }}
-              onBlur={() => setPasswordError(validatePassword(password))}
-            />
-            <Button type="submit" fullWidth loading={submitting} loadingText="Iniciando sesión…">
-              Iniciar sesión
-            </Button>
-          </form>
+              role="tabpanel"
+              id={authPanelId(panel)}
+              aria-labelledby={authTabId(panel)}
+              inert={view !== panel}
+              className={`${SLIDE_CLASSES[panel]} flex flex-col justify-center px-6 pt-6 pb-8 sm:px-10 md:py-10`}
+            >
+              {panel === 'signin' ? (
+                <SignInForm onSwitch={() => switchFromForm('signup')} />
+              ) : (
+                <SignUpForm onSwitch={() => switchFromForm('signin')} />
+              )}
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
     </main>
   )
 }
