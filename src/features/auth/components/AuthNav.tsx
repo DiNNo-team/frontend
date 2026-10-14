@@ -30,7 +30,7 @@ export function AuthNav({ view, onSelect }: AuthNavProps) {
   return (
     <nav aria-label="Acceso" className="flex shrink-0 flex-col md:w-25">
       <div className="flex justify-center pt-8 pb-4 md:flex-1 md:items-center md:p-0">
-        <Logo symbolOnly className="hidden h-11 w-auto md:block" />
+        <Logo symbolOnly className="hidden h-33 w-auto max-w-none md:block" />
         <Logo className="w-24 md:hidden" />
       </div>
 
