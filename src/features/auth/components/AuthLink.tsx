@@ -1,17 +1,14 @@
 import type { ComponentPropsWithRef } from 'react'
 import { cn } from '@/lib/cn'
 
-/**
- * Inline text action on the glass card. Text stays in `text-fg` (manual 7: text on glass is ink or cream, AA);
- * the orange underline marks it as an action.
- */
+/** Inline text action on the glass card, in orange and softened so it does not compete with the form. */
 export function AuthLink({ className, type = 'button', ...props }: ComponentPropsWithRef<'button'>) {
   return (
     <button
       type={type}
       className={cn(
-        'cursor-pointer font-bold text-fg underline decoration-accent decoration-2 underline-offset-4',
-        'transition duration-(--dur-fast) ease-dinno enabled:hover:decoration-accent-pressed',
+        'cursor-pointer font-bold text-accent-text opacity-70',
+        'transition duration-(--dur-fast) ease-dinno enabled:hover:opacity-100',
         'disabled:cursor-not-allowed disabled:opacity-45',
         className,
       )}

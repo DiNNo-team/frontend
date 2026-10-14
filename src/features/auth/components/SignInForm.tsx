@@ -71,7 +71,7 @@ export function SignInForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <form aria-labelledby="signin-title" className="flex flex-col gap-5" noValidate onSubmit={handleSubmit}>
-      <p className="order-last text-center text-sec text-fg md:order-first">
+      <p className="order-last text-center text-sec text-fg/60 md:order-first">
         ¿Aún no tienes cuenta? <AuthLink onClick={onSwitch}>Crear cuenta</AuthLink>
       </p>
 
@@ -91,6 +91,7 @@ export function SignInForm({ onSwitch }: { onSwitch: () => void }) {
           name="email"
           type="email"
           icon={Mail}
+          iconPosition="end"
           autoComplete="username"
           placeholder="nombre@restaurante.com"
           value={email}

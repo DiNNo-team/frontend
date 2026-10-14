@@ -11,6 +11,7 @@
 - `/login` es ahora una tarjeta de vidrio sobre dos formas de marca (naranja arriba a la izquierda, petróleo abajo a la derecha), con navegación lateral **Iniciar sesión / Crear cuenta** y panel de marca. Al cambiar de pestaña, los formularios y el panel se deslizan (300 ms, `--dur-slow`); con "reducir movimiento" solo cambian. El vidrio cae a sólido sin `backdrop-filter` o con "reducir transparencia".
 - La pantalla quedó partida en `features/auth/components/` (`AuthNav`, `AuthHero`, `AuthBackdrop`, `AuthLink`, `SignInForm`, `SignUpForm`) y `features/auth/auth-view.ts`. `LoginPage.tsx` solo los arma.
 - Nuevas utilidades en `globals.css`: `glass-login`, `login-blob-start` y `login-blob-end`. Son solo para el login.
+- **Kit:** `TextField` tiene la prop nueva `iconPosition="end"`, que pone el ícono a la derecha (lo usa el correo del login). Por defecto sigue a la izquierda, así que no cambia ninguna pantalla. Con `type="password"` se ignora, porque ese lado es del botón del ojo.
 
 **Para quién**
 - **Jacobo:** `useAuth()` trae dos funciones nuevas: `signUp(email, password)` (crea la cuenta en Firebase y envía el correo de verificación) y `sendPasswordReset(email)` (no dice si la cuenta existe). Los textos de error del registro están en `getFirebaseSignUpErrorMessage`. La lógica de iniciar sesión es la misma que tenías, solo se movió a `SignInForm`.
@@ -18,7 +19,8 @@
 - **Equipo:** "Crear cuenta" abre el registro público, y el reparto del Sprint 1 decía "No hay registro público". Hay que confirmarlo antes de subirlo a `main`. Si no se aprueba, se quita la pestaña sin tocar el resto.
 
 **Rama / PR**
-- `refactor/sprint1-pantalla-login` (local, sin PR todavía).
+- `feat/sprint1-pantalla-login` → `develop` (PR #35, mergeado).
+- Ajustes: `feat/sprint1-ajustes-login` → `develop` (símbolo del logo más grande, ícono del correo a la derecha y enlaces en naranja suave sin subrayado).
 
 **Pendiente**
 - Imagen del panel de marca (por ahora `--grad-petrol`) y el documento de "Términos y condiciones" (por ahora es solo texto).
