@@ -11,6 +11,9 @@ export interface AuthContextValue {
   clearAuthEvent: () => void
   emailVerificationRetried: boolean
   signIn: (email: string, password: string) => Promise<void>
+  /** Creates the Firebase account and sends the verification email. The backend creates the user on the first verified request. */
+  signUp: (email: string, password: string) => Promise<void>
+  sendPasswordReset: (email: string) => Promise<void>
   signOut: () => Promise<void>
   reenviarVerificacion: () => Promise<void>
   refrescarSesion: () => Promise<void>
