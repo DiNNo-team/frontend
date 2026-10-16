@@ -5,10 +5,40 @@
 
 ---
 
+## 15 oct 2026 (noche) · Elizabeth · Backend del Sprint 2 disponible en `develop`
+
+- **Todo el backend del Sprint 2 está en `develop` desde el 15 oct** (PR #35 a #40 del backend): cuentas y roles, geocodificación y coordenadas del restaurante, búsqueda, detalle público y tiempo real. Ya se puede integrar contra la API real; no hace falta esperar a ninguna fecha.
+- **El contrato sigue en `CLAUDE.md`, sección 10**, ahora idéntica en los tres repos. Hoy cambió solo la parte de **Tiempo real** (es de la app) y la tabla "Cuándo está listo cada contrato en `develop`". El detalle de cada endpoint, con ejemplos, está en Swagger: `https://dinno-backend.onrender.com/docs`.
+- Las fechas de la entrada "Contratos del Sprint 2 publicados" (más abajo) quedan superadas.
+
+### Por persona
+
+**Jacobo (acceso a la web):**
+- **Ya está activo en `develop`:** el backend no crea usuarios al iniciar sesión. Precedencia de los errores: `401` de sesión → `401 EMAIL_NOT_VERIFIED` → `403 ACCOUNT_NOT_ENABLED` (cuenta sin perfil) o `403 DINER_ACCOUNT` (cuenta de comensal) → `403 RESTAURANT_REQUIRED` (restaurante habilitado sin restaurante registrado). Textos exactos en la tabla de códigos de `CLAUDE.md`, sección 10.
+- **Sigue pendiente en la web:** hoy `src/lib/api-client.ts` solo distingue `EMAIL_NOT_VERIFIED` y `RESTAURANT_REQUIRED`; `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` terminan en «No tienes acceso a esta sección.». El plan sigue siendo el de la entrada "Contratos del Sprint 2 publicados" (más abajo): manejarlos por `errorCode` y quitar «Crear cuenta».
+- **Para probar:** `dinnoteam2026@gmail.com` es el único correo real habilitado como restaurante. Cualquier otro correo verificado da `ACCOUNT_NOT_ENABLED`. Para `DINER_ACCOUNT` hace falta una cuenta de comensal: crea una desde la app (o con `POST /v1/diners/me`) y entra con ella en la web.
+
+**Santiago (ubicación del restaurante):**
+- **`GET /v1/geocode?address=<texto>`** ya está en `develop` → `200 { latitude, longitude, formattedAddress }` (6 decimales, siempre dentro de Bogotá). No exige restaurante registrado: úsalo en `/onboarding` antes del `POST`. `address` recortada, de 3 a 255 caracteres; si no, `400`.
+  - `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE`: en los dos casos muestra el mensaje y el mapa centrado en Bogotá para mover el pin, sin bloquear el guardado. Ramifica por `errorCode`. Mientras la llave de Google no esté configurada en Render, la respuesta es siempre `503`.
+- **Coordenadas en `POST /v1/restaurants` y `PATCH /v1/restaurants/me`:** `latitude` y `longitude` como números, **las dos o ninguna** (si llega solo una, `400`), dentro de Bogotá (lat 4.45 a 4.85, lng −74.25 a −73.95; fuera, `400`). Se aceptan con más decimales y **se guardan redondeadas a 6**. **No se pueden borrar:** `null` da `400`. En el `PATCH`, enviar solo las coordenadas es una edición válida.
+- **Respuestas:** `POST /v1/restaurants`, `GET` y `PATCH /v1/restaurants/me` traen `latitude` y `longitude` (`number | null`). El aviso **«Completa tu ubicación»** se muestra cuando `GET /v1/restaurants/me` trae `latitude === null`.
+- **Datos de los 15 restaurantes reales:** el formato de `src/seed-data/restaurants.json` está en el `AVISOS.md` del backend (sección de Santiago). Se entrega el **viernes 16** en una rama `feature/s2-seed-restaurantes` del backend, con PR para Elizabeth, sin correr el seed en Neon. **No incluyas Casa 72:** ya está en el seed y es el restaurante de prueba del equipo.
+
+**Sergio (QA):**
+- **Nombres exactos para la matriz:**
+  - `errorCode` de HTTP: `EMAIL_NOT_VERIFIED`, `ACCOUNT_NOT_ENABLED`, `PROFILE_REQUIRED`, `DINER_ACCOUNT`, `RESTAURANT_ACCOUNT`, `RESTAURANT_REQUIRED`, `RESTAURANT_NOT_FOUND`, `ADDRESS_NOT_FOUND` y `GEOCODING_UNAVAILABLE`.
+  - Códigos del `connect_error` del WebSocket (app): `UNAUTHORIZED`, `EMAIL_NOT_VERIFIED`, `PROFILE_REQUIRED`, `RESTAURANT_ACCOUNT` y `SERVER_ERROR`.
+  - `availability`: `available`, `few`, `none` y `closed`.
+- **`GET /v1/me`** responde con los dos roles: `{ id, email, displayName, role, restaurantId }`. En una cuenta de restaurante `displayName` es `null`.
+- **QA de tiempo real:** el script `scripts/listen-availability.mjs` vive en el repo del backend. Crear una mesa, cambiar su estado, desactivarla o reactivarla, abrir o cerrar el restaurante, o editar su horario o ubicación desde la web debe imprimir un `availability.changed`; editar el identificador o la capacidad de una mesa, o repetir el mismo estado, no imprime nada. Uso en el `AVISOS.md` del backend (sección de Sergio) y en su README, sección 6.
+
+---
+
 ## 15 oct 2026 · Elizabeth · Contratos del Sprint 2 publicados
 
 - Los contratos del Sprint 2 están en `CLAUDE.md`, sección "Sprint 2 · Contratos". Es la fuente de verdad para backend, web y app; si algo no está ahí, se pregunta antes de inventarlo. Las fechas de cada contrato están en la tabla "Cuándo está listo cada contrato en `develop`".
-- **Cambio importante (llega a `develop` el 15 oct en la noche):** el backend deja de crear usuarios automáticamente. Por ahora el único correo real habilitado como restaurante es `dinnoteam2026@gmail.com`. Para probar la web como restaurante, usen esa cuenta o el usuario de desarrollo en local. Cualquier otra cuenta recibe 403 `ACCOUNT_NOT_ENABLED` en la web. Si necesitan habilitar otro correo, pídanselo a Elizabeth.
+- **Cambio importante (ya en `develop` desde el 15 oct):** el backend deja de crear usuarios automáticamente. Por ahora el único correo real habilitado como restaurante es `dinnoteam2026@gmail.com`. Para probar la web como restaurante, usen esa cuenta o el usuario de desarrollo en local. Cualquier otra cuenta recibe 403 `ACCOUNT_NOT_ENABLED` en la web. Si necesitan habilitar otro correo, pídanselo a Elizabeth.
 
 ### Por persona (Sprint 2)
 
@@ -22,7 +52,7 @@
 - `POST /v1/restaurants` y `PATCH /v1/restaurants/me` aceptan `latitude` y `longitude` opcionales: se envían **las dos o ninguna**, con hasta 6 decimales y dentro de Bogotá (lat 4.45–4.85, lng −74.25 a −73.95). Fuera de ese rango → 400. Las respuestas, incluido `GET /restaurants/me`, traen `latitude` y `longitude` (pueden venir en `null`).
 - La obligatoriedad de la ubicación al registrar la pone el formulario. El backend la deja opcional.
 - `GET /v1/geocode?address=...` → `{ latitude, longitude, formattedAddress }`. `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE` muestran el mapa centrado en Bogotá para mover el pin a mano, sin bloquear el guardado. Recuerda que `forbidNonWhitelisted` rechaza cualquier campo que no esté en el contrato.
-- Disponible en `develop` el viernes 16; mientras tanto, usa datos de ejemplo con esa forma.
+- ~~Disponible en `develop` el viernes 16; mientras tanto, usa datos de ejemplo con esa forma.~~ **Superado:** ya está en `develop` desde el 15 oct (ver la entrada "Backend del Sprint 2 disponible en `develop`").
 - Aviso «Completa tu ubicación»: se muestra cuando `GET /restaurants/me` trae `latitude === null`.
 
 **Sergio:**
