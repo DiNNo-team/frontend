@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getFirebaseAuthErrorMessage } from './auth-errors'
+import { getFirebaseAuthErrorMessage, getFirebaseGoogleAuthErrorMessage } from './auth-errors'
 
 describe('getFirebaseAuthErrorMessage', () => {
   it('uses one generic message for invalid credentials', () => {
@@ -21,6 +21,20 @@ describe('getFirebaseAuthErrorMessage', () => {
   it('does not expose technical details for unknown errors', () => {
     expect(getFirebaseAuthErrorMessage({ code: 'auth/unknown', message: 'private detail' })).toBe(
       'No pudimos iniciar sesión. Revisa tu correo y contraseña e intenta de nuevo.',
+    )
+  })
+})
+
+describe('getFirebaseGoogleAuthErrorMessage', () => {
+  it('explains blocked popups and common retryable failures without technical codes', () => {
+    expect(getFirebaseGoogleAuthErrorMessage({ code: 'auth/popup-blocked' })).toBe(
+      'No pudimos abrir la ventana de Google. Permite las ventanas emergentes e intenta de nuevo.',
+    )
+    expect(getFirebaseGoogleAuthErrorMessage({ code: 'auth/network-request-failed' })).toBe(
+      'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.',
+    )
+    expect(getFirebaseGoogleAuthErrorMessage({ code: 'auth/unknown', message: 'private detail' })).toBe(
+      'No pudimos iniciar sesión con Google. Intenta de nuevo.',
     )
   })
 })

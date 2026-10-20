@@ -1,15 +1,15 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   onAuthStateChanged,
   reload,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as firebaseSignOut,
   type User,
-  type UserCredential,
 } from 'firebase/auth'
 import {
   EMAIL_NOT_VERIFIED_EVENT,
@@ -22,7 +22,7 @@ import {
   getFirebaseActionErrorMessage,
   getFirebaseAuthErrorMessage,
   getFirebaseErrorCode,
-  getFirebaseSignUpErrorMessage,
+  getFirebaseGoogleAuthErrorMessage,
 } from './auth-errors'
 import { auth } from './firebase'
 
@@ -76,19 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string): Promise<void> {
-    let credential: UserCredential
+  async function signInWithGoogle(): Promise<boolean> {
     try {
-      credential = await createUserWithEmailAndPassword(auth, email, password)
+      await signInWithPopup(auth, new GoogleAuthProvider())
       setEmailVerificationRetried(false)
+      return true
     } catch (error) {
-      throw new Error(getFirebaseSignUpErrorMessage(error))
-    }
-    try {
-      await sendEmailVerification(credential.user)
-    } catch (error) {
-      // The account already exists: the verification screen lets the person resend the email.
-      throw new Error(getFirebaseActionErrorMessage(error, 'Creamos tu cuenta, pero no pudimos enviar el correo de verificación. Reenvíalo desde la siguiente pantalla.'))
+      const code = getFirebaseErrorCode(error)
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return false
+      throw new Error(getFirebaseGoogleAuthErrorMessage(error))
     }
   }
 
@@ -144,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailVerificationRetried,
         clearAuthEvent: () => setAuthEvent(null),
         signIn,
-        signUp,
+        signInWithGoogle,
         sendPasswordReset,
         signOut,
         reenviarVerificacion,
