@@ -1,14 +1,18 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import type { User } from 'firebase/auth'
 import { renderWithProviders } from '@/test/render'
 import { AuthContext, type AuthContextValue, type AuthEvent } from '@/features/auth/auth-context'
 import { routes } from './router'
 
-vi.mock('@/features/restaurant-status/components/RestaurantStatusBanner', () => ({ RestaurantStatusBanner: () => null }))
-vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () => ({ RestaurantStatusControl: () => null }))
+vi.mock('@/features/restaurant-status/components/RestaurantStatusBanner', () => ({
+  RestaurantStatusBanner: () => <div data-testid="restaurant-status-banner" />,
+}))
+vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () => ({
+  RestaurantStatusControl: () => <div data-testid="restaurant-status-control" />,
+}))
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
@@ -18,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   reenviarVerificacion: vi.fn(),
   refrescarSesion: vi.fn(),
   clearAuthEvent: vi.fn(),
+  clearAccountEvent: vi.fn(),
 }))
 
 const AUTH_USER = {
@@ -31,6 +36,7 @@ interface AuthState {
   loading: boolean
   emailVerified: boolean
   authEvent: AuthEvent | null
+  accountEvent: AuthState['authEvent']
   emailVerificationRetried: boolean
 }
 
@@ -39,6 +45,7 @@ const SIGNED_OUT: AuthState = {
   loading: false,
   emailVerified: false,
   authEvent: null,
+  accountEvent: null,
   emailVerificationRetried: false,
 }
 const SIGNED_IN: AuthState = { ...SIGNED_OUT, user: AUTH_USER, emailVerified: true }
@@ -69,18 +76,24 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
     mocks.clearAuthEvent()
     setState((current) => ({ ...current, authEvent: null }))
   }, [])
+  const clearAccountEvent = useCallback(() => {
+    mocks.clearAccountEvent()
+    setState((current) => ({ ...current, authEvent: null, accountEvent: null }))
+  }, [])
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,
+      accountEvent: state.authEvent === 'account-not-enabled' || state.authEvent === 'diner-account' ? state.authEvent : null,
       signIn,
       signInWithGoogle,
       sendPasswordReset: mocks.sendPasswordReset,
       signOut,
       clearAuthEvent,
+      clearAccountEvent,
       reenviarVerificacion,
       refrescarSesion,
     }),
-    [state, signIn, signInWithGoogle, signOut, clearAuthEvent, reenviarVerificacion, refrescarSesion],
+    [state, signIn, signInWithGoogle, signOut, clearAuthEvent, clearAccountEvent, reenviarVerificacion, refrescarSesion],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -248,6 +261,55 @@ describe('authentication routes', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
     expect(await screen.findByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
     expect(mocks.signOut).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['account-not-enabled', 'Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.'],
+    ['diner-account', 'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.'],
+  ] as const)('shows the account screen for %s with only sign out and returns to login', async (event, message) => {
+    const { router, user } = renderAt('/mesas', { ...SIGNED_IN, authEvent: event })
+
+    const accountScreen = await screen.findByRole('region', { name: 'Cierra sesión para continuar.' })
+    expect(within(accountScreen).getByText(message)).toBeInTheDocument()
+    expect(within(accountScreen).getAllByRole('button')).toHaveLength(1)
+    await user.click(within(accountScreen).getByRole('button', { name: 'Cerrar sesión' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
+    expect(mocks.signOut).toHaveBeenCalledTimes(1)
+    expect(mocks.clearAccountEvent).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+  })
+
+  it('shows only the account screen, without the restaurant status banner or switch', async () => {
+    renderAt('/mesas', { ...SIGNED_IN, authEvent: 'account-not-enabled' })
+
+    expect(await screen.findByRole('region', { name: 'Cierra sesión para continuar.' })).toBeInTheDocument()
+    expect(screen.queryByTestId('restaurant-status-banner')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('restaurant-status-control')).not.toBeInTheDocument()
+  })
+
+  it('keeps the restaurant status banner and switch without an account event', async () => {
+    renderAt('/mesas', SIGNED_IN)
+
+    expect(await screen.findByTestId('restaurant-status-banner')).toBeInTheDocument()
+    expect(screen.getByTestId('restaurant-status-control')).toBeInTheDocument()
+  })
+
+  it('shows email verification before an account event', async () => {
+    renderAt('/mesas', { ...SIGNED_IN, authEvent: 'email-not-verified' })
+
+    expect(await screen.findByRole('heading', { name: 'Verifica tu correo para continuar.' })).toBeInTheDocument()
+    expect(screen.queryByText('Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.')).not.toBeInTheDocument()
+  })
+
+  it('shows the account screen inside OnboardingShell', async () => {
+    const { router } = renderAt('/onboarding', { ...SIGNED_IN, authEvent: 'diner-account' })
+
+    expect(await screen.findByText('Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/onboarding')
+    expect(screen.queryByRole('heading', { name: 'Configura tu restaurante' })).not.toBeInTheDocument()
+    const accountScreen = screen.getByRole('region', { name: 'Cierra sesión para continuar.' })
+    expect(within(accountScreen).getAllByRole('button')).toHaveLength(1)
   })
 
   it('routes RESTAURANT_REQUIRED to onboarding without requiring restaurant data there', async () => {

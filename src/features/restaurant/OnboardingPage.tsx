@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import { PageHeader, useToast } from '@/components/ui'
-import { ApiError } from '@/lib/api-client'
+import { ACCOUNT_NOT_ENABLED_CODE, ApiError, DINER_ACCOUNT_CODE } from '@/lib/api-client'
 import { RestaurantForm } from './components/RestaurantForm'
 import { useRegisterRestaurant } from './hooks'
 import { ONBOARDING_TEXT } from './messages'
@@ -17,6 +17,10 @@ export default function OnboardingPage() {
       await registerRestaurant.mutateAsync(toRegisterRestaurantInput(values))
       toast.show({ type: 'success', message: ONBOARDING_TEXT.savedToast })
     } catch (error) {
+      // Wrong account: the layout already shows WrongAccountScreen, so stay here.
+      if (error instanceof ApiError && error.status === 403 && (error.code === ACCOUNT_NOT_ENABLED_CODE || error.code === DINER_ACCOUNT_CODE)) {
+        return
+      }
       // 409: the user already has a restaurant, so there is nothing to register: go to the tables.
       if (!(error instanceof ApiError && error.status === 409)) throw error
       toast.show({ type: 'info', message: ONBOARDING_TEXT.alreadyRegisteredToast })
