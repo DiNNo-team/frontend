@@ -5,6 +5,20 @@
 
 ---
 
+## 20 oct 2026 · Sergio · Pendiente del Sprint 1 · Prueba de `RestaurantStatus` que fallaba
+
+**Qué quedó listo**
+- «cannot be pressed again while saving» (`RestaurantStatus.test.tsx`) ya no depende de la velocidad de la máquina. El componente no cambió: la falla estaba en la prueba, que usaba un `setTimeout` real de 50 ms.
+- **La suite de pruebas de la web queda 100 % en verde (264/264).** Si una prueba falla después de tu cambio, revisa primero tu cambio.
+
+**Para quién**
+- **Todos:** para probar estados "mientras guarda", no uses `setLatency` ni timeouts reales. Deja el guardado pendiente con una promesa que controle la prueba y suéltalo en un `finally` (ejemplo: «cannot be pressed again while saving» en `RestaurantStatus.test.tsx`).
+
+**Rama / PR**
+- `fix/sprint2-restaurant-status-test` → `develop`.
+
+---
+
 ## 15 oct 2026 (noche) · Elizabeth · Backend del Sprint 2 disponible en `develop`
 
 - **Todo el backend del Sprint 2 está en `develop` desde el 15 oct** (PR #35 a #40 del backend): cuentas y roles, geocodificación y coordenadas del restaurante, búsqueda, detalle público y tiempo real. Ya se puede integrar contra la API real; no hace falta esperar a ninguna fecha.
