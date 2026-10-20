@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import type { User } from 'firebase/auth'
 import { renderWithProviders } from '@/test/render'
@@ -12,7 +12,7 @@ vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () =>
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
-  signUp: vi.fn(),
+  signInWithGoogle: vi.fn(),
   sendPasswordReset: vi.fn(),
   signOut: vi.fn(),
   reenviarVerificacion: vi.fn(),
@@ -49,6 +49,11 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
     await mocks.signIn(email, password)
     setState({ ...SIGNED_IN, user: AUTH_USER })
   }, [])
+  const signInWithGoogle = useCallback(async () => {
+    const signedIn = await mocks.signInWithGoogle()
+    if (signedIn) setState({ ...SIGNED_IN, user: AUTH_USER })
+    return signedIn
+  }, [])
   const signOut = useCallback(async () => {
     await mocks.signOut()
     setState(SIGNED_OUT)
@@ -68,14 +73,14 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
     () => ({
       ...state,
       signIn,
-      signUp: mocks.signUp,
+      signInWithGoogle,
       sendPasswordReset: mocks.sendPasswordReset,
       signOut,
       clearAuthEvent,
       reenviarVerificacion,
       refrescarSesion,
     }),
-    [state, signIn, signOut, clearAuthEvent, reenviarVerificacion, refrescarSesion],
+    [state, signIn, signInWithGoogle, signOut, clearAuthEvent, reenviarVerificacion, refrescarSesion],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -94,6 +99,7 @@ function renderAt(path: string, authState = SIGNED_OUT) {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.signIn.mockResolvedValue(undefined)
+  mocks.signInWithGoogle.mockResolvedValue(true)
   mocks.signOut.mockResolvedValue(undefined)
   mocks.reenviarVerificacion.mockResolvedValue(undefined)
   mocks.refrescarSesion.mockResolvedValue(undefined)
@@ -106,10 +112,9 @@ describe('authentication routes', () => {
     expect(router.state.location.pathname).toBe('/login')
     expect(router.state.location.state).toEqual({ from: '/bitacora?period=week' })
 
-    const signInPanel = within(screen.getByRole('tabpanel', { name: 'Iniciar sesión' }))
-    await user.type(signInPanel.getByLabelText('Correo'), 'admin@casa72.co')
-    await user.type(signInPanel.getByLabelText('Contraseña'), 'secreta')
-    await user.click(signInPanel.getByRole('button', { name: 'Iniciar sesión' }))
+    await user.type(screen.getByLabelText('Correo'), 'admin@casa72.co')
+    await user.type(screen.getByLabelText('Contraseña'), 'secreta')
+    await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/bitacora'))
     expect(router.state.location.search).toBe('?period=week')
@@ -141,6 +146,30 @@ describe('authentication routes', () => {
     )
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
+  })
+
+  it('returns a Google sign-in to the original internal route', async () => {
+    const { router, user } = renderAt('/bitacora?period=week')
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/bitacora'))
+    expect(router.state.location.search).toBe('?period=week')
+    expect(mocks.signInWithGoogle).toHaveBeenCalledOnce()
+  })
+
+  it('sends a Google sign-in without a return route to the dashboard', async () => {
+    const { router, user } = renderAt('/login')
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
+    expect(mocks.signInWithGoogle).toHaveBeenCalledOnce()
+  })
+
+  it('keeps unknown registration URLs on the normal missing-route behavior', async () => {
+    const { router } = renderAt('/signup')
+
+    expect(await screen.findByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/login')
   })
 
   it('does not redirect while Firebase is resolving the initial session', async () => {
