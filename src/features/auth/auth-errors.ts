@@ -16,18 +16,16 @@ export function getFirebaseActionErrorMessage(error: unknown, fallback: string):
   }
 }
 
-export function getFirebaseSignUpErrorMessage(error: unknown): string {
+export function getFirebaseGoogleAuthErrorMessage(error: unknown): string {
   switch (getFirebaseErrorCode(error)) {
-    case 'auth/email-already-in-use':
-      return 'Ya hay una cuenta con este correo. Inicia sesión o usa otro correo.'
-    case 'auth/invalid-email':
-      return 'Escribe un correo válido para crear tu cuenta.'
-    case 'auth/weak-password':
-      return 'Usa una contraseña más segura, de al menos 8 caracteres.'
-    case 'auth/operation-not-allowed':
-      return 'Por ahora no puedes crear cuentas desde aquí. Escríbele al equipo de DiNNo.'
+    case 'auth/popup-blocked':
+      return 'No pudimos abrir la ventana de Google. Permite las ventanas emergentes e intenta de nuevo.'
+    case 'auth/too-many-requests':
+      return 'Hay demasiados intentos. Espera un momento e inténtalo de nuevo.'
+    case 'auth/network-request-failed':
+      return 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'
     default:
-      return getFirebaseActionErrorMessage(error, 'No pudimos crear tu cuenta. Intenta de nuevo.')
+      return 'No pudimos iniciar sesión con Google. Intenta de nuevo.'
   }
 }
 
