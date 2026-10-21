@@ -5,6 +5,17 @@
 
 ---
 
+## 20 oct 2026 · Sergio · Pendiente del Sprint 1 · Prueba de `RestaurantStatus` que fallaba
+
+**Qué quedó listo**
+- «cannot be pressed again while saving» (`RestaurantStatus.test.tsx`) ya no depende de la velocidad de la máquina. El componente no cambió: la falla estaba en la prueba, que usaba un `setTimeout` real de 50 ms.
+- **La suite de pruebas de la web queda 100 % en verde (264/264).** Si una prueba falla después de tu cambio, revisa primero tu cambio.
+
+**Para quién**
+- **Todos:** para probar estados "mientras guarda", no uses `setLatency` ni timeouts reales. Deja el guardado pendiente con una promesa que controle la prueba y suéltalo en un `finally` (ejemplo: «cannot be pressed again while saving» en `RestaurantStatus.test.tsx`).
+
+**Rama / PR**
+- `fix/sprint2-restaurant-status-test` → `develop`.
 ## 20 oct 2026 · Jacobo · Cuenta equivocada en la web
 
 - Los 403 `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` muestran una pantalla de cuenta equivocada con el texto del contrato (`CLAUDE.md`, sección 10) y un solo botón **Cerrar sesión**, en el dashboard y en `/onboarding`. Se decide por `errorCode`, nunca por el texto.
