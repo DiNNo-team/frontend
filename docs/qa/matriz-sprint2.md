@@ -5,7 +5,7 @@
 | **Sprint** | Sprint 2 · Búsqueda y disponibilidad para el comensal (15–21 oct 2026) |
 | **Objetivo** | Un comensal entra a la app móvil, busca restaurantes cerca o por zona, los ve con su indicador de disponibilidad, filtra, abre el detalle y ve los cambios en vivo cuando el restaurante cambia sus mesas o cierra desde la web (Reparto, sección 1). |
 | **Ambiente** | Backend en Render + base en Neon · web en Vercel (⚠️ ver [Por confirmar #16](#7-por-confirmar)) · app como development build o APK de QA en el emulador de Android Studio, contra Render |
-| **Fecha** | Matriz creada el 20 oct 2026 · QA: 20 oct (noche) · demo: 21 oct |
+| **Fecha** | Matriz creada el 20 oct 2026 · actualizada el 20 oct (noche) con los PR #15 y #16 de mobile y #44 de la web · QA: 20 oct (noche) · demo: 21 oct |
 | **Responsables** | Jacobo: C1, C2, C12, R1, T1 · Santiago: C3, C4, C5, C6, C9, R2 · Sergio: C7, C8, C10, C11, R3, R4, T2, T3 (Reparto, sección 9) |
 | **Fuente de los resultados esperados** | `DiNNo_Sprint2_Reparto.md` (secciones 2, 10 y 12), sección 10 del `CLAUDE.md` (contrato) y los textos del código en `develop` el 20 oct. Lo que no está definido o no coincide está marcado ⚠️ y listado en la [sección 7](#7-por-confirmar). |
 
@@ -141,17 +141,17 @@ Actualiza los conteos al terminar cada caso.
 | [T2](#t2--los-estados-se-llaman-igual) | Los estados se llaman igual | Sergio | 6 | 0 | 0 | 5 | 1 | 0 |
 | [T3](#t3--regresión-del-sprint-1) | Regresión del Sprint 1 | Sergio | 10 | 0 | 0 | 7 | 0 | 3 |
 | [C1](#c1--iniciar-sesión) | Iniciar sesión | Jacobo | 7 | 0 | 0 | 5 | 1 | 1 |
-| [C2](#c2--crear-cuenta) | Crear cuenta | Jacobo | 5 | 0 | 0 | 0 | 5 | 0 |
-| [C12](#c12--perfil) | Perfil | Jacobo | 6 | 0 | 0 | 0 | 6 | 0 |
-| [R1](#r1--login-con-google-web) | Login con Google (web) | Jacobo | 4 | 0 | 0 | 3 | 1 | 0 |
-| [T1](#t1--roles) | Roles | Jacobo | 6 | 0 | 0 | 5 | 1 | 0 |
+| [C2](#c2--crear-cuenta) | Crear cuenta | Jacobo | 5 | 0 | 0 | 5 | 0 | 0 |
+| [C12](#c12--perfil) | Perfil | Jacobo | 6 | 0 | 0 | 6 | 0 | 0 |
+| [R1](#r1--login-con-google-web) | Login con Google (web) | Jacobo | 4 | 0 | 0 | 4 | 0 | 0 |
+| [T1](#t1--roles) | Roles | Jacobo | 6 | 0 | 0 | 6 | 0 | 0 |
 | [C3](#c3--permiso-de-ubicación) | Permiso de ubicación | Santiago | 6 | 0 | 0 | 6 | 0 | 0 |
 | [C4](#c4--buscar-cerca) | Buscar cerca | Santiago | 6 | 0 | 0 | 3 | 0 | 3 |
 | [C5](#c5--buscar-por-zona) | Buscar por zona | Santiago | 5 | 0 | 0 | 5 | 0 | 0 |
 | [C6](#c6--ver-resultados) | Ver resultados | Santiago | 7 | 0 | 0 | 3 | 3 | 1 |
 | [C9](#c9--detalle) | Detalle | Santiago | 7 | 0 | 0 | 6 | 0 | 1 |
 | [R2](#r2--ubicación-web) | Ubicación (web) | Santiago | 6 | 0 | 0 | 0 | 6 | 0 |
-| **Total** | | | **126** | **0** | **0** | **88** | **24** | **14** |
+| **Total** | | | **126** | **0** | **0** | **101** | **11** | **14** |
 
 ---
 
@@ -286,27 +286,27 @@ Actualiza los conteos al terminar cada caso.
 | C1.7 | Muchos intentos | Sin sesión | 1. Repite una clave incorrecta varias veces. | «Hay demasiados intentos. Espera un momento e inténtalo de nuevo.» | | Pendiente | | |
 
 ### C2 · Crear cuenta
-**Responsable:** Jacobo · Las pantallas `/crear-cuenta`, `/verificar-correo` y `/recuperar-contrasena` siguen provisionales en `develop` (hallazgo 4).
+**Responsable:** Jacobo · `/crear-cuenta`, `/verificar-correo` y `/recuperar-contrasena` están en `develop` desde el PR #16 de mobile. Con `EXPO_PUBLIC_USE_MOCKS=true`, crear cuenta pasa a la verificación con `sinverificar@dinno.test`.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| C2.1 | Correo nuevo | — | 1. «Crea tu cuenta» → nombre, correo y contraseña. | «Creando cuenta…» y pasa a la verificación de correo | | Bloqueado (no está en develop: crear cuenta, Jacobo) | | |
-| C2.2 | Correo ya usado | — | 1. Usa un correo existente. | «Ya hay una cuenta con este correo. Inicia sesión o usa otro correo.» | | Bloqueado (no está en develop: crear cuenta, Jacobo) | | |
-| C2.3 | Contraseña corta | — | 1. Contraseña de menos de 8 caracteres. | «Usa una contraseña más segura, de al menos 8 caracteres.» | | Bloqueado (no está en develop: crear cuenta, Jacobo) | | |
-| C2.4 | Verificación de correo | Cuenta sin verificar | 1. «Reenviar» y «Ya lo verifiqué». | Comportamiento igual al de la web; al verificar, crea el perfil y entra | | Bloqueado (no está en develop: verificación, Jacobo) | | |
-| C2.5 | Recuperar contraseña | — | 1. «¿Olvidaste tu contraseña?». | Envía el correo sin decir si la cuenta existe | | Bloqueado (no está en develop: recuperar contraseña, Jacobo) | | |
+| C2.1 | Correo nuevo | — | 1. «Crea tu cuenta» → «Nombre», «Correo» y «Contraseña» → «Crear cuenta». | «Creando cuenta…» y pasa a la verificación de correo | | Pendiente | | |
+| C2.2 | Correo ya usado | — | 1. Usa un correo existente. | «Ya hay una cuenta con este correo. Inicia sesión o usa otro correo.» | | Pendiente | | |
+| C2.3 | Contraseña corta | — | 1. Contraseña de menos de 8 caracteres. | «Usa una contraseña más segura, de al menos 8 caracteres.» | | Pendiente | | |
+| C2.4 | Verificación de correo | Cuenta sin verificar | 1. «Reenviar correo» y «Ya lo verifiqué». | Comportamiento igual al de la web; al verificar, crea el perfil y entra | | Pendiente | | |
+| C2.5 | Recuperar contraseña | — | 1. «¿Olvidaste tu contraseña?» → «Correo» → «Enviar enlace». | Envía el correo sin decir si la cuenta existe | | Pendiente | | |
 
 ### C12 · Perfil
-**Responsable:** Jacobo · La pantalla real está en el PR `feat/sprint2-diner-profile`, sin fusionar. En `develop` hay una provisional sin confirmación.
+**Responsable:** Jacobo · Pantalla de Perfil en `develop` desde el PR #15 de mobile.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| C12.1 | Ver datos | Con sesión | 1. Abre *Perfil*. | Nombre (o la parte del correo antes de `@`), correo y «Versión 1.0.0»; skeleton si tarda | | Bloqueado (no está en develop: feat/sprint2-diner-profile) | | |
-| C12.2 | Error al cargar | Modo avión | 1. Abre *Perfil*. | «No pudimos cargar tu perfil» + mensaje de red + «Intentar de nuevo» | | Bloqueado (no está en develop: feat/sprint2-diner-profile) | | |
-| C12.3 | Cancelar el cierre | Con sesión | 1. «Cerrar sesión» → «Cancelar». | Se cierra el diálogo «¿Cerrar sesión?» y sigue en *Perfil* | | Bloqueado (no está en develop: feat/sprint2-diner-profile) | | |
-| C12.4 | Cerrar sesión con confirmación | Con sesión | 1. «Cerrar sesión» → «Cerrar sesión». | Diálogo «¿Cerrar sesión?» / «Tendrás que iniciar sesión de nuevo para buscar mesa.»; «Cerrando sesión…» y llega al login | | Bloqueado (no está en develop: feat/sprint2-diner-profile) | | |
-| C12.5 | Botón atrás después de cerrar sesión | Después de C12.4 | 1. Botón atrás de Android. | No vuelve a *Perfil* ni a *Explorar* | | Bloqueado (no está en develop: feat/sprint2-diner-profile) | | |
-| C12.6 | Sin datos de la cuenta anterior | Después de C12.4 | 1. Entra con otra cuenta de comensal. | *Perfil* muestra solo sus datos; *Explorar* empieza sin filtros ni resultados anteriores | | Bloqueado (no está en develop: feat/sprint2-diner-profile) | | |
+| C12.1 | Ver datos | Con sesión | 1. Abre *Perfil*. | Nombre (o la parte del correo antes de `@`), correo y «Versión 1.0.0»; skeleton si tarda | | Pendiente | | |
+| C12.2 | Error al cargar | Modo avión | 1. Abre *Perfil*. | «No pudimos cargar tu perfil» + mensaje de red + «Intentar de nuevo» | | Pendiente | | |
+| C12.3 | Cancelar el cierre | Con sesión | 1. «Cerrar sesión» → «Cancelar». | Se cierra el diálogo «¿Cerrar sesión?» y sigue en *Perfil* | | Pendiente | | |
+| C12.4 | Cerrar sesión con confirmación | Con sesión | 1. «Cerrar sesión» → «Cerrar sesión». | Diálogo «¿Cerrar sesión?» / «Tendrás que iniciar sesión de nuevo para buscar mesa.»; «Cerrando sesión…» y llega al login | | Pendiente | | |
+| C12.5 | Botón atrás después de cerrar sesión | Después de C12.4 | 1. Botón atrás de Android. | No vuelve a *Perfil* ni a *Explorar* | | Pendiente | | |
+| C12.6 | Sin datos de la cuenta anterior | Después de C12.4 | 1. Entra con otra cuenta de comensal. | *Perfil* muestra solo sus datos; *Explorar* empieza sin filtros ni resultados anteriores | | Pendiente | | |
 
 ### R1 · Login con Google (web)
 **Responsable:** Jacobo · **Precondiciones comunes:** web con el login de Google (PR #42, en `develop`; ⚠️ #16 sobre la URL).
@@ -314,7 +314,7 @@ Actualiza los conteos al terminar cada caso.
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
 | R1.1 | Correo habilitado → panel | `dinnoteam2026@gmail.com` | 1. «Continuar con Google» → elige la cuenta. | «Conectando con Google…» y entra. Como no tiene restaurante, va a `/onboarding` «Configura tu restaurante» (no lo registres) | | Pendiente | | |
-| R1.2 | Correo no habilitado → mensaje | Gmail que no está en `users` | 1. «Continuar con Google». | «Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.» + «Cerrar sesión» | | Bloqueado (no está en develop: feat/sprint2-cuenta-equivocada-web) | | |
+| R1.2 | Correo no habilitado → mensaje | Gmail que no está en `users` | 1. «Continuar con Google». | «Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.» + «Cerrar sesión» | | Pendiente | | |
 | R1.3 | Ventana cerrada por el usuario | — | 1. «Continuar con Google» → cierra la ventana. | No aparece ningún error; sigue en el login | | Pendiente | | |
 | R1.4 | Ventanas emergentes bloqueadas | Bloquea las ventanas emergentes del sitio | 1. «Continuar con Google». | «No pudimos abrir la ventana de Google. Permite las ventanas emergentes e intenta de nuevo.» | | Pendiente | | |
 
@@ -323,7 +323,7 @@ Actualiza los conteos al terminar cada caso.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| T1.1 | Comensal en la web | Cuenta de comensal | 1. Entra a la web. | «Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.» + «Cerrar sesión» | | Bloqueado (no está en develop: feat/sprint2-cuenta-equivocada-web) | | |
+| T1.1 | Comensal en la web | Cuenta de comensal | 1. Entra a la web. | «Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.» + «Cerrar sesión» | | Pendiente | | |
 | T1.2 | Restaurante en la app | Cuenta de Casa 72 | 1. Inicia sesión en la app. | «Esta es una cuenta de restaurante» · «Administra tu restaurante desde la web.» · «Cerrar sesión» | | Pendiente | | |
 | T1.3 | Comensal llamando un endpoint de restaurante | Token de comensal | 1. `GET /v1/tables`. | `403` `DINER_ACCOUNT` · «Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.» | | Pendiente | | |
 | T1.4 | Restaurante llamando un endpoint de comensal | Token de restaurante | 1. `GET /v1/search/zones`. | `403` `RESTAURANT_ACCOUNT` · «Esta es una cuenta de restaurante. Administra tu restaurante desde la web.» | | Pendiente | | |
@@ -436,9 +436,9 @@ Después pega el enlace del Bug en la columna **Bug** de la variante y cambia su
 | 1 | ¿Qué cuenta entra a la web como dueña de Casa 72? | El seed se la asigna a `casa72@example.com`; `dinnoteam2026@gmail.com` no tiene restaurante (hallazgo 6, abierto) | Elizabeth | C10, R3, R4, T2, T3 |
 | 2 | 30 % exacto | Con 7 activas no se llega al 30 %. No se modifica Neon antes de la demo; queda cubierto por la prueba unitaria | Elizabeth | C10.4 |
 | 3 | Horarios de 24 horas y que cierra al día siguiente | Hay que editar el horario de Casa 72 en Neon; no se hace antes de la demo | Elizabeth | R3.5, R3.6, C9.4 |
-| 4 | Pantallas de cuenta equivocada en la web | `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` no están en `develop` (`feat/sprint2-cuenta-equivocada-web`) | Jacobo / Sebastián | R1.2, T1.1 |
+| 4 | ✅ Resuelto: pantallas de cuenta equivocada en la web | En `develop` desde el PR #44 (20 oct) | — | R1.2, T1.1 |
 | 5 | Pin de ubicación y geocodificación en la web | No están en `develop` (hallazgo 8, «en curso») | Santiago / Sebastián | R2 |
-| 6 | Google, crear cuenta, verificación y recuperar contraseña en la app | Siguen provisionales (hallazgo 4) | Jacobo / Sebastián | C1.3, C2 |
+| 6 | Google en la app | Crear cuenta, verificación y recuperar contraseña ya están en `develop` (PR #16 de mobile); «Continuar con Google» sigue pendiente | Jacobo | C1.3 |
 | 7 | Mapa | No hay llave de Maps (hallazgo 2) | Equipo de Google Cloud / Sebastián | C6.4–C6.6, T2.5 |
 | 8 | Varios restaurantes en Render | Solo existe Casa 72 (hallazgo 3): no se puede ver el orden, varios pines ni los tres niveles a la vez | Santiago / Elizabeth | C4.2, C4.5, C4.6, C6.7 |
 | 9 | Etiquetas de categoría | El reparto 2.3 dice «Pescados y mariscos» y «Café»; la web y la app dicen «Mariscos» y «Cafetería». La matriz usa los del código | Sebastián | C7 |
@@ -446,7 +446,7 @@ Después pega el enlace del Bug en la columna **Bug** de la variante y cambia su
 | 11 | «Backend dormido» | No se puede forzar. ¿Se acepta `adb emu network delay 6000` como sustituto? | Sebastián | C11.1 |
 | 12 | Usuario sin restaurante para T3 | `onboarding@example.com` puede tener ya restaurante y reiniciarlo lo hace Elizabeth; `demo@example.com` está reservado para la demo | Elizabeth | T3.1–T3.3 |
 | 13 | Credenciales de la cuenta de comensal de prueba | Compartirlas por privado, nunca en la matriz | Elizabeth / Sebastián | Todos los casos de la app |
-| 14 | C12 Perfil | Depende del PR `feat/sprint2-diner-profile`, sin fusionar | Sebastián (revisión del PR) | C12 |
+| 14 | ✅ Resuelto: C12 Perfil | En `develop` desde el PR #15 de mobile (20 oct) | — | C12 |
 | 15 | Tiempo máximo de un cambio en vivo | El reparto no lo fija; la matriz usa «1–2 s» del README de mobile | Sebastián | C10, R4 |
 | 16 | **Nuevo:** ¿con qué URL se prueba la web? | Vercel despliega desde `main`, y `main` todavía no tiene lo del Sprint 2 que ya está en `develop` (por ejemplo, Google en la web, PR #42). ¿Vista previa de Vercel o `npm run dev` contra Render? | Sebastián / Elizabeth | R1, T1, T3 |
 | 17 | **Nuevo:** cómo forzar una sesión vencida | El comportamiento está definido, pero no hay un método acordado para provocarlo en la app | Jacobo | C1.5 |

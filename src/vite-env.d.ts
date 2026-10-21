@@ -2,7 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
-  /** "true" uses the in-memory tables mock (src/features/tables/api.mock.ts). */
+  /** "true" uses the in-memory mocks of tables, restaurant status and activity log (each feature's api.mock.ts). Sign-in still uses Firebase. */
   readonly VITE_USE_MOCKS?: string
   /** Public Firebase web configuration; these values are not secrets. */
   readonly VITE_FIREBASE_API_KEY: string

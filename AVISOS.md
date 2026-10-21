@@ -5,6 +5,23 @@
 
 ---
 
+## 20 oct 2026 (noche) · Sergio · Pendiente del Sprint 1 · README, AGENTS.md y matriz de pruebas
+
+**Qué quedó listo**
+- **`README.md`:** las 5 variables de entorno (`VITE_API_URL`, `VITE_USE_MOCKS` y las tres `VITE_FIREBASE_*`) con si son obligatorias y un ejemplo, los parámetros de los datos de ejemplo, tres formas de correr la web (mocks, Render y backend local), cómo verificar que funciona y problemas comunes.
+- **Firebase hace falta incluso con `VITE_USE_MOCKS=true`:** los mocks cubren mesas, estado y bitácora, pero la sesión siempre usa Firebase. Sin las `VITE_FIREBASE_*`, la web queda en blanco.
+- **`AGENTS.md`:** en español y al día con el repo (estructura, rutas y convenciones). Enlaza al `CLAUDE.md` en vez de repetirlo.
+- **`docs/qa/matriz-sprint2.md`:** 13 variantes pasan de «Bloqueado» a «Pendiente», porque ya están en `develop`: **C2** (crear cuenta, verificación y recuperar contraseña, PR #16 de mobile), **C12** (Perfil, PR #15 de mobile), **R1.2** y **T1.1** (cuenta equivocada en la web, PR #44). Siguen bloqueados Google en la app, el mapa y el pin de ubicación web.
+
+**Para quién**
+- **Jacobo:** **C2** (crear cuenta), **C12**, **R1.2** y **T1.1** son tuyos y ya se pueden probar. Registra tus resultados en la matriz.
+- **Todos:** si alguien nuevo levanta la web, que siga solo el README. Las credenciales de Firebase y las cuentas de prueba se piden por privado a Elizabeth, nunca en el repo.
+
+**Rama / PR**
+- `docs/sprint2-readme-agents` → `develop`.
+
+---
+
 ## 20 oct 2026 · Sergio · Pendiente del Sprint 1 · Prueba de `RestaurantStatus` que fallaba
 
 **Qué quedó listo**
