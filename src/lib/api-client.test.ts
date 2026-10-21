@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
   apiRequest,
+  ACCOUNT_NOT_ENABLED_EVENT,
   EMAIL_NOT_VERIFIED_EVENT,
+  DINER_ACCOUNT_EVENT,
   getApiErrorMessage,
   isAccessError,
   RESTAURANT_REQUIRED_EVENT,
@@ -61,6 +63,38 @@ describe('apiRequest', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
+  const ACCESS_EVENTS = [
+    SESSION_EXPIRED_EVENT,
+    EMAIL_NOT_VERIFIED_EVENT,
+    ACCOUNT_NOT_ENABLED_EVENT,
+    DINER_ACCOUNT_EVENT,
+    RESTAURANT_REQUIRED_EVENT,
+  ]
+
+  it.each([
+    [401, undefined, SESSION_EXPIRED_EVENT],
+    [401, 'EMAIL_NOT_VERIFIED', EMAIL_NOT_VERIFIED_EVENT],
+    [403, 'ACCOUNT_NOT_ENABLED', ACCOUNT_NOT_ENABLED_EVENT],
+    [403, 'DINER_ACCOUNT', DINER_ACCOUNT_EVENT],
+    [403, 'RESTAURANT_REQUIRED', RESTAURANT_REQUIRED_EVENT],
+    [403, undefined, undefined],
+  ])('a %i with errorCode %s announces only its own event', async (status, code, expectedEvent) => {
+    mockFetch({
+      ok: false,
+      status,
+      jsonBody: { statusCode: status, errorCode: code, message: 'backend text must not drive the UI' },
+    })
+    const listeners = ACCESS_EVENTS.map((eventName) => [eventName, vi.fn()] as const)
+    listeners.forEach(([eventName, listener]) => window.addEventListener(eventName, listener))
+
+    await expect(apiRequest('/restaurants')).rejects.toMatchObject({ status, code })
+
+    listeners.forEach(([eventName, listener]) => window.removeEventListener(eventName, listener))
+    for (const [eventName, listener] of listeners) {
+      expect(listener, eventName).toHaveBeenCalledTimes(eventName === expectedEvent ? 1 : 0)
+    }
+  })
+
   it('a 401 for an unverified email announces EMAIL_NOT_VERIFIED, not an expired session', async () => {
     mockFetch({
       ok: false,
@@ -101,6 +135,12 @@ describe('getApiErrorMessage', () => {
     )
     expect(getApiErrorMessage(new ApiError({ status: 401 }))).toBe('Tu sesión terminó. Inicia sesión de nuevo.')
     expect(getApiErrorMessage(new ApiError({ status: 403 }))).toBe('No tienes acceso a esta sección.')
+    expect(getApiErrorMessage(new ApiError({ status: 403, code: 'ACCOUNT_NOT_ENABLED' }))).toBe(
+      'Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.',
+    )
+    expect(getApiErrorMessage(new ApiError({ status: 403, code: 'DINER_ACCOUNT' }))).toBe(
+      'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.',
+    )
     expect(getApiErrorMessage(new ApiError({ status: 500, message: 'stack trace' }), 'Texto propio')).toBe('Texto propio')
   })
 })
