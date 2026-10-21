@@ -19,6 +19,9 @@
 
 **Rama / PR**
 - `docs/sprint2-readme-agents` → `develop`.
+## 21 oct 2026 · Jacobo · Matriz del Sprint 2
+
+- Jacobo: actualicé mis casos de la matriz del Sprint 2 con evidencia de QA.
 
 ---
 
