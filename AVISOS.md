@@ -5,6 +5,12 @@
 
 ---
 
+## 21 oct 2026 · Jacobo · Matriz del Sprint 2
+
+- Jacobo: actualicé mis casos de la matriz del Sprint 2 con evidencia de QA.
+
+---
+
 ## 20 oct 2026 · Sergio · Pendiente del Sprint 1 · Prueba de `RestaurantStatus` que fallaba
 
 **Qué quedó listo**
