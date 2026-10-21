@@ -5,6 +5,15 @@
 
 ---
 
+## 20 oct 2026 · Jacobo · Cuenta equivocada en la web
+
+- Los 403 `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` muestran una pantalla de cuenta equivocada con el texto del contrato (`CLAUDE.md`, sección 10) y un solo botón **Cerrar sesión**, en el dashboard y en `/onboarding`. Se decide por `errorCode`, nunca por el texto.
+- Precedencia: `EMAIL_NOT_VERIFIED` manda; con una cuenta equivocada activa, `RESTAURANT_REQUIRED` ya no lleva a `/onboarding`.
+- **`AuthContextValue` tiene dos campos nuevos: `accountEvent` y `clearAccountEvent`.** Cualquier mock de `AuthContext` en pruebas debe incluirlos o `tsc -b` falla.
+- Toqué archivos de otros: `OnboardingPage.tsx` (Santiago: un 403 de cuenta equivocada ya no lanza error) y los mocks de `RestaurantStatus.layout.test.tsx` (Sergio) y `router.test.tsx`.
+
+---
+
 ## 15 oct 2026 (noche) · Elizabeth · Backend del Sprint 2 disponible en `develop`
 
 - **Todo el backend del Sprint 2 está en `develop` desde el 15 oct** (PR #35 a #40 del backend): cuentas y roles, geocodificación y coordenadas del restaurante, búsqueda, detalle público y tiempo real. Ya se puede integrar contra la API real; no hace falta esperar a ninguna fecha.
