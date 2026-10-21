@@ -23,7 +23,7 @@
 1. [Preparación del ambiente](#1-preparación-del-ambiente)
 2. [Tabla resumen](#2-tabla-resumen)
 3. [Casos de Sergio](#3-casos-de-sergio-prioridad-de-esta-noche): C10 · R3 · R4 · C7 · C8 · C11 · T2 · T3
-4. [Casos de Jacobo](#4-casos-de-jacobo): C1 · C2 · C12 · R1 · T1
+4. [Casos de Jacobo](#4-casos-de-jacobo): C1 · C2 · C12 · R1 · T1 · W
 5. [Casos de Santiago](#5-casos-de-santiago): C3 · C4 · C5 · C6 · C9 · R2
 6. [Formato para reportar hallazgos](#6-formato-para-reportar-hallazgos)
 7. [Por confirmar ⚠️](#7-por-confirmar)
@@ -140,18 +140,19 @@ Actualiza los conteos al terminar cada caso.
 | [C11](#c11--errores-de-red) | Errores de red | Sergio | 6 | 0 | 0 | 4 | 0 | 2 |
 | [T2](#t2--los-estados-se-llaman-igual) | Los estados se llaman igual | Sergio | 6 | 0 | 0 | 5 | 1 | 0 |
 | [T3](#t3--regresión-del-sprint-1) | Regresión del Sprint 1 | Sergio | 10 | 0 | 0 | 7 | 0 | 3 |
-| [C1](#c1--iniciar-sesión) | Iniciar sesión | Jacobo | 7 | 0 | 0 | 5 | 1 | 1 |
-| [C2](#c2--crear-cuenta) | Crear cuenta | Jacobo | 5 | 0 | 0 | 0 | 5 | 0 |
+| [C1](#c1--iniciar-sesión) | Iniciar sesión | Jacobo | 7 | 3 | 0 | 3 | 0 | 1 |
+| [C2](#c2--crear-cuenta) | Crear cuenta | Jacobo | 5 | 2 | 0 | 3 | 0 | 0 |
 | [C12](#c12--perfil) | Perfil | Jacobo | 6 | 0 | 0 | 0 | 6 | 0 |
-| [R1](#r1--login-con-google-web) | Login con Google (web) | Jacobo | 4 | 0 | 0 | 3 | 1 | 0 |
-| [T1](#t1--roles) | Roles | Jacobo | 6 | 0 | 0 | 5 | 1 | 0 |
+| [R1](#r1--login-con-google-web) | Login con Google (web) | Jacobo | 4 | 1 | 0 | 3 | 0 | 0 |
+| [T1](#t1--roles) | Roles | Jacobo | 6 | 3 | 0 | 3 | 0 | 0 |
+| [W](#w--cuentas-roles-y-sesión-en-la-web) | Cuentas, roles y sesión en la web | Jacobo | 17 | 17 | 0 | 0 | 0 | 0 |
 | [C3](#c3--permiso-de-ubicación) | Permiso de ubicación | Santiago | 6 | 0 | 0 | 6 | 0 | 0 |
 | [C4](#c4--buscar-cerca) | Buscar cerca | Santiago | 6 | 0 | 0 | 3 | 0 | 3 |
 | [C5](#c5--buscar-por-zona) | Buscar por zona | Santiago | 5 | 0 | 0 | 5 | 0 | 0 |
 | [C6](#c6--ver-resultados) | Ver resultados | Santiago | 7 | 0 | 0 | 3 | 3 | 1 |
 | [C9](#c9--detalle) | Detalle | Santiago | 7 | 0 | 0 | 6 | 0 | 1 |
 | [R2](#r2--ubicación-web) | Ubicación (web) | Santiago | 6 | 0 | 0 | 0 | 6 | 0 |
-| **Total** | | | **126** | **0** | **0** | **88** | **24** | **14** |
+| **Total** | | | **143** | **26** | **0** | **87** | **16** | **14** |
 
 ---
 
@@ -277,12 +278,12 @@ Actualiza los conteos al terminar cada caso.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| C1.1 | Correo y clave correctos | Sin sesión | 1. «Correo» y «Contraseña» → «Iniciar sesión». | «Iniciando sesión…» y llega a *Explorar* | | Pendiente | | |
-| C1.2 | Credenciales inválidas | Sin sesión | 1. Clave incorrecta → «Iniciar sesión». | «Correo o contraseña incorrectos. Revisa e intenta de nuevo.» (no dice cuál de los dos falló) | | Pendiente | | |
-| C1.3 | Google | — | 1. «Continuar con Google». | Entra a *Explorar*; el nombre de Google llega al perfil | | Bloqueado (no está en develop: botón de Google en la app, Jacobo) | | |
-| C1.4 | Sesión persistente al reabrir | Con sesión | 1. Cierra la app desde Recientes.<br>2. Ábrela. | Entra directo a *Explorar*, sin pedir login | | Pendiente | | |
+| C1.1 | Correo y clave correctos | Sin sesión | 1. «Correo» y «Contraseña» → «Iniciar sesión». | «Iniciando sesión…» y llega a *Explorar* | | Pasa | | |
+| C1.2 | Credenciales inválidas | Sin sesión | 1. Clave incorrecta → «Iniciar sesión». | «Correo o contraseña incorrectos. Revisa e intenta de nuevo.» (no dice cuál de los dos falló) | Error genérico, no dice cuál de los dos falló (M6) | Pasa | Sin captura | |
+| C1.3 | Google | — | 1. «Continuar con Google». | Entra a *Explorar*; el nombre de Google llega al perfil | Abre el selector de Google, entra y crea el comensal (M4). Probado en `feat/sprint2-google-app`, PR pendiente de fusión | Pasa | [M4-inicio-sesion-google.png](evidencias/img/M4-inicio-sesion-google.png) | |
+| C1.4 | Sesión persistente al reabrir | Con sesión | 1. Cierra la app desde Recientes.<br>2. Ábrela. | Entra directo a *Explorar*, sin pedir login | Al reabrir la app entra directo a *Explorar*; la sesión se conserva (M8) | Pasa | Sin captura | |
 | C1.5 | Sesión vencida | Token inválido o vencido | — | Vuelve al login con «Tu sesión terminó. Inicia sesión de nuevo.» | | ⚠️ Por confirmar (#17) | | |
-| C1.6 | Cerrar sesión | Con sesión | 1. *Perfil* → «Cerrar sesión». | Vuelve al login (con confirmación: ver C12) | | Pendiente | | |
+| C1.6 | Cerrar sesión | Con sesión | 1. *Perfil* → «Cerrar sesión». | Vuelve al login (con confirmación: ver C12) | | Pasa | | |
 | C1.7 | Muchos intentos | Sin sesión | 1. Repite una clave incorrecta varias veces. | «Hay demasiados intentos. Espera un momento e inténtalo de nuevo.» | | Pendiente | | |
 
 ### C2 · Crear cuenta
@@ -290,11 +291,11 @@ Actualiza los conteos al terminar cada caso.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| C2.1 | Correo nuevo | — | 1. «Crea tu cuenta» → nombre, correo y contraseña. | «Creando cuenta…» y pasa a la verificación de correo | | Bloqueado (no está en develop: crear cuenta, Jacobo) | | |
-| C2.2 | Correo ya usado | — | 1. Usa un correo existente. | «Ya hay una cuenta con este correo. Inicia sesión o usa otro correo.» | | Bloqueado (no está en develop: crear cuenta, Jacobo) | | |
-| C2.3 | Contraseña corta | — | 1. Contraseña de menos de 8 caracteres. | «Usa una contraseña más segura, de al menos 8 caracteres.» | | Bloqueado (no está en develop: crear cuenta, Jacobo) | | |
-| C2.4 | Verificación de correo | Cuenta sin verificar | 1. «Reenviar» y «Ya lo verifiqué». | Comportamiento igual al de la web; al verificar, crea el perfil y entra | | Bloqueado (no está en develop: verificación, Jacobo) | | |
-| C2.5 | Recuperar contraseña | — | 1. «¿Olvidaste tu contraseña?». | Envía el correo sin decir si la cuenta existe | | Bloqueado (no está en develop: recuperar contraseña, Jacobo) | | |
+| C2.1 | Correo nuevo | — | 1. «Crea tu cuenta» → nombre, correo y contraseña. | «Creando cuenta…» y pasa a la verificación de correo | Crear cuenta lleva a «Revisa tu correo» (M1) | Pasa | [M1-crear-cuenta.png](evidencias/img/M1-crear-cuenta.png) | |
+| C2.2 | Correo ya usado | — | 1. Usa un correo existente. | «Ya hay una cuenta con este correo. Inicia sesión o usa otro correo.» | | Pasa | | |
+| C2.3 | Contraseña corta | — | 1. Contraseña de menos de 8 caracteres. | «Usa una contraseña más segura, de al menos 8 caracteres.» | | Pasa | | |
+| C2.4 | Verificación de correo | Cuenta sin verificar | 1. «Reenviar» y «Ya lo verifiqué». | Comportamiento igual al de la web; al verificar, crea el perfil y entra | Sin verificar, «Ya lo verifiqué» muestra «Todavía no vemos tu correo verificado.» (M2); verificado, crea el perfil y entra a *Explorar* (M3). «Reenviar» no se probó | Pasa | [M2-ya-lo-verifique-sin-verificar.png](evidencias/img/M2-ya-lo-verifique-sin-verificar.png) · [M3-Correo-Verificado.png](evidencias/img/M3-Correo-Verificado.png) | |
+| C2.5 | Recuperar contraseña | — | 1. «¿Olvidaste tu contraseña?». | Envía el correo sin decir si la cuenta existe | | Pendiente | | |
 
 ### C12 · Perfil
 **Responsable:** Jacobo · La pantalla real está en el PR `feat/sprint2-diner-profile`, sin fusionar. En `develop` hay una provisional sin confirmación.
@@ -313,22 +314,59 @@ Actualiza los conteos al terminar cada caso.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| R1.1 | Correo habilitado → panel | `dinnoteam2026@gmail.com` | 1. «Continuar con Google» → elige la cuenta. | «Conectando con Google…» y entra. Como no tiene restaurante, va a `/onboarding` «Configura tu restaurante» (no lo registres) | | Pendiente | | |
-| R1.2 | Correo no habilitado → mensaje | Gmail que no está en `users` | 1. «Continuar con Google». | «Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.» + «Cerrar sesión» | | Bloqueado (no está en develop: feat/sprint2-cuenta-equivocada-web) | | |
-| R1.3 | Ventana cerrada por el usuario | — | 1. «Continuar con Google» → cierra la ventana. | No aparece ningún error; sigue en el login | | Pendiente | | |
-| R1.4 | Ventanas emergentes bloqueadas | Bloquea las ventanas emergentes del sitio | 1. «Continuar con Google». | «No pudimos abrir la ventana de Google. Permite las ventanas emergentes e intenta de nuevo.» | | Pendiente | | |
+| R1.1 | Correo habilitado → panel | `dinnoteam2026@gmail.com` | 1. «Continuar con Google» → elige la cuenta. | «Conectando con Google…» y entra. Como no tiene restaurante, va a `/onboarding` «Configura tu restaurante» (no lo registres) | Google con la cuenta de restaurante entra (W4); sin restaurante llega a `/onboarding` (W7) | Pasa | [W4-Restaurante-login.png](evidencias/img/W4-Restaurante-login.png) · [w7-pantalla-onboarding.png](evidencias/img/w7-pantalla-onboarding.png) | |
+| R1.2 | Correo no habilitado → mensaje | Gmail que no está en `users` | 1. «Continuar con Google». | «Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.» + «Cerrar sesión» | | Pasa | | |
+| R1.3 | Ventana cerrada por el usuario | — | 1. «Continuar con Google» → cierra la ventana. | No aparece ningún error; sigue en el login | | Pasa | | |
+
 
 ### T1 · Roles
 **Responsable:** Jacobo · Las variantes de API se prueban en Swagger (`/docs`) con el token de cada cuenta. **Nunca captures el token.**
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| T1.1 | Comensal en la web | Cuenta de comensal | 1. Entra a la web. | «Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.» + «Cerrar sesión» | | Bloqueado (no está en develop: feat/sprint2-cuenta-equivocada-web) | | |
+| T1.1 | Comensal en la web | Cuenta de comensal | 1. Entra a la web. | «Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.» + «Cerrar sesión» | Pantalla de cuenta equivocada `DINER_ACCOUNT` con un solo botón «Cerrar sesión» (W3) | Pasa | [W3-diner-en-web.png](evidencias/img/W3-diner-en-web.png) | |
 | T1.2 | Restaurante en la app | Cuenta de Casa 72 | 1. Inicia sesión en la app. | «Esta es una cuenta de restaurante» · «Administra tu restaurante desde la web.» · «Cerrar sesión» | | Pendiente | | |
-| T1.3 | Comensal llamando un endpoint de restaurante | Token de comensal | 1. `GET /v1/tables`. | `403` `DINER_ACCOUNT` · «Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.» | | Pendiente | | |
+| T1.3 | Comensal llamando un endpoint de restaurante | Token de comensal | 1. `GET /v1/tables`. | `403` `DINER_ACCOUNT` · «Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.» | `403` `DINER_ACCOUNT` (A5) | Pasa | Sin captura | |
 | T1.4 | Restaurante llamando un endpoint de comensal | Token de restaurante | 1. `GET /v1/search/zones`. | `403` `RESTAURANT_ACCOUNT` · «Esta es una cuenta de restaurante. Administra tu restaurante desde la web.» | | Pendiente | | |
 | T1.5 | Cuenta sin perfil en un endpoint de restaurante | Token de una cuenta de Firebase sin fila en `users` | 1. `GET /v1/tables`. | `403` `ACCOUNT_NOT_ENABLED` · «Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.» | | Pendiente | | |
-| T1.6 | Sin token | — | 1. `GET /v1/me` sin *Authorize*. | `401` · «Tu sesión terminó. Inicia sesión de nuevo.» | | Pendiente | | |
+| T1.6 | Sin token | — | 1. `GET /v1/me` sin *Authorize*. | `401` · «Tu sesión terminó. Inicia sesión de nuevo.» | `401` sin `errorCode` (A11) | Pasa | Sin captura | |
+
+### W · Cuentas, roles y sesión en la web
+**Responsable:** Jacobo · **Fecha:** 20 y 21 oct 2026 · **Ambiente:** vista previa de Vercel de `develop` + backend en Render · **Cuentas:** la del restaurante del equipo, el comensal de prueba (correo y clave) y una cuenta personal de Google registrada como comensal. Las capturas están en [`evidencias/img/`](evidencias/img/).
+**Relación con otras variantes:** W1 = T3.9 · W3 = T1.1 · W7 = R1.1 · A5 = T1.3 · A11 = T1.6 · C1.2 = M6 · C1.3 = M4 · C1.4 = M8 · C2.1 = M1 · C2.4 = M2 y M3.
+
+| ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
+|---|---|---|---|---|---|---|---|---|
+| W1 | Ruta protegida sin sesión | Sin sesión | 1. Abre `/mesas`. | Redirige a `/login` | Redirige a `/login` | Pasa | Sin captura | |
+| W2 | Credenciales incorrectas | Sin sesión | 1. Escribe un correo y una clave incorrectos → «Iniciar sesión». | Mensaje de error genérico, sin revelar si la cuenta existe | Mensaje genérico | Pasa | [W2-inicio-incorrecto.png](evidencias/img/W2-inicio-incorrecto.png) | |
+| W3 | Comensal por correo y clave | Comensal de prueba | 1. Inicia sesión con correo y clave. | Pantalla de cuenta equivocada (`DINER_ACCOUNT`), un solo botón «Cerrar sesión», sin banner ni switch | Como se esperaba | Pasa | [W3-diner-en-web.png](evidencias/img/W3-diner-en-web.png) | |
+| W4 | Google con cuenta de restaurante | Cuenta del restaurante | 1. «Continuar con Google». | Entra al panel normalmente | Entra al panel | Pasa | [W4-Restaurante-login.png](evidencias/img/W4-Restaurante-login.png) | |
+| W5 | Cerrar sesión | Con sesión | 1. «Cerrar sesión» desde el menú. | Vuelve a `/login` | Vuelve a `/login` | Pasa | Sin captura | |
+| W6 | Google pide la cuenta otra vez | Después de W5 | 1. «Continuar con Google». | Muestra el selector de cuenta, no entra solo | Muestra el selector | Pasa | [w6-inicio-no-inmediato.png](evidencias/img/w6-inicio-no-inmediato.png) | |
+| W7 | Restaurante sin restaurante | Cuenta de restaurante sin restaurante registrado | 1. Inicia sesión. | Pantalla de onboarding | Llega a `/onboarding` | Pasa | [w7-pantalla-onboarding.png](evidencias/img/w7-pantalla-onboarding.png) | |
+| W8 | Google con cuenta de comensal | Cuenta de Google registrada como comensal | 1. «Continuar con Google». | Pantalla de cuenta equivocada (`DINER_ACCOUNT`) | Como se esperaba | Pasa | [w8-pantalla-inicio-sesion-google.png](evidencias/img/w8-pantalla-inicio-sesion-google.png) | |
+
+**API (rechazo por rol):** con el token del comensal se llamó al backend en Render, saltándose la interfaz. Un comensal no puede leer ni cambiar datos de un restaurante.
+
+| ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
+|---|---|---|---|---|---|---|---|---|
+| A1 | Perfil del comensal | Token de comensal | 1. `GET /v1/me`. | `200`, `role: diner` | Como se esperaba | Pasa | | |
+| A4 | Detalle con id inválido | Token de comensal | 1. `GET /v1/restaurants/no-es-uuid/public`. | `404` `RESTAURANT_NOT_FOUND` | Como se esperaba | Pasa | | |
+| A5 | Mesas | Token de comensal | 1. `GET /v1/tables`. | `403` `DINER_ACCOUNT` | Como se esperaba | Pasa | | |
+| A6 | Restaurante | Token de comensal | 1. `GET /v1/restaurants/me`. | `403` `DINER_ACCOUNT` | Como se esperaba | Pasa | | |
+| A7 | Bitácora | Token de comensal | 1. `GET /v1/table-logs`. | `403` `DINER_ACCOUNT` | Como se esperaba | Pasa | | |
+| A8 | Geocodificación | Token de comensal | 1. `GET /v1/geocode`. | `403` `DINER_ACCOUNT` | Como se esperaba | Pasa | | |
+| A9 | Cambiar el estado del restaurante | Token de comensal | 1. `PATCH /v1/restaurants/me/status`. | `403` `DINER_ACCOUNT`, el estado no cambia | Como se esperaba | Pasa | | |
+| A10 | Token falso | Token inventado | 1. `GET /v1/tables`. | `401` sin `errorCode` | Como se esperaba | Pasa | | |
+| A11 | Sin token | — | 1. Llamada sin `Authorization`. | `401` sin `errorCode` | Como se esperaba | Pasa | | |
+
+**No probado**
+- `ACCOUNT_NOT_ENABLED` con una cuenta real (solo hay pruebas unitarias).
+- Pantalla de correo sin verificar en la web con una cuenta nueva sin verificar.
+
+**Hallazgos**
+1. Las variables `VITE_FIREBASE_*` no estaban marcadas para **Preview** en Vercel y la web quedaba en blanco (`auth/invalid-api-key`). Se corrigió en Preview. **Verificar que también estén en Production antes de fusionar `develop` a `main`.**
+2. Para que Google abra en la web desplegada, el dominio de producción debe estar en *Dominios autorizados* de Firebase.
 
 ---
 
@@ -438,7 +476,7 @@ Después pega el enlace del Bug en la columna **Bug** de la variante y cambia su
 | 3 | Horarios de 24 horas y que cierra al día siguiente | Hay que editar el horario de Casa 72 en Neon; no se hace antes de la demo | Elizabeth | R3.5, R3.6, C9.4 |
 | 4 | Pantallas de cuenta equivocada en la web | `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` no están en `develop` (`feat/sprint2-cuenta-equivocada-web`) | Jacobo / Sebastián | R1.2, T1.1 |
 | 5 | Pin de ubicación y geocodificación en la web | No están en `develop` (hallazgo 8, «en curso») | Santiago / Sebastián | R2 |
-| 6 | Google, crear cuenta, verificación y recuperar contraseña en la app | Siguen provisionales (hallazgo 4) | Jacobo / Sebastián | C1.3, C2 |
+| 6 | Google, crear cuenta, verificación y recuperar contraseña en la app | Siguen provisionales (hallazgo 4). Jacobo 21 oct: C1.3, C2.1 y C2.4 probados; Google en la app está en feat/sprint2-google-app, PR pendiente | Jacobo / Sebastián | C1.3, C2 |
 | 7 | Mapa | No hay llave de Maps (hallazgo 2) | Equipo de Google Cloud / Sebastián | C6.4–C6.6, T2.5 |
 | 8 | Varios restaurantes en Render | Solo existe Casa 72 (hallazgo 3): no se puede ver el orden, varios pines ni los tres niveles a la vez | Santiago / Elizabeth | C4.2, C4.5, C4.6, C6.7 |
 | 9 | Etiquetas de categoría | El reparto 2.3 dice «Pescados y mariscos» y «Café»; la web y la app dicen «Mariscos» y «Cafetería». La matriz usa los del código | Sebastián | C7 |
