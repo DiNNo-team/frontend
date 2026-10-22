@@ -64,7 +64,9 @@ export function HoursEditor({ value, onChange, errors, disabled, className }: Ho
                   />
                 </div>
                 {entry.isOpen ? (
-                  <div className="flex items-center gap-3">
+                  // Below @md (phones, about 390 px) two hour pickers do not fit side by side: opening and
+                  // closing go one under the other, without the dash.
+                  <div className="flex flex-col gap-2 @md:flex-row @md:items-center @md:gap-3">
                     <TimeSelect
                       label={`Apertura del ${labels.long.toLowerCase()}`}
                       hideLabel
@@ -79,11 +81,11 @@ export function HoursEditor({ value, onChange, errors, disabled, className }: Ho
                       invalid={Boolean(error)}
                       aria-describedby={error ? errorId : undefined}
                       disabled={disabled}
-                      className={cn('min-w-0 flex-1 @2xl:flex-none', entry.isOpen24h ? '@2xl:w-60' : '@2xl:w-44')}
+                      className={cn('min-w-0 @md:flex-1 @2xl:flex-none', entry.isOpen24h ? '@2xl:w-60' : '@2xl:w-44')}
                     />
                     {!entry.isOpen24h && (
                       <>
-                        <span className="text-fg-2" aria-hidden="true">
+                        <span className="hidden text-fg-2 @md:inline" aria-hidden="true">
                           –
                         </span>
                         <TimeSelect
@@ -94,7 +96,7 @@ export function HoursEditor({ value, onChange, errors, disabled, className }: Ho
                           invalid={Boolean(error)}
                           aria-describedby={error ? errorId : undefined}
                           disabled={disabled}
-                          className="min-w-0 flex-1 @2xl:w-44 @2xl:flex-none"
+                          className="min-w-0 @md:flex-1 @2xl:w-44 @2xl:flex-none"
                         />
                       </>
                     )}
