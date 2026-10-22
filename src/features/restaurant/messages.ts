@@ -11,6 +11,13 @@ export const ONBOARDING_TEXT = {
   alreadyRegisteredToast: 'Ya registraste tu restaurante. Para cambiar sus datos, entra a Restaurante.',
 } as const
 
+// Dashboard notice while the restaurant has no coordinates (Sprint 2 plan, section 9; final period added
+// like the closed notice, decision of Santiago, 2026-10-22).
+export const LOCATION_BANNER_TEXT = {
+  text: 'Completa la ubicación de tu restaurante para que los comensales te encuentren en DiNNo.',
+  action: 'Completar ubicación',
+} as const
+
 // Texts of the location picker (registration and edition). Its validation errors live in restaurant-form.ts.
 export const LOCATION_TEXT = {
   locate: 'Ubicar en el mapa',

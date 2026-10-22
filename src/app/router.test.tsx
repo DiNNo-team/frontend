@@ -13,6 +13,9 @@ vi.mock('@/features/restaurant-status/components/RestaurantStatusBanner', () => 
 vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () => ({
   RestaurantStatusControl: () => <div data-testid="restaurant-status-control" />,
 }))
+vi.mock('@/features/restaurant/components/LocationBanner', () => ({
+  LocationBanner: () => <div data-testid="location-banner" />,
+}))
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),

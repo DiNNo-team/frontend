@@ -5,6 +5,7 @@ import { EmailVerificationScreen } from './EmailVerificationScreen'
 import { WrongAccountScreen } from './WrongAccountScreen'
 import { RestaurantStatusBanner } from '@/features/restaurant-status/components/RestaurantStatusBanner'
 import { RestaurantStatusControl } from '@/features/restaurant-status/components/RestaurantStatusControl'
+import { LocationBanner } from '@/features/restaurant/components/LocationBanner'
 import { useToast } from '@/components/ui'
 
 export function DashboardLayout() {
@@ -24,7 +25,15 @@ export function DashboardLayout() {
       userEmail={user?.email ?? ''}
       onSignOut={handleSignOut}
       statusSlot={accountEvent ? undefined : <RestaurantStatusControl />}
-      banner={accountEvent ? undefined : <RestaurantStatusBanner />}
+      banner={
+        accountEvent ? undefined : (
+          // empty:hidden: with no notice to show, the wrapper takes no gap in the page.
+          <div className="flex flex-col gap-3 empty:hidden">
+            <RestaurantStatusBanner />
+            <LocationBanner />
+          </div>
+        )
+      }
     >
       {authEvent === 'email-not-verified' ? (
         <EmailVerificationScreen />

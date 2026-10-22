@@ -5,6 +5,22 @@
 
 ---
 
+## 22 oct 2026 · Santiago · Aviso «Completa tu ubicación»
+
+**Qué quedó listo**
+- Mientras `GET /v1/restaurants/me` traiga `latitude === null`, arriba del contenido del dashboard aparece «Completa la ubicación de tu restaurante para que los comensales te encuentren en DiNNo.» con «Completar ubicación», que lleva a `/restaurante` (en `/restaurante` va sin botón). Mismo estilo que el aviso de restaurante cerrado. Desaparece al guardar la ubicación, sin recargar.
+- **Decisión (Santiago):** el texto lleva punto final, como el aviso de cerrado.
+
+**Para quién**
+- **Sergio:** el `banner` de `src/app/layouts.tsx` ahora muestra tu `RestaurantStatusBanner` y debajo `LocationBanner`, en un contenedor (`gap-3`, `empty:hidden`). Tu componente no cambió. En `RestaurantStatus.layout.test.tsx` agregué el mock de `LocationBanner`.
+- **Sebastián:** en `router.test.tsx` agregué el mock de `LocationBanner`, igual a los de los componentes de Sergio.
+- **Todos:** el dashboard pide `GET /v1/restaurants/me` en todas las pantallas (la misma consulta de `/restaurante`, `restaurantQueryKey`). Si una prueba renderiza `DashboardLayout`, simula `LocationBanner` o `restaurantApi`.
+
+**Rama / PR**
+- `feat/sprint2-aviso-ubicacion` → `develop`, después del PR de `feat/sprint2-ubicacion-restaurante`, del que depende.
+
+---
+
 ## 22 oct 2026 · Santiago · Ubicación del restaurante en el formulario
 
 **Qué quedó listo**
