@@ -37,6 +37,7 @@ export default function OnboardingPage() {
         submitLabel={ONBOARDING_TEXT.submit}
         saving={registerRestaurant.isPending}
         onSubmit={handleSubmit}
+        requireLocation
       />
     </>
   )

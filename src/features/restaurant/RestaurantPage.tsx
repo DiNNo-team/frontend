@@ -34,12 +34,24 @@ function createUpdateInput(restaurant: RestaurantProfile, values: ValidRestauran
     name?: string
     category?: ValidRestaurantFormValues['category']
     address?: string
+    latitude?: number
+    longitude?: number
     schedules?: typeof updatedPayload.schedules
   } = {}
 
   if (originalValues.name.trim() !== updatedPayload.name) update.name = updatedPayload.name
   if ((restaurant.category ?? '') !== updatedPayload.category) update.category = updatedPayload.category
   if (originalValues.address.trim() !== updatedPayload.address) update.address = updatedPayload.address
+  // Both coordinates or neither (Sprint 2 contract); they cannot be removed, so only a moved pin is sent.
+  const { latitude, longitude } = updatedPayload
+  if (
+    latitude !== undefined &&
+    longitude !== undefined &&
+    (latitude !== originalPayload.latitude || longitude !== originalPayload.longitude)
+  ) {
+    update.latitude = latitude
+    update.longitude = longitude
+  }
   if (JSON.stringify(originalPayload.schedules) !== JSON.stringify(updatedPayload.schedules)) {
     update.schedules = updatedPayload.schedules
   }

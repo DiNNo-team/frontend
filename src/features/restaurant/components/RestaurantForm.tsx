@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { Alert, Button, Card, HoursEditor, Select, TextField, type WeeklyHours } from '@/components/ui'
+import type { Coordinates } from '../location'
 import {
   countRestaurantFormErrors,
   describeRestaurantSaveError,
@@ -10,6 +11,7 @@ import {
   validateAddress,
   validateCategory,
   validateHours,
+  validateLocation,
   validateName,
   validateRestaurantForm,
   type RestaurantFormErrors,
@@ -17,6 +19,7 @@ import {
   type ValidRestaurantFormValues,
 } from '../restaurant-form'
 import { RESTAURANT_CATEGORIES, RESTAURANT_CATEGORY_LABELS } from '../types'
+import { LocationPicker } from './LocationPicker'
 
 const CATEGORY_OPTIONS = RESTAURANT_CATEGORIES.map((value) => ({ value, label: RESTAURANT_CATEGORY_LABELS[value] }))
 
@@ -32,11 +35,13 @@ export interface RestaurantFormProps {
   onCancel?: () => void
   /** Called when the form starts or stops having unsaved changes ("¿Salir sin guardar?"). */
   onDirtyChange?: (dirty: boolean) => void
+  /** The registration asks for the location on the map (Sprint 2); the edition does not. */
+  requireLocation?: boolean
 }
 
 /**
- * Restaurant form (manual 10 and 12.4): Tu restaurante (Nombre, Categoría), Ubicación (Dirección)
- * and Horarios (HoursEditor), one card per group. Validates on blur and on submit with the rules
+ * Restaurant form (manual 10 and 12.4): Tu restaurante (Nombre, Categoría), Ubicación (Dirección and
+ * the pin on the map) and Horarios (HoursEditor), one card per group. Validates on blur and on submit with the rules
  * of restaurant-form.ts. Shared by the registration (/onboarding) and the edition (/restaurante):
  *
  * ```tsx
@@ -51,12 +56,25 @@ export interface RestaurantFormProps {
  * />
  * ```
  */
-export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, onCancel, onDirtyChange }: RestaurantFormProps) {
+export function RestaurantForm({
+  initialValues,
+  submitLabel,
+  saving,
+  onSubmit,
+  onCancel,
+  onDirtyChange,
+  requireLocation = false,
+}: RestaurantFormProps) {
   const formId = useId()
   const nameId = `${formId}-name`
   const categoryId = `${formId}-category`
   const addressId = `${formId}-address`
+  const locateId = `${formId}-locate`
   const hoursRef = useRef<HTMLDivElement>(null)
+  const [mapUnavailable, setMapUnavailable] = useState(false)
+  const handleMapUnavailable = useCallback(() => setMapUnavailable(true), [])
+  // Without a map nobody can place the pin: then the registration goes on without it.
+  const locationRequired = requireLocation && !mapUnavailable
   // `saving` arrives one render late: a fast double click would send the form twice.
   const submittingRef = useRef(false)
   const [initial] = useState(initialValues)
@@ -76,7 +94,15 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
       setErrors(next)
       setFormError(nextFormError)
     })
-    const fieldId = next.name ? nameId : next.category ? categoryId : next.address ? addressId : undefined
+    const fieldId = next.name
+      ? nameId
+      : next.category
+        ? categoryId
+        : next.address
+          ? addressId
+          : next.location
+            ? locateId
+            : undefined
     if (fieldId) {
       document.getElementById(fieldId)?.focus()
       return
@@ -95,12 +121,22 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
     if (errors.hours || errors.days) setErrors((current) => ({ ...current, hours: undefined, days: undefined, ...validateHours(hours) }))
   }
 
+  function handleLocationChange(location: Coordinates) {
+    setValues((current) => ({ ...current, location }))
+    // A pin outside Bogotá is told right away; a missing one clears as soon as it is placed.
+    setErrors((current) => ({ ...current, location: validateLocation(location, locationRequired) }))
+  }
+
+  function handleInvalidAddress(message: string) {
+    showErrors({ ...errors, address: message })
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (saving || submittingRef.current) return
     setFormError(undefined)
 
-    const nextErrors = validateRestaurantForm(values)
+    const nextErrors = validateRestaurantForm(values, { requireLocation: locationRequired })
     if (countRestaurantFormErrors(nextErrors) > 0 || !isRestaurantCategory(values.category)) {
       showErrors(nextErrors)
       return
@@ -157,20 +193,32 @@ export function RestaurantForm({ initialValues, submitLabel, saving, onSubmit, o
       </Card>
 
       <Card as="section" title="Ubicación">
-        <TextField
-          id={addressId}
-          label="Dirección"
-          placeholder="Ej.: Calle 72 # 10-34, Bogotá"
-          autoComplete="street-address"
-          value={values.address}
-          error={errors.address}
-          onChange={(event) => {
-            const address = event.target.value
-            setValues((current) => ({ ...current, address }))
-            if (errors.address) setErrors((current) => ({ ...current, address: validateAddress(address) }))
-          }}
-          onBlur={() => setErrors((current) => ({ ...current, address: validateAddress(values.address) }))}
-        />
+        <div className="flex flex-col gap-6">
+          <TextField
+            id={addressId}
+            label="Dirección"
+            placeholder="Ej.: Calle 72 # 10-34, Bogotá"
+            autoComplete="street-address"
+            value={values.address}
+            error={errors.address}
+            onChange={(event) => {
+              const address = event.target.value
+              setValues((current) => ({ ...current, address }))
+              if (errors.address) setErrors((current) => ({ ...current, address: validateAddress(address) }))
+            }}
+            onBlur={() => setErrors((current) => ({ ...current, address: validateAddress(values.address) }))}
+          />
+          <LocationPicker
+            address={values.address}
+            value={values.location}
+            onChange={handleLocationChange}
+            error={errors.location}
+            onInvalidAddress={handleInvalidAddress}
+            mapUnavailable={mapUnavailable}
+            onMapUnavailable={handleMapUnavailable}
+            locateButtonId={locateId}
+          />
+        </div>
       </Card>
 
       <Card as="section" title="Horarios">

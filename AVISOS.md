@@ -5,6 +5,35 @@
 
 ---
 
+## 22 oct 2026 · Santiago · Ubicación del restaurante en el formulario
+
+**Qué quedó listo**
+- En `/onboarding` y `/restaurante`, la tarjeta «Ubicación» tiene «Ubicar en el mapa»: busca la dirección con `GET /v1/geocode` y pone el pin del logo en un mapa de Google, que se arrastra o se mueve tocando el mapa. `latitude` y `longitude` van en `POST /v1/restaurants` y en `PATCH /v1/restaurants/me` (solo si el pin se movió).
+- `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE`: mensaje y mapa con toda Bogotá, con el pin en el medio para moverlo; no bloquea el guardado.
+- **Decisión (Santiago):** la ubicación es obligatoria para registrar solo mientras el mapa carga. Sin mapa se guarda el punto de `/geocode`; si tampoco hay punto, el registro sigue y el aviso «Completa tu ubicación» la pedirá después.
+- `HoursEditor`: en pantallas angostas (menos de 448 px de ancho del editor) apertura y cierre van uno debajo del otro. Se cierra el corte a 390 px del aviso del 9 oct.
+- Variables nuevas, opcionales: `VITE_GOOGLE_MAPS_API_KEY` y `VITE_GOOGLE_MAPS_MAP_ID`. Dependencia nueva: `@vis.gl/react-google-maps`.
+
+**Para quién**
+- **Responsable de Google Cloud:**
+  - activar Maps JavaScript API (el checklist de la sección 7 la prohibía antes de la decisión de usar Google en la web);
+  - crear una llave restringida a `http://localhost:5173` y a los dominios de Vercel, y solo a esa API;
+  - crear un Map ID de JavaScript;
+  - entregar la llave y el Map ID por privado.
+
+  Sin ellos, el formulario funciona sin mapa.
+- **Sebastián:** revisa el cambio de layout en tu `HoursEditor` y el mapa (`features/restaurant/components/LocationMap.tsx`: `aspect-4/3`, `rounded-input`, `border-line` y `Logo symbolOnly` como pin). Cuando lleguen la llave y el Map ID, agrégalos en Vercel y vuelve a desplegar.
+- **Jacobo:** en `RestaurantPage.tsx`, `createUpdateInput` envía las coordenadas. `RestaurantProfile` ahora tiene `latitude` y `longitude` (`number | null`): todo mock de `RestaurantProfile` debe incluirlas.
+- **Todos:** después del pull, corre `npm install`.
+
+**Rama / PR**
+- `feat/sprint2-ubicacion-restaurante` → `develop`.
+
+**Pendiente**
+- Ver el mapa real (falta la llave) y probar R2.1 a R2.4 en el ambiente desplegado.
+
+---
+
 ## 20 oct 2026 (noche) · Sergio · Pendiente del Sprint 1 · README, AGENTS.md y matriz de pruebas
 
 **Qué quedó listo**

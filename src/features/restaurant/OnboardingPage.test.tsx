@@ -16,6 +16,8 @@ const CREATED: RestaurantProfile = {
   name: 'Casa 72',
   category: 'colombian',
   address: 'Calle 72 # 10-34, Bogotá',
+  latitude: null,
+  longitude: null,
   schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }],
 }
 

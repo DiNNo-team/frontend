@@ -30,6 +30,11 @@ export function useRegisterRestaurant() {
   })
 }
 
+/** Address → point (GET /geocode). A mutation: it runs when the person asks, and nothing is cached. */
+export function useGeocodeAddress() {
+  return useMutation({ mutationFn: (address: string) => restaurantApi.geocode(address) })
+}
+
 /** Updates the session's restaurant and writes the complete PATCH response into the query cache. */
 export function useUpdateRestaurant() {
   const queryClient = useQueryClient()

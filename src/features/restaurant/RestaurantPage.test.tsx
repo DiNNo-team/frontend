@@ -8,7 +8,9 @@ import RestaurantPage from './RestaurantPage'
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), update: vi.fn() }))
 
-vi.mock('./api', () => ({ restaurantApi: { get: mocks.get, update: mocks.update, register: vi.fn() } }))
+vi.mock('./api', () => ({ restaurantApi: { get: mocks.get, update: mocks.update, register: vi.fn(), geocode: vi.fn() } }))
+// jsdom cannot load Google Maps: the fake map moves the pin with a button (Santiago, Sprint 2).
+vi.mock('./components/LocationMap', () => import('./components/LocationMap.fake'))
 vi.mock('@/features/auth/auth-context', () => ({
   useAuth: () => ({ user: { uid: 'restaurant-owner' } }),
 }))
@@ -18,6 +20,8 @@ const PROFILE: RestaurantProfile = {
   name: 'Casa 72',
   category: 'grill',
   address: 'Calle 72 # 10-34, Bogotá',
+  latitude: 4.655671,
+  longitude: -74.057006,
   schedules: [
     { dayOfWeek: 1, isOpen24h: false, opensAt: '18:00', closesAt: '02:00' },
     { dayOfWeek: 6, isOpen24h: true, opensAt: null, closesAt: null },
@@ -139,6 +143,15 @@ describe('RestaurantPage', () => {
     expect(mocks.get).toHaveBeenCalledTimes(1)
     expect(await screen.findByText('Cambios guardados')).toBeInTheDocument()
     expect(screen.queryByLabelText('Nombre')).not.toBeInTheDocument()
+  })
+
+  it('sends both coordinates when the pin moves, and only them', async () => {
+    const { user } = renderPage()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    await user.click(screen.getByRole('button', { name: 'Mover pin' }))
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ latitude: 4.660123, longitude: -74.053211 }))
   })
 
   it('sends the complete open schedule list when hours change', async () => {

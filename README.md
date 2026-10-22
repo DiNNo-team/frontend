@@ -32,8 +32,10 @@ Van en `.env.local`, que no se versiona. Se leen al iniciar `npm run dev`: **si 
 | `VITE_FIREBASE_API_KEY` | Sí | Configuración pública de Firebase Authentication (no es secreta) | `your-firebase-api-key` |
 | `VITE_FIREBASE_AUTH_DOMAIN` | Sí | ídem | `your-project.firebaseapp.com` |
 | `VITE_FIREBASE_PROJECT_ID` | Sí | ídem | `your-firebase-project-id` |
+| `VITE_GOOGLE_MAPS_API_KEY` | No | Llave de Google Maps JavaScript API para el mapa de la ubicación del restaurante. Va al navegador: se protege restringiéndola en Google Cloud a los dominios de la web y a esa API. Sin ella, el formulario funciona sin mapa | (sin valor) |
+| `VITE_GOOGLE_MAPS_MAP_ID` | No | Map ID de Google Maps (no es secreto). Lo exigen el pin arrastrable y el mapa oscuro. Sin él, el formulario funciona sin mapa | (sin valor) |
 
-- **Los valores reales nunca van en el repo.** Pídeselos a Elizabeth por privado, igual que las cuentas de prueba para iniciar sesión.
+- **Los valores reales nunca van en el repo.** Pídeselos a Elizabeth por privado, igual que las cuentas de prueba para iniciar sesión. La llave y el Map ID de Google Maps los entrega el responsable de Google Cloud.
 - **Firebase hace falta incluso con `VITE_USE_MOCKS=true`:** los mocks cubren los datos, pero el inicio de sesión siempre usa Firebase. Sin las tres `VITE_FIREBASE_*` la web queda en blanco.
 - Todas las `VITE_*` terminan en el navegador: **nunca pongas secretos en ellas**.
 - Si agregas una variable, va también en `.env.example` (con un valor de ejemplo y un comentario) y tipada en `src/vite-env.d.ts`.

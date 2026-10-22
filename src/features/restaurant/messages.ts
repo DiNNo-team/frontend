@@ -10,3 +10,18 @@ export const ONBOARDING_TEXT = {
   // 409: the user already has a restaurant. Same text as the backend, owned by the web.
   alreadyRegisteredToast: 'Ya registraste tu restaurante. Para cambiar sus datos, entra a Restaurante.',
 } as const
+
+// Texts of the location picker (registration and edition). Its validation errors live in restaurant-form.ts.
+export const LOCATION_TEXT = {
+  locate: 'Ubicar en el mapa',
+  locating: 'Ubicando…',
+  help: 'Arrastra el pin hasta la entrada de tu restaurante o toca el mapa para moverlo.',
+  // Sprint 2 plan, section 9: 404 ADDRESS_NOT_FOUND.
+  addressNotFound: 'No encontramos esa dirección. Mueve el pin al lugar correcto.',
+  // Backend AVISOS.md (Santiago): 503 GEOCODING_UNAVAILABLE.
+  geocodingUnavailable: 'No pudimos ubicar la dirección en este momento. Mueve el pin al lugar correcto.',
+  locateFailed: 'No pudimos ubicar la dirección. Intenta de nuevo en un momento.',
+  mapUnavailable: 'No pudimos cargar el mapa. Con «Ubicar en el mapa» guardamos la ubicación de tu dirección.',
+  locatedWithoutMap: (address: string) => `Ubicamos tu dirección: ${address}.`,
+  notLocatedWithoutMap: 'No pudimos ubicar tu dirección. Puedes guardar y completar la ubicación después en Restaurante.',
+} as const
