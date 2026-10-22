@@ -1,5 +1,6 @@
 import { DAY_LABELS, DAYS_OF_WEEK, type DayHours, type DayOfWeek, type WeeklyHours } from '@/components/ui'
 import { ApiError, getApiErrorMessage, isAccessError } from '@/lib/api-client'
+import { isInsideBogota, roundCoordinate, type Coordinates } from './location'
 import {
   RESTAURANT_CATEGORIES,
   RESTAURANT_LIMITS,
@@ -16,6 +17,8 @@ export interface RestaurantFormValues {
   /** `''` while nothing is chosen. */
   category: RestaurantCategory | ''
   address: string
+  /** Point of the restaurant on the map; `null` while it has none. */
+  location: Coordinates | null
   /** Seven entries, Monday to Sunday (HoursEditor value). */
   hours: WeeklyHours
 }
@@ -29,6 +32,7 @@ export interface RestaurantFormErrors {
   name?: string
   category?: string
   address?: string
+  location?: string
   /** Error of the whole schedule (no open day). */
   hours?: string
   /** One message per day row. */
@@ -46,6 +50,8 @@ export const RESTAURANT_FORM_MESSAGES = {
   categoryRequired: 'Elige la categoría de tu restaurante de la lista.',
   addressRequired: 'Escribe la dirección de tu restaurante.',
   addressTooLong: `La dirección es muy larga. Usa máximo ${RESTAURANT_LIMITS.addressMaxLength} caracteres.`,
+  locationRequired: 'Ubica tu restaurante en el mapa.',
+  locationOutsideBogota: 'Ubica tu restaurante dentro de Bogotá.',
   noOpenDay: 'Indica al menos un día en que abre tu restaurante.',
   // Backend: "escribe la hora … en formato HH:MM". Here the hours come from a list, so the text says to choose one.
   openingRequired: (day: DayOfWeek) => `${dayLabel(day)}: elige la hora de apertura.`,
@@ -79,6 +85,7 @@ export function emptyRestaurantFormValues(): RestaurantFormValues {
     name: '',
     category: '',
     address: '',
+    location: null,
     hours: DAYS_OF_WEEK.map((day) => ({ day, isOpen: false, isOpen24h: false, ...SUGGESTED_HOURS })),
   }
 }
@@ -101,6 +108,15 @@ export function validateAddress(address: string): string | undefined {
   return undefined
 }
 
+/**
+ * Required only to register, and only while the map can be shown (decision of Santiago, 2026-10-22):
+ * without a map nobody can place the pin, so the registration goes on without it.
+ */
+export function validateLocation(location: Coordinates | null, required: boolean): string | undefined {
+  if (!location) return required ? RESTAURANT_FORM_MESSAGES.locationRequired : undefined
+  return isInsideBogota(location) ? undefined : RESTAURANT_FORM_MESSAGES.locationOutsideBogota
+}
+
 /** One message per day: a closed day or a 24-hour day has no hours to check. */
 export function validateDay({ day, isOpen, isOpen24h, opensAt, closesAt }: DayHours): string | undefined {
   if (!isOpen || isOpen24h) return undefined
@@ -121,20 +137,22 @@ export function validateHours(hours: WeeklyHours): Pick<RestaurantFormErrors, 'h
   return Object.keys(days).length > 0 ? { days } : {}
 }
 
-export function validateRestaurantForm(values: RestaurantFormValues): RestaurantFormErrors {
+export function validateRestaurantForm(values: RestaurantFormValues, { requireLocation = false } = {}): RestaurantFormErrors {
   const errors: RestaurantFormErrors = validateHours(values.hours)
   const name = validateName(values.name)
   const category = validateCategory(values.category)
   const address = validateAddress(values.address)
+  const location = validateLocation(values.location, requireLocation)
   if (name) errors.name = name
   if (category) errors.category = category
   if (address) errors.address = address
+  if (location) errors.location = location
   return errors
 }
 
 /** Fields with an error: each day row counts as one field. */
 export function countRestaurantFormErrors(errors: RestaurantFormErrors): number {
-  const fields = [errors.name, errors.category, errors.address, errors.hours].filter(Boolean).length
+  const fields = [errors.name, errors.category, errors.address, errors.location, errors.hours].filter(Boolean).length
   return fields + Object.keys(errors.days ?? {}).length
 }
 
@@ -165,12 +183,15 @@ export function describeRestaurantSaveError(error: unknown, values: RestaurantFo
  * Form values from GET /restaurants/me (edition, Jacobo). A day without schedule is closed. Missing
  * hours (closed or 24-hour days) get the suggestion, so switching the day back shows hours.
  * `category` and `address` are `null` in restaurants created before PBI 3: the form asks for them.
+ * Coordinates are `null` in restaurants registered before Sprint 2: then there is no location yet.
  */
 export function toRestaurantFormValues(profile: RestaurantProfile): RestaurantFormValues {
+  const { latitude, longitude } = profile
   return {
     name: profile.name,
     category: profile.category ?? '',
     address: profile.address ?? '',
+    location: latitude !== null && longitude !== null ? { latitude, longitude } : null,
     hours: DAYS_OF_WEEK.map((day, index) => {
       const schedule = profile.schedules.find((entry) => entry.dayOfWeek === index + 1)
       if (!schedule) return { day, isOpen: false, isOpen24h: false, ...SUGGESTED_HOURS }
@@ -193,22 +214,37 @@ function isSameDay(before: DayHours, after: DayHours): boolean {
   return before.isOpen24h || (before.opensAt === after.opensAt && before.closesAt === after.closesAt)
 }
 
+/** Same point at the 6 decimals the backend keeps: a sub-centimeter drag is not a change. */
+function isSameLocation(before: Coordinates | null, after: Coordinates | null): boolean {
+  if (!before || !after) return before === after
+  return (
+    roundCoordinate(before.latitude) === roundCoordinate(after.latitude) &&
+    roundCoordinate(before.longitude) === roundCoordinate(after.longitude)
+  )
+}
+
 /** `true` when the values differ from the initial ones ("¿Salir sin guardar?", manual 10). Texts compare trimmed. */
 export function hasRestaurantFormChanges(initial: RestaurantFormValues, values: RestaurantFormValues): boolean {
   if (initial.name.trim() !== values.name.trim() || initial.address.trim() !== values.address.trim()) return true
   if (initial.category !== values.category) return true
+  if (!isSameLocation(initial.location, values.location)) return true
   return values.hours.some((entry) => {
     const before = initial.hours.find((day) => day.day === entry.day)
     return !before || !isSameDay(before, entry)
   })
 }
 
-/** Body of POST /restaurants: one element per open day; a 24-hour day goes without hours. */
+/**
+ * Body of POST /restaurants: one element per open day; a 24-hour day goes without hours.
+ * Coordinates go with 6 decimals, both or neither.
+ */
 export function toRegisterRestaurantInput(values: ValidRestaurantFormValues): RegisterRestaurantInput {
+  const { location } = values
   return {
     name: values.name.trim(),
     category: values.category,
     address: values.address.trim(),
+    ...(location && { latitude: roundCoordinate(location.latitude), longitude: roundCoordinate(location.longitude) }),
     schedules: values.hours
       .filter((entry) => entry.isOpen)
       .map((entry) => {

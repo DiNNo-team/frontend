@@ -34,6 +34,7 @@ const VALID: RestaurantFormValues = {
   name: '  Casa 72 ',
   category: 'colombian',
   address: ' Calle 72 # 10-34, Bogotá ',
+  location: null,
   hours: withDays(openDay('mon', '12:00', '21:00'), { ...openDay('sat', '12:00', '21:00'), isOpen24h: true }, openDay('fri', '18:00', '02:00')),
 }
 
@@ -170,6 +171,8 @@ describe('restaurant form: edition (GET /restaurants/me → form)', () => {
     name: 'Casa 72',
     category: 'grill' as const,
     address: 'Calle 72 # 10-34, Bogotá',
+    latitude: 4.655671,
+    longitude: -74.057006,
     schedules: [
       { dayOfWeek: 1, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
       { dayOfWeek: 5, isOpen24h: false, opensAt: '18:00', closesAt: '02:00' },
@@ -212,5 +215,34 @@ describe('restaurant form: edition (GET /restaurants/me → form)', () => {
     expect(hasRestaurantFormChanges(initial, { ...initial, hours: openTuesday })).toBe(true)
     const mondayCloses = initial.hours.map((day) => (day.day === 'mon' ? { ...day, closesAt: '18:00' } : day))
     expect(hasRestaurantFormChanges(initial, { ...initial, hours: mondayCloses })).toBe(true)
+  })
+
+  it('reads the saved location, or none for restaurants registered before Sprint 2', () => {
+    expect(toRestaurantFormValues(profile).location).toEqual({ latitude: 4.655671, longitude: -74.057006 })
+    expect(toRestaurantFormValues({ ...profile, latitude: null, longitude: null }).location).toBeNull()
+  })
+
+  it('a moved pin is a change; the same point at 6 decimals is not', () => {
+    const initial = toRestaurantFormValues(profile)
+    expect(hasRestaurantFormChanges(initial, { ...initial, location: { latitude: 4.6556714, longitude: -74.0570061 } })).toBe(false)
+    expect(hasRestaurantFormChanges(initial, { ...initial, location: { latitude: 4.6561, longitude: -74.057006 } })).toBe(true)
+    expect(hasRestaurantFormChanges({ ...initial, location: null }, initial)).toBe(true)
+  })
+})
+
+describe('restaurant form: location in POST /restaurants', () => {
+  it('sends both coordinates with 6 decimals', () => {
+    const body = toRegisterRestaurantInput({
+      ...VALID,
+      category: 'colombian',
+      location: { latitude: 4.65567149999, longitude: -74.05700651234 },
+    })
+    expect(body).toMatchObject({ latitude: 4.655671, longitude: -74.057007 })
+  })
+
+  it('sends neither coordinate without a location', () => {
+    const body = toRegisterRestaurantInput({ ...VALID, category: 'colombian' })
+    expect(body).not.toHaveProperty('latitude')
+    expect(body).not.toHaveProperty('longitude')
   })
 })
