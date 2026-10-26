@@ -34,8 +34,42 @@ describe('LoginPage', () => {
     expect(signInForm().getByRole('button', { name: 'Mostrar contraseña' })).toBeInTheDocument()
     expect(signInForm().getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continuar con Google' })).toBeInTheDocument()
-    expect(screen.queryByText(/crear cuenta|regístrate/i)).not.toBeInTheDocument()
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Iniciar sesión' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tabpanel', { name: 'Crear cuenta' })).toHaveAttribute('inert')
+  })
+
+  it('places Google sign-in below the email sign-in button', () => {
+    renderLoginPage()
+    const signInButton = signInForm().getByRole('button', { name: 'Iniciar sesión' })
+    const googleButton = signInForm().getByRole('button', { name: 'Continuar con Google' })
+
+    expect(signInButton.compareDocumentPosition(googleButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('switches to "Crear cuenta" from the tab and back with the arrow keys', async () => {
+    const { user } = renderLoginPage()
+    await user.click(screen.getByRole('tab', { name: 'Crear cuenta' }))
+
+    expect(screen.getByRole('tab', { name: 'Crear cuenta' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tabpanel', { name: 'Crear cuenta' })).not.toHaveAttribute('inert')
+    expect(screen.getByRole('tabpanel', { name: 'Iniciar sesión' })).toHaveAttribute('inert')
+
+    await user.keyboard('{ArrowUp}')
+    expect(screen.getByRole('tab', { name: 'Iniciar sesión' })).toHaveFocus()
+    expect(screen.getByRole('tab', { name: 'Iniciar sesión' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('explains how to get a restaurant account without offering public sign-up', async () => {
+    const { user } = renderLoginPage()
+    await user.click(signInForm().getByRole('button', { name: 'Crear cuenta' }))
+
+    const panel = within(screen.getByRole('tabpanel', { name: 'Crear cuenta' }))
+    expect(panel.getByRole('heading', { name: 'Pide tu cuenta de restaurante' })).toHaveFocus()
+    expect(panel.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(panel.queryByRole('form')).not.toBeInTheDocument()
+
+    await user.click(panel.getByRole('button', { name: 'Inicia sesión' }))
+    expect(signInForm().getByLabelText('Correo')).toHaveFocus()
   })
 
   it('validates email format and requires a password without calling signIn', async () => {
