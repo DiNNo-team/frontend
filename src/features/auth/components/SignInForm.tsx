@@ -16,7 +16,7 @@ function validatePassword(value: string): string | undefined {
   return value.length > 0 ? undefined : 'Escribe tu contraseña para iniciar sesión.'
 }
 
-export function SignInForm() {
+export function SignInForm({ onSwitch }: { onSwitch: () => void }) {
   const { signIn, signInWithGoogle, sendPasswordReset } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -87,6 +87,10 @@ export function SignInForm() {
 
   return (
     <form aria-labelledby="signin-title" className="flex flex-col gap-5" noValidate onSubmit={handleSubmit}>
+      <p className="order-last text-center text-sec text-fg/60 md:order-first">
+        ¿Aún no tienes cuenta? <AuthLink onClick={onSwitch}>Crear cuenta</AuthLink>
+      </p>
+
       <header className="flex flex-col gap-2 lg:sr-only">
         <h1 id="signin-title" className="text-h1">
           Inicia sesión
@@ -96,25 +100,6 @@ export function SignInForm() {
 
       {submitError && <Alert type="error">{submitError}</Alert>}
       {resetNotice && <Alert type="success">{resetNotice}</Alert>}
-
-      <Button
-        type="button"
-        variant="outline"
-        fullWidth
-        loading={googleSigningIn}
-        disabled={submitting || sendingReset}
-        loadingText="Conectando con Google…"
-        onClick={() => void handleGoogleSignIn()}
-      >
-        {/* Official Google "G" (branding guidelines): its colors and shape never change. */}
-        <img src={googleLogo} alt="" aria-hidden="true" width={20} height={20} className="size-5" />
-        Continuar con Google
-      </Button>
-      <div aria-hidden="true" className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-line" />
-        <span className="text-label text-fg-2">O continúa con correo</span>
-        <span className="h-px flex-1 bg-line" />
-      </div>
 
       <div className="flex flex-col gap-4">
         <TextField
@@ -154,6 +139,25 @@ export function SignInForm() {
 
       <Button type="submit" fullWidth loading={submitting} disabled={googleSigningIn || sendingReset} loadingText="Iniciando sesión…">
         Iniciar sesión
+      </Button>
+
+      <div aria-hidden="true" className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-line" />
+        <span className="text-label text-fg/60">O inicia sesión con</span>
+        <span className="h-px flex-1 bg-line" />
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        fullWidth
+        loading={googleSigningIn}
+        disabled={submitting || sendingReset}
+        loadingText="Conectando con Google…"
+        onClick={() => void handleGoogleSignIn()}
+      >
+        {/* Official Google "G" (branding guidelines): its colors and shape never change. */}
+        <img src={googleLogo} alt="" aria-hidden="true" width={20} height={20} className="size-5" />
+        Continuar con Google
       </Button>
     </form>
   )

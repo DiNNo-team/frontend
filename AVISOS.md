@@ -5,6 +5,23 @@
 
 ---
 
+## 26 oct 2026 · Sebastián · `/login` vuelve a tener pestañas, sin registro público
+
+**Qué cambió**
+- Vuelve el diseño del 14 oct: la columna izquierda con el símbolo de DiNNo y las pestañas **Iniciar sesión / Crear cuenta**, la barra naranja que se desliza, el panel de marca que cambia de texto y los formularios que se deslizan (300 ms).
+- **"Crear cuenta" no crea cuentas.** El contrato (sección 10) sigue igual: no hay registro público. La pestaña explica cómo pedir una cuenta de restaurante (el equipo la habilita) y remite a los comensales a la app. No tiene campos ni llama a Firebase. `signUp` sigue fuera del contexto.
+- **"Continuar con Google"** baja a debajo de "Iniciar sesión", con el separador "O inicia sesión con". Es el mismo botón y la misma lógica.
+- Piezas: `AuthNav` y `auth-view.ts` vuelven; `AccountRequestPanel` es nuevo; `SignInForm` recibe `onSwitch`.
+
+**Para quién**
+- **Jacobo:** tu lógica de `SignInForm` (correo, Google, recuperar contraseña) no cambió, solo el orden. En `LoginPage.test.tsx` cambié la prueba que exigía que no hubiera pestañas: ahora revisa que "Crear cuenta" no tenga ningún campo ni formulario.
+- **Equipo:** el texto de la pestaña dice "Escríbele al equipo de DiNNo" sin un canal. Si definimos un correo o un enlace de contacto, se agrega ahí.
+
+**Rama / PR**
+- `fix/sprint2-login-pestanas` → `develop`.
+
+---
+
 ## 26 oct 2026 · Sebastián · Cierre del Sprint 2 en la web: mensajes de ubicación, logo de Google y dominio único
 
 **Después del pull:** `npm install`. No hay dependencias nuevas.
