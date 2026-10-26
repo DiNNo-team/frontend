@@ -5,6 +5,29 @@
 
 ---
 
+## 26 oct 2026 · Elizabeth · `GET /v1/geocode` con mensajes neutros (también lo usa el comensal)
+
+**Para Santiago y Sebastián.** Cambio del backend en la rama `docs/sprint2-cierre-contrato`, todavía sin fusionar.
+
+- **Mensajes neutros:** el `message` del backend ya no dice «Mueve el pin»: ahora es «No encontramos esa dirección en Bogotá.» (`404 ADDRESS_NOT_FOUND`) y «No pudimos ubicar la dirección en este momento.» (`503 GEOCODING_UNAVAILABLE`). El cambio es porque el comensal también usa la ruta para buscar por dirección. Los `errorCode`, los códigos HTTP y la forma de la respuesta no cambian.
+- **La web debe mostrar su propio texto por `errorCode`, nunca el `message`.** Hoy ya lo hace (`LocationPicker.tsx` con `LOCATION_TEXT` en `features/restaurant/messages.ts`), así que no se rompe nada. El texto sugerido para el 404 es «No encontramos esa dirección en Bogotá. Mueve el pin al lugar correcto.»; hoy la web dice «No encontramos esa dirección. Mueve el pin al lugar correcto.». Alinearlo es opcional (Santiago).
+- **Cuenta sin perfil:** en `/geocode` ahora recibe `403 PROFILE_REQUIRED` en lugar de `ACCOUNT_NOT_ENABLED`, igual que en `GET /v1/me`. La web ya ve ese código en `/me` antes de llegar al formulario. Un comensal ahora recibe `200` en esta ruta, ya no `403 DINER_ACCOUNT`.
+- **El restaurante no cambia:** `/geocode` sigue sin exigir restaurante registrado.
+- **Contrato:** `CLAUDE.md` §10 (fila de `/geocode`, «Ambos roles» y «Búsqueda por dirección (app)»), idéntica en los tres repos.
+
+---
+
+## 26 oct 2026 · Elizabeth · Backend del Sprint 2 cerrado
+
+- **El backend del Sprint 2 está cerrado:** todo está en `develop` y desplegado en Render. Se probó el 26 oct con tokens reales de Firebase. No cambió ninguna ruta ni respuesta.
+- **Seed en Render:** además de Casa 72 y Casa16 están los 15 restaurantes reales de Santiago, con sus horarios y mesas. Sus dueños (`restaurante-XX@dinno.test`) son solo datos: nadie entra a la web como ellos.
+- **Casa 72** tiene como dueño `dinnoteam2026+casa72@gmail.com` (Casa16 es de `dinnoteam2026@gmail.com`). Su cuenta de Firebase ya existe y está verificada: con ella se entra a la web como Casa 72 (probado el 26 oct en Render, junto con el tiempo real hacia la app).
+- **La geocodificación ya funciona** (llave real en Render): `GET /v1/geocode` devuelve coordenadas reales, y `503 GEOCODING_UNAVAILABLE` solo sale si Google no responde. Una dirección fuera de Bogotá da `404 ADDRESS_NOT_FOUND`. **Caso conocido:** un texto sin sentido puede devolver `200` con una dirección cualquiera de Bogotá, así que el dueño siempre debe confirmar el pin en el mapa.
+- **Credenciales:** en Discord (#usuarios-restaurante y #usuarios-comensal), nunca en el repo. Una cuenta nueva usa un alias `dinnoteam2026+algo@gmail.com`.
+- **Contrato:** `CLAUDE.md`, sección 10, idéntica en los tres repos. Hoy cambió el apartado «Cuentas de prueba» y la tabla «Cuándo está listo cada contrato en `develop`».
+
+---
+
 ## 22 oct 2026 · Santiago · Aviso «Completa tu ubicación»
 
 **Qué quedó listo**
@@ -101,11 +124,11 @@
 **Jacobo (acceso a la web):**
 - **Ya está activo en `develop`:** el backend no crea usuarios al iniciar sesión. Precedencia de los errores: `401` de sesión → `401 EMAIL_NOT_VERIFIED` → `403 ACCOUNT_NOT_ENABLED` (cuenta sin perfil) o `403 DINER_ACCOUNT` (cuenta de comensal) → `403 RESTAURANT_REQUIRED` (restaurante habilitado sin restaurante registrado). Textos exactos en la tabla de códigos de `CLAUDE.md`, sección 10.
 - **Sigue pendiente en la web:** hoy `src/lib/api-client.ts` solo distingue `EMAIL_NOT_VERIFIED` y `RESTAURANT_REQUIRED`; `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` terminan en «No tienes acceso a esta sección.». El plan sigue siendo el de la entrada "Contratos del Sprint 2 publicados" (más abajo): manejarlos por `errorCode` y quitar «Crear cuenta».
-- **Para probar:** `dinnoteam2026@gmail.com` es el único correo real habilitado como restaurante. Cualquier otro correo verificado da `ACCOUNT_NOT_ENABLED`. Para `DINER_ACCOUNT` hace falta una cuenta de comensal: crea una desde la app (o con `POST /v1/diners/me`) y entra con ella en la web.
+- **Para probar** (superado el 26 oct: ahora también está Casa 72, ver «Cuentas de prueba» en `CLAUDE.md`, sección 10): `dinnoteam2026@gmail.com` es el único correo real habilitado como restaurante. Cualquier otro correo verificado da `ACCOUNT_NOT_ENABLED`. Para `DINER_ACCOUNT` hace falta una cuenta de comensal: crea una desde la app (o con `POST /v1/diners/me`) y entra con ella en la web.
 
 **Santiago (ubicación del restaurante):**
 - **`GET /v1/geocode?address=<texto>`** ya está en `develop` → `200 { latitude, longitude, formattedAddress }` (6 decimales, siempre dentro de Bogotá). No exige restaurante registrado: úsalo en `/onboarding` antes del `POST`. `address` recortada, de 3 a 255 caracteres; si no, `400`.
-  - `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE`: en los dos casos muestra el mensaje y el mapa centrado en Bogotá para mover el pin, sin bloquear el guardado. Ramifica por `errorCode`. Mientras la llave de Google no esté configurada en Render, la respuesta es siempre `503`.
+  - `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE`: en los dos casos muestra el mensaje y el mapa centrado en Bogotá para mover el pin, sin bloquear el guardado. Ramifica por `errorCode`. ~~Mientras la llave de Google no esté configurada en Render, la respuesta es siempre `503`.~~ **Resuelto el 26 oct:** la llave ya está configurada (ver la entrada del 26 oct).
 - **Coordenadas en `POST /v1/restaurants` y `PATCH /v1/restaurants/me`:** `latitude` y `longitude` como números, **las dos o ninguna** (si llega solo una, `400`), dentro de Bogotá (lat 4.45 a 4.85, lng −74.25 a −73.95; fuera, `400`). Se aceptan con más decimales y **se guardan redondeadas a 6**. **No se pueden borrar:** `null` da `400`. En el `PATCH`, enviar solo las coordenadas es una edición válida.
 - **Respuestas:** `POST /v1/restaurants`, `GET` y `PATCH /v1/restaurants/me` traen `latitude` y `longitude` (`number | null`). El aviso **«Completa tu ubicación»** se muestra cuando `GET /v1/restaurants/me` trae `latitude === null`.
 - **Datos de los 15 restaurantes reales:** el formato de `src/seed-data/restaurants.json` está en el `AVISOS.md` del backend (sección de Santiago). Se entrega el **viernes 16** en una rama `feature/s2-seed-restaurantes` del backend, con PR para Elizabeth, sin correr el seed en Neon. **No incluyas Casa 72:** ya está en el seed y es el restaurante de prueba del equipo.
