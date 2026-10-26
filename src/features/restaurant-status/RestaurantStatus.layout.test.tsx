@@ -11,6 +11,8 @@ import { mockRestaurantStatusControl } from './api.mock'
 // Async factories: the layout imports both APIs while the mocks are still loading.
 vi.mock('./api', async () => ({ restaurantStatusApi: (await import('./api.mock')).mockRestaurantStatusApi }))
 vi.mock('@/features/tables/api', async () => ({ tablesApi: (await import('@/features/tables/api.mock')).mockTablesApi }))
+// The location notice shares the banner slot and reads GET /restaurants/me: out of these tests (Santiago).
+vi.mock('@/features/restaurant/components/LocationBanner', () => ({ LocationBanner: () => null }))
 
 // Signed-in session as the AuthProvider exposes it (Firebase replaced by a fixed value).
 const SESSION: AuthContextValue = {
@@ -18,10 +20,12 @@ const SESSION: AuthContextValue = {
   loading: false,
   emailVerified: true,
   authEvent: null,
+  accountEvent: null,
   clearAuthEvent: vi.fn(),
+  clearAccountEvent: vi.fn(),
   emailVerificationRetried: false,
   signIn: vi.fn(),
-  signUp: vi.fn(),
+  signInWithGoogle: vi.fn(),
   sendPasswordReset: vi.fn(),
   signOut: vi.fn(),
   reenviarVerificacion: vi.fn(),

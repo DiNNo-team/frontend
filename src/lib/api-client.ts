@@ -35,6 +35,16 @@ export const EMAIL_NOT_VERIFIED_CODE = 'EMAIL_NOT_VERIFIED'
 /** Fired on `window` on that 401 instead of SESSION_EXPIRED_EVENT: the session is fine, the email is not. */
 export const EMAIL_NOT_VERIFIED_EVENT = 'dinno:email-not-verified'
 
+/** `errorCode` values for restaurant routes used by accounts with the wrong role. */
+export const ACCOUNT_NOT_ENABLED_CODE = 'ACCOUNT_NOT_ENABLED'
+export const DINER_ACCOUNT_CODE = 'DINER_ACCOUNT'
+
+/** Fired on `window` for a verified account without a restaurant profile. */
+export const ACCOUNT_NOT_ENABLED_EVENT = 'dinno:account-not-enabled'
+
+/** Fired on `window` when a diner account opens a restaurant route. */
+export const DINER_ACCOUNT_EVENT = 'dinno:diner-account'
+
 /** `errorCode` of the 403 for a session user without a restaurant yet. */
 export const RESTAURANT_REQUIRED_CODE = 'RESTAURANT_REQUIRED'
 
@@ -95,6 +105,10 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, signal
       window.dispatchEvent(new CustomEvent(event))
     }
     if (error.code === RESTAURANT_REQUIRED_CODE) window.dispatchEvent(new CustomEvent(RESTAURANT_REQUIRED_EVENT))
+    if (error.status === 403 && error.code === ACCOUNT_NOT_ENABLED_CODE) {
+      window.dispatchEvent(new CustomEvent(ACCOUNT_NOT_ENABLED_EVENT))
+    }
+    if (error.status === 403 && error.code === DINER_ACCOUNT_CODE) window.dispatchEvent(new CustomEvent(DINER_ACCOUNT_EVENT))
     throw error
   }
   if (response.status === 204) return undefined as T
@@ -106,6 +120,10 @@ export function getApiErrorMessage(error: unknown, fallback = 'No pudimos conect
   if (error instanceof ApiError) {
     if (error.isNetworkError) return 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'
     if (error.code === EMAIL_NOT_VERIFIED_CODE) return 'Verifica tu correo para continuar.'
+    if (error.code === ACCOUNT_NOT_ENABLED_CODE) {
+      return 'Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.'
+    }
+    if (error.code === DINER_ACCOUNT_CODE) return 'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.'
     if (error.status === 401) return 'Tu sesión terminó. Inicia sesión de nuevo.'
     if (error.status === 403) return 'No tienes acceso a esta sección.'
   }

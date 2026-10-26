@@ -2,13 +2,15 @@ import { Outlet, useNavigate } from 'react-router'
 import { AppShell, OnboardingShell } from '@/components/layout'
 import { useAuth } from '@/features/auth/auth-context'
 import { EmailVerificationScreen } from './EmailVerificationScreen'
+import { WrongAccountScreen } from './WrongAccountScreen'
 import { RestaurantStatusBanner } from '@/features/restaurant-status/components/RestaurantStatusBanner'
 import { RestaurantStatusControl } from '@/features/restaurant-status/components/RestaurantStatusControl'
+import { LocationBanner } from '@/features/restaurant/components/LocationBanner'
 import { useToast } from '@/components/ui'
 
 export function DashboardLayout() {
   const navigate = useNavigate()
-  const { user, authEvent, signOut } = useAuth()
+  const { user, authEvent, accountEvent, signOut } = useAuth()
   const toast = useToast()
 
   function handleSignOut() {
@@ -22,18 +24,40 @@ export function DashboardLayout() {
       restaurantName={user?.displayName ?? 'Restaurante'}
       userEmail={user?.email ?? ''}
       onSignOut={handleSignOut}
-      statusSlot={<RestaurantStatusControl />}
-      banner={<RestaurantStatusBanner />}
+      statusSlot={accountEvent ? undefined : <RestaurantStatusControl />}
+      banner={
+        accountEvent ? undefined : (
+          // empty:hidden: with no notice to show, the wrapper takes no gap in the page.
+          <div className="flex flex-col gap-3 empty:hidden">
+            <RestaurantStatusBanner />
+            <LocationBanner />
+          </div>
+        )
+      }
     >
-      {authEvent === 'email-not-verified' ? <EmailVerificationScreen /> : <Outlet />}
+      {authEvent === 'email-not-verified' ? (
+        <EmailVerificationScreen />
+      ) : accountEvent ? (
+        <WrongAccountScreen />
+      ) : (
+        <Outlet />
+      )}
     </AppShell>
   )
 }
 
 export function OnboardingLayout() {
+  const { authEvent, accountEvent } = useAuth()
+
   return (
     <OnboardingShell>
-      <Outlet />
+      {authEvent === 'email-not-verified' ? (
+        <EmailVerificationScreen />
+      ) : accountEvent ? (
+        <WrongAccountScreen />
+      ) : (
+        <Outlet />
+      )}
     </OnboardingShell>
   )
 }

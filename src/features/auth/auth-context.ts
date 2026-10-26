@@ -1,18 +1,20 @@
 import { createContext, useContext } from 'react'
 import type { User } from 'firebase/auth'
 
-export type AuthEvent = 'session-expired' | 'email-not-verified' | 'restaurant-required'
+export type AccountEvent = 'account-not-enabled' | 'diner-account'
+export type AuthEvent = 'session-expired' | 'email-not-verified' | AccountEvent | 'restaurant-required'
 
 export interface AuthContextValue {
   user: User | null
   loading: boolean
   emailVerified: boolean
   authEvent: AuthEvent | null
+  accountEvent: AccountEvent | null
   clearAuthEvent: () => void
+  clearAccountEvent: () => void
   emailVerificationRetried: boolean
   signIn: (email: string, password: string) => Promise<void>
-  /** Creates the Firebase account and sends the verification email. The backend creates the user on the first verified request. */
-  signUp: (email: string, password: string) => Promise<void>
+  signInWithGoogle: () => Promise<boolean>
   sendPasswordReset: (email: string) => Promise<void>
   signOut: () => Promise<void>
   reenviarVerificacion: () => Promise<void>

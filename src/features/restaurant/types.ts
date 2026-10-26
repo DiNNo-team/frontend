@@ -50,8 +50,18 @@ export interface RestaurantProfile {
   name: string
   category: RestaurantCategory | null
   address: string | null
+  /** Both or neither, 6 decimals, inside Bogotá. `null` in restaurants registered before Sprint 2. */
+  latitude: number | null
+  longitude: number | null
   /** Only the days it opens, Monday to Sunday. */
   schedules: RestaurantSchedule[]
+}
+
+/** 200 of GET /geocode: always inside Bogotá, 6 decimals. */
+export interface GeocodeResult {
+  latitude: number
+  longitude: number
+  formattedAddress: string
 }
 
 /** One open day in POST /restaurants. With `isOpen24h: true` no hours are sent. */
@@ -59,10 +69,12 @@ export type RegisterScheduleInput =
   | { dayOfWeek: number; isOpen24h: true }
   | { dayOfWeek: number; isOpen24h: false; opensAt: string; closesAt: string }
 
-/** Body of POST /restaurants: exactly these fields (any other one is rejected with 400). */
+/** Body of POST /restaurants: exactly these fields (any other one is rejected with 400). Coordinates go both or neither. */
 export interface RegisterRestaurantInput {
   name: string
   category: RestaurantCategory
   address: string
+  latitude?: number
+  longitude?: number
   schedules: RegisterScheduleInput[]
 }

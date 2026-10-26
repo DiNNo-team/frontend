@@ -10,6 +10,8 @@ const PROFILE: RestaurantProfile = {
   name: 'Casa 72',
   category: 'grill',
   address: 'Calle 72 # 10-34, Bogotá',
+  latitude: 4.655671,
+  longitude: -74.057006,
   schedules: [
     { dayOfWeek: 1, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
     { dayOfWeek: 6, isOpen24h: true, opensAt: null, closesAt: null },

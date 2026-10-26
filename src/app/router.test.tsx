@@ -7,17 +7,25 @@ import { renderWithProviders } from '@/test/render'
 import { AuthContext, type AuthContextValue, type AuthEvent } from '@/features/auth/auth-context'
 import { routes } from './router'
 
-vi.mock('@/features/restaurant-status/components/RestaurantStatusBanner', () => ({ RestaurantStatusBanner: () => null }))
-vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () => ({ RestaurantStatusControl: () => null }))
+vi.mock('@/features/restaurant-status/components/RestaurantStatusBanner', () => ({
+  RestaurantStatusBanner: () => <div data-testid="restaurant-status-banner" />,
+}))
+vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () => ({
+  RestaurantStatusControl: () => <div data-testid="restaurant-status-control" />,
+}))
+vi.mock('@/features/restaurant/components/LocationBanner', () => ({
+  LocationBanner: () => <div data-testid="location-banner" />,
+}))
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
-  signUp: vi.fn(),
+  signInWithGoogle: vi.fn(),
   sendPasswordReset: vi.fn(),
   signOut: vi.fn(),
   reenviarVerificacion: vi.fn(),
   refrescarSesion: vi.fn(),
   clearAuthEvent: vi.fn(),
+  clearAccountEvent: vi.fn(),
 }))
 
 const AUTH_USER = {
@@ -31,6 +39,7 @@ interface AuthState {
   loading: boolean
   emailVerified: boolean
   authEvent: AuthEvent | null
+  accountEvent: AuthState['authEvent']
   emailVerificationRetried: boolean
 }
 
@@ -39,6 +48,7 @@ const SIGNED_OUT: AuthState = {
   loading: false,
   emailVerified: false,
   authEvent: null,
+  accountEvent: null,
   emailVerificationRetried: false,
 }
 const SIGNED_IN: AuthState = { ...SIGNED_OUT, user: AUTH_USER, emailVerified: true }
@@ -48,6 +58,11 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
   const signIn = useCallback(async (email: string, password: string) => {
     await mocks.signIn(email, password)
     setState({ ...SIGNED_IN, user: AUTH_USER })
+  }, [])
+  const signInWithGoogle = useCallback(async () => {
+    const signedIn = await mocks.signInWithGoogle()
+    if (signedIn) setState({ ...SIGNED_IN, user: AUTH_USER })
+    return signedIn
   }, [])
   const signOut = useCallback(async () => {
     await mocks.signOut()
@@ -64,18 +79,24 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
     mocks.clearAuthEvent()
     setState((current) => ({ ...current, authEvent: null }))
   }, [])
+  const clearAccountEvent = useCallback(() => {
+    mocks.clearAccountEvent()
+    setState((current) => ({ ...current, authEvent: null, accountEvent: null }))
+  }, [])
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,
+      accountEvent: state.authEvent === 'account-not-enabled' || state.authEvent === 'diner-account' ? state.authEvent : null,
       signIn,
-      signUp: mocks.signUp,
+      signInWithGoogle,
       sendPasswordReset: mocks.sendPasswordReset,
       signOut,
       clearAuthEvent,
+      clearAccountEvent,
       reenviarVerificacion,
       refrescarSesion,
     }),
-    [state, signIn, signOut, clearAuthEvent, reenviarVerificacion, refrescarSesion],
+    [state, signIn, signInWithGoogle, signOut, clearAuthEvent, clearAccountEvent, reenviarVerificacion, refrescarSesion],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -94,6 +115,7 @@ function renderAt(path: string, authState = SIGNED_OUT) {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.signIn.mockResolvedValue(undefined)
+  mocks.signInWithGoogle.mockResolvedValue(true)
   mocks.signOut.mockResolvedValue(undefined)
   mocks.reenviarVerificacion.mockResolvedValue(undefined)
   mocks.refrescarSesion.mockResolvedValue(undefined)
@@ -106,10 +128,9 @@ describe('authentication routes', () => {
     expect(router.state.location.pathname).toBe('/login')
     expect(router.state.location.state).toEqual({ from: '/bitacora?period=week' })
 
-    const signInPanel = within(screen.getByRole('tabpanel', { name: 'Iniciar sesión' }))
-    await user.type(signInPanel.getByLabelText('Correo'), 'admin@casa72.co')
-    await user.type(signInPanel.getByLabelText('Contraseña'), 'secreta')
-    await user.click(signInPanel.getByRole('button', { name: 'Iniciar sesión' }))
+    await user.type(screen.getByLabelText('Correo'), 'admin@casa72.co')
+    await user.type(screen.getByLabelText('Contraseña'), 'secreta')
+    await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/bitacora'))
     expect(router.state.location.search).toBe('?period=week')
@@ -141,6 +162,30 @@ describe('authentication routes', () => {
     )
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
+  })
+
+  it('returns a Google sign-in to the original internal route', async () => {
+    const { router, user } = renderAt('/bitacora?period=week')
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/bitacora'))
+    expect(router.state.location.search).toBe('?period=week')
+    expect(mocks.signInWithGoogle).toHaveBeenCalledOnce()
+  })
+
+  it('sends a Google sign-in without a return route to the dashboard', async () => {
+    const { router, user } = renderAt('/login')
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
+    expect(mocks.signInWithGoogle).toHaveBeenCalledOnce()
+  })
+
+  it('keeps unknown registration URLs on the normal missing-route behavior', async () => {
+    const { router } = renderAt('/signup')
+
+    expect(await screen.findByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/login')
   })
 
   it('does not redirect while Firebase is resolving the initial session', async () => {
@@ -219,6 +264,55 @@ describe('authentication routes', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
     expect(await screen.findByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
     expect(mocks.signOut).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['account-not-enabled', 'Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.'],
+    ['diner-account', 'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.'],
+  ] as const)('shows the account screen for %s with only sign out and returns to login', async (event, message) => {
+    const { router, user } = renderAt('/mesas', { ...SIGNED_IN, authEvent: event })
+
+    const accountScreen = await screen.findByRole('region', { name: 'Cierra sesión para continuar.' })
+    expect(within(accountScreen).getByText(message)).toBeInTheDocument()
+    expect(within(accountScreen).getAllByRole('button')).toHaveLength(1)
+    await user.click(within(accountScreen).getByRole('button', { name: 'Cerrar sesión' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
+    expect(mocks.signOut).toHaveBeenCalledTimes(1)
+    expect(mocks.clearAccountEvent).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+  })
+
+  it('shows only the account screen, without the restaurant status banner or switch', async () => {
+    renderAt('/mesas', { ...SIGNED_IN, authEvent: 'account-not-enabled' })
+
+    expect(await screen.findByRole('region', { name: 'Cierra sesión para continuar.' })).toBeInTheDocument()
+    expect(screen.queryByTestId('restaurant-status-banner')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('restaurant-status-control')).not.toBeInTheDocument()
+  })
+
+  it('keeps the restaurant status banner and switch without an account event', async () => {
+    renderAt('/mesas', SIGNED_IN)
+
+    expect(await screen.findByTestId('restaurant-status-banner')).toBeInTheDocument()
+    expect(screen.getByTestId('restaurant-status-control')).toBeInTheDocument()
+  })
+
+  it('shows email verification before an account event', async () => {
+    renderAt('/mesas', { ...SIGNED_IN, authEvent: 'email-not-verified' })
+
+    expect(await screen.findByRole('heading', { name: 'Verifica tu correo para continuar.' })).toBeInTheDocument()
+    expect(screen.queryByText('Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.')).not.toBeInTheDocument()
+  })
+
+  it('shows the account screen inside OnboardingShell', async () => {
+    const { router } = renderAt('/onboarding', { ...SIGNED_IN, authEvent: 'diner-account' })
+
+    expect(await screen.findByText('Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/onboarding')
+    expect(screen.queryByRole('heading', { name: 'Configura tu restaurante' })).not.toBeInTheDocument()
+    const accountScreen = screen.getByRole('region', { name: 'Cierra sesión para continuar.' })
+    expect(within(accountScreen).getAllByRole('button')).toHaveLength(1)
   })
 
   it('routes RESTAURANT_REQUIRED to onboarding without requiring restaurant data there', async () => {

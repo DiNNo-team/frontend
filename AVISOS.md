@@ -5,6 +5,194 @@
 
 ---
 
+## 26 oct 2026 · Sebastián · Cierre del Sprint 2 en la web: mensajes de ubicación, logo de Google y dominio único
+
+**Después del pull:** `npm install`. No hay dependencias nuevas.
+
+**Qué quedó listo**
+- **Mensajes de «Ubicar en el mapa» por `errorCode`** (`GET /geocode` ahora responde mensajes neutros):
+  - Con mapa: `404` → «No encontramos esa dirección en Bogotá. Mueve el pin al lugar correcto.» y `503` → «No pudimos ubicar la dirección en este momento. Mueve el pin al lugar correcto.». En los dos casos el mapa muestra **toda Bogotá** con el pin en el medio para moverlo (antes hacía zoom a una cuadra).
+  - Sin mapa: los dos casos tienen su propio texto y dicen que la ubicación se puede completar después.
+  - Sin llave o sin Map ID ya no dice «No pudimos cargar el mapa»: dice «Con «Ubicar en el mapa» guardamos la ubicación de tu dirección.», que es informativo.
+- **«Continuar con Google» con la «G» oficial de Google**, sacada del paquete de las guías de marca sin redibujarla (`src/assets/google/`, con su README). Mismo botón de borde del kit, en claro y oscuro.
+- **Las pruebas ya no dependen de tu `.env.local`:** con la llave de Maps y el Map ID puestos, 11 pruebas de `OnboardingPage` fallaban porque el formulario intentaba cargar Google Maps, y jsdom no puede. `vite.config.ts` → `test.env` deja esas dos variables vacías en las pruebas. Las que necesitan el mapa siguen usando `LocationMap.fake`.
+- **`.gitattributes`** con `* text=auto eol=lf`, sin `--renormalize`. `git status` no cambia: ningún archivo del repo tenía finales de línea de Windows.
+- **README, sección 7:** el dominio único de producción, quién configura Vercel y que el mapa necesita las dos variables de Google.
+
+**Para quién**
+- **Todos:** para QA y la demo usen solo **https://frontend-di-nn-o.vercel.app**. Las URLs de cada despliegue fallan con Google Sign-In.
+- **Santiago:** cambié tu `LocationPicker` (textos por `errorCode`) y `LocationMap` (prop `framing`, para ver toda la ciudad después de una búsqueda fallida). Sus pruebas están al día.
+- **Jacobo:** el botón de Google de `SignInForm` ahora lleva el logo; la lógica no cambió.
+- **Producción:** sigue publicando `main`, que está en la versión del 14 oct. Falta el PR `develop` → `main` para que la demo vea el Sprint 2.
+
+**Rama / PR**
+- `fix/sprint2-cierre-web` → `develop`.
+
+---
+
+## 26 oct 2026 · Elizabeth · `GET /v1/geocode` con mensajes neutros (también lo usa el comensal)
+
+**Para Santiago y Sebastián.** Cambio del backend en la rama `docs/sprint2-cierre-contrato`, todavía sin fusionar.
+
+- **Mensajes neutros:** el `message` del backend ya no dice «Mueve el pin»: ahora es «No encontramos esa dirección en Bogotá.» (`404 ADDRESS_NOT_FOUND`) y «No pudimos ubicar la dirección en este momento.» (`503 GEOCODING_UNAVAILABLE`). El cambio es porque el comensal también usa la ruta para buscar por dirección. Los `errorCode`, los códigos HTTP y la forma de la respuesta no cambian.
+- **La web debe mostrar su propio texto por `errorCode`, nunca el `message`.** Hoy ya lo hace (`LocationPicker.tsx` con `LOCATION_TEXT` en `features/restaurant/messages.ts`), así que no se rompe nada. El texto sugerido para el 404 es «No encontramos esa dirección en Bogotá. Mueve el pin al lugar correcto.»; hoy la web dice «No encontramos esa dirección. Mueve el pin al lugar correcto.». Alinearlo es opcional (Santiago).
+- **Cuenta sin perfil:** en `/geocode` ahora recibe `403 PROFILE_REQUIRED` en lugar de `ACCOUNT_NOT_ENABLED`, igual que en `GET /v1/me`. La web ya ve ese código en `/me` antes de llegar al formulario. Un comensal ahora recibe `200` en esta ruta, ya no `403 DINER_ACCOUNT`.
+- **El restaurante no cambia:** `/geocode` sigue sin exigir restaurante registrado.
+- **Contrato:** `CLAUDE.md` §10 (fila de `/geocode`, «Ambos roles» y «Búsqueda por dirección (app)»), idéntica en los tres repos.
+
+---
+
+## 26 oct 2026 · Elizabeth · Backend del Sprint 2 cerrado
+
+- **El backend del Sprint 2 está cerrado:** todo está en `develop` y desplegado en Render. Se probó el 26 oct con tokens reales de Firebase. No cambió ninguna ruta ni respuesta.
+- **Seed en Render:** además de Casa 72 y Casa16 están los 15 restaurantes reales de Santiago, con sus horarios y mesas. Sus dueños (`restaurante-XX@dinno.test`) son solo datos: nadie entra a la web como ellos.
+- **Casa 72** tiene como dueño `dinnoteam2026+casa72@gmail.com` (Casa16 es de `dinnoteam2026@gmail.com`). Su cuenta de Firebase ya existe y está verificada: con ella se entra a la web como Casa 72 (probado el 26 oct en Render, junto con el tiempo real hacia la app).
+- **La geocodificación ya funciona** (llave real en Render): `GET /v1/geocode` devuelve coordenadas reales, y `503 GEOCODING_UNAVAILABLE` solo sale si Google no responde. Una dirección fuera de Bogotá da `404 ADDRESS_NOT_FOUND`. **Caso conocido:** un texto sin sentido puede devolver `200` con una dirección cualquiera de Bogotá, así que el dueño siempre debe confirmar el pin en el mapa.
+- **Credenciales:** en Discord (#usuarios-restaurante y #usuarios-comensal), nunca en el repo. Una cuenta nueva usa un alias `dinnoteam2026+algo@gmail.com`.
+- **Contrato:** `CLAUDE.md`, sección 10, idéntica en los tres repos. Hoy cambió el apartado «Cuentas de prueba» y la tabla «Cuándo está listo cada contrato en `develop`».
+
+---
+
+## 22 oct 2026 · Santiago · Aviso «Completa tu ubicación»
+
+**Qué quedó listo**
+- Mientras `GET /v1/restaurants/me` traiga `latitude === null`, arriba del contenido del dashboard aparece «Completa la ubicación de tu restaurante para que los comensales te encuentren en DiNNo.» con «Completar ubicación», que lleva a `/restaurante` (en `/restaurante` va sin botón). Mismo estilo que el aviso de restaurante cerrado. Desaparece al guardar la ubicación, sin recargar.
+- **Decisión (Santiago):** el texto lleva punto final, como el aviso de cerrado.
+
+**Para quién**
+- **Sergio:** el `banner` de `src/app/layouts.tsx` ahora muestra tu `RestaurantStatusBanner` y debajo `LocationBanner`, en un contenedor (`gap-3`, `empty:hidden`). Tu componente no cambió. En `RestaurantStatus.layout.test.tsx` agregué el mock de `LocationBanner`.
+- **Sebastián:** en `router.test.tsx` agregué el mock de `LocationBanner`, igual a los de los componentes de Sergio.
+- **Todos:** el dashboard pide `GET /v1/restaurants/me` en todas las pantallas (la misma consulta de `/restaurante`, `restaurantQueryKey`). Si una prueba renderiza `DashboardLayout`, simula `LocationBanner` o `restaurantApi`.
+
+**Rama / PR**
+- `feat/sprint2-aviso-ubicacion` → `develop`, después del PR de `feat/sprint2-ubicacion-restaurante`, del que depende.
+
+---
+
+## 22 oct 2026 · Santiago · Ubicación del restaurante en el formulario
+
+**Qué quedó listo**
+- En `/onboarding` y `/restaurante`, la tarjeta «Ubicación» tiene «Ubicar en el mapa»: busca la dirección con `GET /v1/geocode` y pone el pin del logo en un mapa de Google, que se arrastra o se mueve tocando el mapa. `latitude` y `longitude` van en `POST /v1/restaurants` y en `PATCH /v1/restaurants/me` (solo si el pin se movió).
+- `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE`: mensaje y mapa con toda Bogotá, con el pin en el medio para moverlo; no bloquea el guardado.
+- **Decisión (Santiago):** la ubicación es obligatoria para registrar solo mientras el mapa carga. Sin mapa se guarda el punto de `/geocode`; si tampoco hay punto, el registro sigue y el aviso «Completa tu ubicación» la pedirá después.
+- `HoursEditor`: en pantallas angostas (menos de 448 px de ancho del editor) apertura y cierre van uno debajo del otro. Se cierra el corte a 390 px del aviso del 9 oct.
+- Variables nuevas, opcionales: `VITE_GOOGLE_MAPS_API_KEY` y `VITE_GOOGLE_MAPS_MAP_ID`. Dependencia nueva: `@vis.gl/react-google-maps`.
+
+**Para quién**
+- **Responsable de Google Cloud:**
+  - activar Maps JavaScript API (el checklist de la sección 7 la prohibía antes de la decisión de usar Google en la web);
+  - crear una llave restringida a `http://localhost:5173` y a los dominios de Vercel, y solo a esa API;
+  - crear un Map ID de JavaScript;
+  - entregar la llave y el Map ID por privado.
+
+  Sin ellos, el formulario funciona sin mapa.
+- **Sebastián:** revisa el cambio de layout en tu `HoursEditor` y el mapa (`features/restaurant/components/LocationMap.tsx`: `aspect-4/3`, `rounded-input`, `border-line` y `Logo symbolOnly` como pin). Cuando lleguen la llave y el Map ID, agrégalos en Vercel y vuelve a desplegar.
+- **Jacobo:** en `RestaurantPage.tsx`, `createUpdateInput` envía las coordenadas. `RestaurantProfile` ahora tiene `latitude` y `longitude` (`number | null`): todo mock de `RestaurantProfile` debe incluirlas.
+- **Todos:** después del pull, corre `npm install`.
+
+**Rama / PR**
+- `feat/sprint2-ubicacion-restaurante` → `develop`.
+
+**Pendiente**
+- Ver el mapa real (falta la llave) y probar R2.1 a R2.4 en el ambiente desplegado.
+
+---
+
+## 20 oct 2026 (noche) · Sergio · Pendiente del Sprint 1 · README, AGENTS.md y matriz de pruebas
+
+**Qué quedó listo**
+- **`README.md`:** las 5 variables de entorno (`VITE_API_URL`, `VITE_USE_MOCKS` y las tres `VITE_FIREBASE_*`) con si son obligatorias y un ejemplo, los parámetros de los datos de ejemplo, tres formas de correr la web (mocks, Render y backend local), cómo verificar que funciona y problemas comunes.
+- **Firebase hace falta incluso con `VITE_USE_MOCKS=true`:** los mocks cubren mesas, estado y bitácora, pero la sesión siempre usa Firebase. Sin las `VITE_FIREBASE_*`, la web queda en blanco.
+- **`AGENTS.md`:** en español y al día con el repo (estructura, rutas y convenciones). Enlaza al `CLAUDE.md` en vez de repetirlo.
+- **`docs/qa/matriz-sprint2.md`:** 13 variantes pasan de «Bloqueado» a «Pendiente», porque ya están en `develop`: **C2** (crear cuenta, verificación y recuperar contraseña, PR #16 de mobile), **C12** (Perfil, PR #15 de mobile), **R1.2** y **T1.1** (cuenta equivocada en la web, PR #44). Siguen bloqueados Google en la app, el mapa y el pin de ubicación web.
+
+**Para quién**
+- **Jacobo:** **C2** (crear cuenta), **C12**, **R1.2** y **T1.1** son tuyos y ya se pueden probar. Registra tus resultados en la matriz.
+- **Todos:** si alguien nuevo levanta la web, que siga solo el README. Las credenciales de Firebase y las cuentas de prueba se piden por privado a Elizabeth, nunca en el repo.
+
+**Rama / PR**
+- `docs/sprint2-readme-agents` → `develop`.
+## 21 oct 2026 · Jacobo · Matriz del Sprint 2
+
+- Jacobo: actualicé mis casos de la matriz del Sprint 2 con evidencia de QA.
+
+---
+
+## 20 oct 2026 · Sergio · Pendiente del Sprint 1 · Prueba de `RestaurantStatus` que fallaba
+
+**Qué quedó listo**
+- «cannot be pressed again while saving» (`RestaurantStatus.test.tsx`) ya no depende de la velocidad de la máquina. El componente no cambió: la falla estaba en la prueba, que usaba un `setTimeout` real de 50 ms.
+- **La suite de pruebas de la web queda 100 % en verde (264/264).** Si una prueba falla después de tu cambio, revisa primero tu cambio.
+
+**Para quién**
+- **Todos:** para probar estados "mientras guarda", no uses `setLatency` ni timeouts reales. Deja el guardado pendiente con una promesa que controle la prueba y suéltalo en un `finally` (ejemplo: «cannot be pressed again while saving» en `RestaurantStatus.test.tsx`).
+
+**Rama / PR**
+- `fix/sprint2-restaurant-status-test` → `develop`.
+## 20 oct 2026 · Jacobo · Cuenta equivocada en la web
+
+- Los 403 `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` muestran una pantalla de cuenta equivocada con el texto del contrato (`CLAUDE.md`, sección 10) y un solo botón **Cerrar sesión**, en el dashboard y en `/onboarding`. Se decide por `errorCode`, nunca por el texto.
+- Precedencia: `EMAIL_NOT_VERIFIED` manda; con una cuenta equivocada activa, `RESTAURANT_REQUIRED` ya no lleva a `/onboarding`.
+- **`AuthContextValue` tiene dos campos nuevos: `accountEvent` y `clearAccountEvent`.** Cualquier mock de `AuthContext` en pruebas debe incluirlos o `tsc -b` falla.
+- Toqué archivos de otros: `OnboardingPage.tsx` (Santiago: un 403 de cuenta equivocada ya no lanza error) y los mocks de `RestaurantStatus.layout.test.tsx` (Sergio) y `router.test.tsx`.
+
+---
+
+## 15 oct 2026 (noche) · Elizabeth · Backend del Sprint 2 disponible en `develop`
+
+- **Todo el backend del Sprint 2 está en `develop` desde el 15 oct** (PR #35 a #40 del backend): cuentas y roles, geocodificación y coordenadas del restaurante, búsqueda, detalle público y tiempo real. Ya se puede integrar contra la API real; no hace falta esperar a ninguna fecha.
+- **El contrato sigue en `CLAUDE.md`, sección 10**, ahora idéntica en los tres repos. Hoy cambió solo la parte de **Tiempo real** (es de la app) y la tabla "Cuándo está listo cada contrato en `develop`". El detalle de cada endpoint, con ejemplos, está en Swagger: `https://dinno-backend.onrender.com/docs`.
+- Las fechas de la entrada "Contratos del Sprint 2 publicados" (más abajo) quedan superadas.
+
+### Por persona
+
+**Jacobo (acceso a la web):**
+- **Ya está activo en `develop`:** el backend no crea usuarios al iniciar sesión. Precedencia de los errores: `401` de sesión → `401 EMAIL_NOT_VERIFIED` → `403 ACCOUNT_NOT_ENABLED` (cuenta sin perfil) o `403 DINER_ACCOUNT` (cuenta de comensal) → `403 RESTAURANT_REQUIRED` (restaurante habilitado sin restaurante registrado). Textos exactos en la tabla de códigos de `CLAUDE.md`, sección 10.
+- **Sigue pendiente en la web:** hoy `src/lib/api-client.ts` solo distingue `EMAIL_NOT_VERIFIED` y `RESTAURANT_REQUIRED`; `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` terminan en «No tienes acceso a esta sección.». El plan sigue siendo el de la entrada "Contratos del Sprint 2 publicados" (más abajo): manejarlos por `errorCode` y quitar «Crear cuenta».
+- **Para probar** (superado el 26 oct: ahora también está Casa 72, ver «Cuentas de prueba» en `CLAUDE.md`, sección 10): `dinnoteam2026@gmail.com` es el único correo real habilitado como restaurante. Cualquier otro correo verificado da `ACCOUNT_NOT_ENABLED`. Para `DINER_ACCOUNT` hace falta una cuenta de comensal: crea una desde la app (o con `POST /v1/diners/me`) y entra con ella en la web.
+
+**Santiago (ubicación del restaurante):**
+- **`GET /v1/geocode?address=<texto>`** ya está en `develop` → `200 { latitude, longitude, formattedAddress }` (6 decimales, siempre dentro de Bogotá). No exige restaurante registrado: úsalo en `/onboarding` antes del `POST`. `address` recortada, de 3 a 255 caracteres; si no, `400`.
+  - `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE`: en los dos casos muestra el mensaje y el mapa centrado en Bogotá para mover el pin, sin bloquear el guardado. Ramifica por `errorCode`. ~~Mientras la llave de Google no esté configurada en Render, la respuesta es siempre `503`.~~ **Resuelto el 26 oct:** la llave ya está configurada (ver la entrada del 26 oct).
+- **Coordenadas en `POST /v1/restaurants` y `PATCH /v1/restaurants/me`:** `latitude` y `longitude` como números, **las dos o ninguna** (si llega solo una, `400`), dentro de Bogotá (lat 4.45 a 4.85, lng −74.25 a −73.95; fuera, `400`). Se aceptan con más decimales y **se guardan redondeadas a 6**. **No se pueden borrar:** `null` da `400`. En el `PATCH`, enviar solo las coordenadas es una edición válida.
+- **Respuestas:** `POST /v1/restaurants`, `GET` y `PATCH /v1/restaurants/me` traen `latitude` y `longitude` (`number | null`). El aviso **«Completa tu ubicación»** se muestra cuando `GET /v1/restaurants/me` trae `latitude === null`.
+- **Datos de los 15 restaurantes reales:** el formato de `src/seed-data/restaurants.json` está en el `AVISOS.md` del backend (sección de Santiago). Se entrega el **viernes 16** en una rama `feature/s2-seed-restaurantes` del backend, con PR para Elizabeth, sin correr el seed en Neon. **No incluyas Casa 72:** ya está en el seed y es el restaurante de prueba del equipo.
+
+**Sergio (QA):**
+- **Nombres exactos para la matriz:**
+  - `errorCode` de HTTP: `EMAIL_NOT_VERIFIED`, `ACCOUNT_NOT_ENABLED`, `PROFILE_REQUIRED`, `DINER_ACCOUNT`, `RESTAURANT_ACCOUNT`, `RESTAURANT_REQUIRED`, `RESTAURANT_NOT_FOUND`, `ADDRESS_NOT_FOUND` y `GEOCODING_UNAVAILABLE`.
+  - Códigos del `connect_error` del WebSocket (app): `UNAUTHORIZED`, `EMAIL_NOT_VERIFIED`, `PROFILE_REQUIRED`, `RESTAURANT_ACCOUNT` y `SERVER_ERROR`.
+  - `availability`: `available`, `few`, `none` y `closed`.
+- **`GET /v1/me`** responde con los dos roles: `{ id, email, displayName, role, restaurantId }`. En una cuenta de restaurante `displayName` es `null`.
+- **QA de tiempo real:** el script `scripts/listen-availability.mjs` vive en el repo del backend. Crear una mesa, cambiar su estado, desactivarla o reactivarla, abrir o cerrar el restaurante, o editar su horario o ubicación desde la web debe imprimir un `availability.changed`; editar el identificador o la capacidad de una mesa, o repetir el mismo estado, no imprime nada. Uso en el `AVISOS.md` del backend (sección de Sergio) y en su README, sección 6.
+
+---
+
+## 15 oct 2026 · Elizabeth · Contratos del Sprint 2 publicados
+
+- Los contratos del Sprint 2 están en `CLAUDE.md`, sección "Sprint 2 · Contratos". Es la fuente de verdad para backend, web y app; si algo no está ahí, se pregunta antes de inventarlo. Las fechas de cada contrato están en la tabla "Cuándo está listo cada contrato en `develop`".
+- **Cambio importante (ya en `develop` desde el 15 oct):** el backend deja de crear usuarios automáticamente. Por ahora el único correo real habilitado como restaurante es `dinnoteam2026@gmail.com`. Para probar la web como restaurante, usen esa cuenta o el usuario de desarrollo en local. Cualquier otra cuenta recibe 403 `ACCOUNT_NOT_ENABLED` en la web. Si necesitan habilitar otro correo, pídanselo a Elizabeth.
+
+### Por persona (Sprint 2)
+
+**Jacobo:**
+- El backend ya no crea usuarios. Una cuenta que no esté habilitada recibe 403 `ACCOUNT_NOT_ENABLED`, y una cuenta de comensal recibe 403 `DINER_ACCOUNT` (textos en la tabla de códigos del contrato).
+- Hoy `api-client.ts` solo dispara un evento para `RESTAURANT_REQUIRED`; los demás 403 terminan en «No tienes acceso a esta sección.». Agrega el manejo de `ACCOUNT_NOT_ENABLED` y `DINER_ACCOUNT` siguiendo el mismo patrón (evento en `window` → pantalla con el texto del contrato y *Cerrar sesión*, como `EmailVerificationScreen`). Se reconocen por `errorCode`, no por el status.
+- Se quita la pestaña «Crear cuenta» y el comentario de `signUp` que dice que el backend crea el usuario.
+- Para probar: `dinnoteam2026@gmail.com` es el único correo habilitado. Cualquier otro correo sirve para probar `ACCOUNT_NOT_ENABLED`.
+
+**Santiago:**
+- `POST /v1/restaurants` y `PATCH /v1/restaurants/me` aceptan `latitude` y `longitude` opcionales: se envían **las dos o ninguna**, con hasta 6 decimales y dentro de Bogotá (lat 4.45–4.85, lng −74.25 a −73.95). Fuera de ese rango → 400. Las respuestas, incluido `GET /restaurants/me`, traen `latitude` y `longitude` (pueden venir en `null`).
+- La obligatoriedad de la ubicación al registrar la pone el formulario. El backend la deja opcional.
+- `GET /v1/geocode?address=...` → `{ latitude, longitude, formattedAddress }`. `404 ADDRESS_NOT_FOUND` y `503 GEOCODING_UNAVAILABLE` muestran el mapa centrado en Bogotá para mover el pin a mano, sin bloquear el guardado. Recuerda que `forbidNonWhitelisted` rechaza cualquier campo que no esté en el contrato.
+- ~~Disponible en `develop` el viernes 16; mientras tanto, usa datos de ejemplo con esa forma.~~ **Superado:** ya está en `develop` desde el 15 oct (ver la entrada "Backend del Sprint 2 disponible en `develop`").
+- Aviso «Completa tu ubicación»: se muestra cuando `GET /restaurants/me` trae `latitude === null`.
+
+**Sergio:**
+- La matriz de pruebas toma los nombres de los `errorCode` y los valores de `availability` del contrato, exactamente como están escritos.
+
+---
+
 ## 14 oct 2026 · Sebastián · Rediseño de `/login` (en curso)
 
 **Qué cambió**
@@ -123,7 +311,7 @@
 - **Si falla:** el estado vuelve atrás y arriba aparece un `Alert` de error con "Intentar de nuevo".
 - Mientras guarda, no se puede volver a pulsar.
 - Mientras el backend no esté desplegado, funciona con `VITE_USE_MOCKS=true`. Parámetros: `?mockClosed`, `?mockError=restaurant-status-load` o `restaurant-status-save`, y `?mockEmpty` para no tener reservadas.
-- Lo que se reutiliza está en `CLAUDE.md` (sección 10, "Estado del restaurante").
+- Lo que se reutiliza está en `CLAUDE.md` (sección 11, "Estado del restaurante").
 
 **Para quién**
 - **Sebastián:**

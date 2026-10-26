@@ -192,19 +192,37 @@ describe('RestaurantStatus', () => {
     keepReserved()
     const { user } = renderStatus()
     const control = await findSwitch()
-    mockRestaurantStatusControl.setLatency(50)
-    await user.click(control)
 
-    // Optimistic: already "Cerrado", but locked until the backend answers.
-    expect(control).not.toBeChecked()
-    expect(control).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Abrir ahora' })).toHaveAttribute('aria-busy', 'true')
-    await user.click(control)
-    await user.click(screen.getByRole('button', { name: 'Abrir ahora' }))
+    // The save stays pending until the test releases it, so "while saving" does not depend on the machine's speed.
+    let releaseSave: () => void = () => undefined
+    const saveReleased = new Promise<void>((resolve) => {
+      releaseSave = resolve
+    })
+    const realUpdate = mockRestaurantStatusApi.update
+    const update = vi.spyOn(mockRestaurantStatusApi, 'update').mockImplementationOnce(async (isOpen) => {
+      await saveReleased
+      return realUpdate(isOpen)
+    })
 
-    await waitFor(() => expect(control).toBeEnabled())
-    expect(control).not.toBeChecked()
-    expect(mockRestaurantStatusControl.isOpen()).toBe(false)
+    try {
+      await user.click(control)
+
+      // Optimistic: already "Cerrado", but locked until the backend answers.
+      expect(control).not.toBeChecked()
+      expect(control).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Abrir ahora' })).toHaveAttribute('aria-busy', 'true')
+      await user.click(control)
+      await user.click(screen.getByRole('button', { name: 'Abrir ahora' }))
+      expect(update).toHaveBeenCalledTimes(1)
+
+      releaseSave()
+      await waitFor(() => expect(control).toBeEnabled())
+      expect(control).not.toBeChecked()
+      expect(mockRestaurantStatusControl.isOpen()).toBe(false)
+    } finally {
+      releaseSave()
+      update.mockRestore()
+    }
   })
 
   it('keyboard: Space toggles and the focus comes back to the switch after saving', async () => {
