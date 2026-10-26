@@ -59,7 +59,7 @@ describe('RestaurantForm · ubicación en el registro', () => {
     const { user, onSubmit } = renderRegistration()
 
     await user.click(screen.getByRole('button', { name: 'Ubicar en el mapa' }))
-    expect(await screen.findByText('No encontramos esa dirección. Mueve el pin al lugar correcto.')).toBeInTheDocument()
+    expect(await screen.findByText('No encontramos esa dirección en Bogotá. Mueve el pin al lugar correcto.')).toBeInTheDocument()
     expect(screen.getByText('Pin: 4.650000, -74.100000')).toBeInTheDocument()
 
     // The pin in the middle of Bogotá is not the restaurant until it is moved.
@@ -122,16 +122,29 @@ describe('RestaurantForm · mapa que no carga', () => {
     fakeMap.available = false
   })
 
-  it('tells the map is not available and saves the point of the address', async () => {
+  it('explains, without sounding like a failure, that the point of the address is saved', async () => {
     geocode.mockResolvedValue(FOUND)
     const { user, onSubmit } = renderRegistration()
 
-    expect(await screen.findByText(/No pudimos cargar el mapa/)).toBeInTheDocument()
+    expect(await screen.findByText('Con «Ubicar en el mapa» guardamos la ubicación de tu dirección.')).toBeInTheDocument()
+    expect(screen.queryByText(/No pudimos cargar el mapa/)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Ubicar en el mapa' }))
     expect(await screen.findByText('Ubicamos tu dirección: Cl. 72 #10-34, Bogotá, Colombia.')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Guardar y continuar' }))
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ location: { latitude: 4.655671, longitude: -74.057006 } }))
+  })
+
+  it('without map, an address outside Bogotá says so (404 ADDRESS_NOT_FOUND)', async () => {
+    geocode.mockRejectedValue(new ApiError({ status: 404, code: 'ADDRESS_NOT_FOUND' }))
+    const { user } = renderRegistration()
+
+    await user.click(screen.getByRole('button', { name: 'Ubicar en el mapa' }))
+    expect(
+      await screen.findByText(
+        'No encontramos esa dirección en Bogotá. Revísala o guarda y completa la ubicación después en Restaurante.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('without map and without a point, the registration goes on without location', async () => {
@@ -140,7 +153,9 @@ describe('RestaurantForm · mapa que no carga', () => {
 
     await user.click(screen.getByRole('button', { name: 'Ubicar en el mapa' }))
     expect(
-      await screen.findByText('No pudimos ubicar tu dirección. Puedes guardar y completar la ubicación después en Restaurante.'),
+      await screen.findByText(
+        'No pudimos ubicar la dirección en este momento. Intenta de nuevo o guarda y completa la ubicación después en Restaurante.',
+      ),
     ).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Guardar y continuar' }))

@@ -12,6 +12,13 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
-    env: { VITE_API_URL: 'http://localhost:3000', VITE_USE_MOCKS: 'true' },
+    // Fixed values, whatever each one has in .env.local: with a real Maps key and Map ID the forms would try to
+    // load Google Maps, which jsdom cannot do (tests that need the map use LocationMap.fake).
+    env: {
+      VITE_API_URL: 'http://localhost:3000',
+      VITE_USE_MOCKS: 'true',
+      VITE_GOOGLE_MAPS_API_KEY: '',
+      VITE_GOOGLE_MAPS_MAP_ID: '',
+    },
   },
 })

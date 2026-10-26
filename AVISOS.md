@@ -5,6 +5,31 @@
 
 ---
 
+## 26 oct 2026 · Sebastián · Cierre del Sprint 2 en la web: mensajes de ubicación, logo de Google y dominio único
+
+**Después del pull:** `npm install`. No hay dependencias nuevas.
+
+**Qué quedó listo**
+- **Mensajes de «Ubicar en el mapa» por `errorCode`** (`GET /geocode` ahora responde mensajes neutros):
+  - Con mapa: `404` → «No encontramos esa dirección en Bogotá. Mueve el pin al lugar correcto.» y `503` → «No pudimos ubicar la dirección en este momento. Mueve el pin al lugar correcto.». En los dos casos el mapa muestra **toda Bogotá** con el pin en el medio para moverlo (antes hacía zoom a una cuadra).
+  - Sin mapa: los dos casos tienen su propio texto y dicen que la ubicación se puede completar después.
+  - Sin llave o sin Map ID ya no dice «No pudimos cargar el mapa»: dice «Con «Ubicar en el mapa» guardamos la ubicación de tu dirección.», que es informativo.
+- **«Continuar con Google» con la «G» oficial de Google**, sacada del paquete de las guías de marca sin redibujarla (`src/assets/google/`, con su README). Mismo botón de borde del kit, en claro y oscuro.
+- **Las pruebas ya no dependen de tu `.env.local`:** con la llave de Maps y el Map ID puestos, 11 pruebas de `OnboardingPage` fallaban porque el formulario intentaba cargar Google Maps, y jsdom no puede. `vite.config.ts` → `test.env` deja esas dos variables vacías en las pruebas. Las que necesitan el mapa siguen usando `LocationMap.fake`.
+- **`.gitattributes`** con `* text=auto eol=lf`, sin `--renormalize`. `git status` no cambia: ningún archivo del repo tenía finales de línea de Windows.
+- **README, sección 7:** el dominio único de producción, quién configura Vercel y que el mapa necesita las dos variables de Google.
+
+**Para quién**
+- **Todos:** para QA y la demo usen solo **https://frontend-di-nn-o.vercel.app**. Las URLs de cada despliegue fallan con Google Sign-In.
+- **Santiago:** cambié tu `LocationPicker` (textos por `errorCode`) y `LocationMap` (prop `framing`, para ver toda la ciudad después de una búsqueda fallida). Sus pruebas están al día.
+- **Jacobo:** el botón de Google de `SignInForm` ahora lleva el logo; la lógica no cambió.
+- **Producción:** sigue publicando `main`, que está en la versión del 14 oct. Falta el PR `develop` → `main` para que la demo vea el Sprint 2.
+
+**Rama / PR**
+- `fix/sprint2-cierre-web` → `develop`.
+
+---
+
 ## 26 oct 2026 · Elizabeth · `GET /v1/geocode` con mensajes neutros (también lo usa el comensal)
 
 **Para Santiago y Sebastián.** Cambio del backend en la rama `docs/sprint2-cierre-contrato`, todavía sin fusionar.

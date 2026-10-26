@@ -94,8 +94,10 @@ Elige contra qué trabajas con `.env.local`:
 - **Producción se despliega desde `main`.** El trabajo diario entra a `develop` por PR; cuando `develop` está probado, pasa a `main` por PR.
 - Cada PR genera un despliegue de vista previa: úsalo para probar antes del merge.
 - Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/`, así que recargar una ruta no da 404.
-- Las variables se configuran en Vercel → *Settings → Environment Variables* (Production y Preview). Se incrustan al compilar: **si cambias una, vuelve a desplegar**.
-- La URL de Vercel tiene que estar en `CORS_ORIGINS` del backend en Render.
+- **Dominio de producción (el único para QA y la demo): https://frontend-di-nn-o.vercel.app.** Las URLs de cada despliegue (`frontend-<código>-di-nn-o.vercel.app`) no sirven para probar: Google Sign-In solo abre en los dominios autorizados de Firebase.
+- **Quién configura Vercel: Sebastián.** Las variables van en Vercel → *Settings → Environment Variables*, marcadas en **Production y Preview**: `VITE_API_URL`, las tres `VITE_FIREBASE_*`, `VITE_GOOGLE_MAPS_API_KEY` y `VITE_GOOGLE_MAPS_MAP_ID`. El mapa del formulario **necesita las dos de Google**: con una sola no aparece.
+- Las `VITE_*` se incrustan al compilar: **si cambias una, vuelve a desplegar** (*Deployments* → último despliegue → *Redeploy*, sin la caché del build).
+- El dominio de producción tiene que estar en `CORS_ORIGINS` del backend en Render y en *Authentication → Settings → Authorized domains* de Firebase.
 
 ## 8. Problemas comunes
 

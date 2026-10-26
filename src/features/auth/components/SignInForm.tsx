@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Mail } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router'
 import { Alert, Button, TextField } from '@/components/ui'
+import googleLogo from '@/assets/google/google-g.png'
 import { getFirebaseAuthErrorMessage, getFirebaseGoogleAuthErrorMessage } from '../auth-errors'
 import { getSafeReturnTo } from '../auth-navigation'
 import { useAuth } from '../auth-context'
@@ -105,6 +106,8 @@ export function SignInForm() {
         loadingText="Conectando con Google…"
         onClick={() => void handleGoogleSignIn()}
       >
+        {/* Official Google "G" (branding guidelines): its colors and shape never change. */}
+        <img src={googleLogo} alt="" aria-hidden="true" width={20} height={20} className="size-5" />
         Continuar con Google
       </Button>
       <div aria-hidden="true" className="flex items-center gap-3">
