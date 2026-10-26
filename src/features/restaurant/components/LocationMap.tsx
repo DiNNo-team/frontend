@@ -30,6 +30,8 @@ const PIN_ZOOM = 17
 export interface LocationMapProps {
   /** Point of the pin; `null` shows the whole city without a pin. */
   position: Coordinates | null
+  /** `pin` zooms to the pin (default); `city` keeps the whole of Bogotá in view, e.g. after a failed lookup. */
+  framing?: 'pin' | 'city'
   /** The user dragged the pin or clicked the map. */
   onPositionChange: (position: Coordinates) => void
   /** The map cannot be shown: no key or Map ID, or Google rejected or failed to load it. */
@@ -56,7 +58,7 @@ export function LocationMap(props: LocationMapProps) {
   )
 }
 
-function PinMap({ position, onPositionChange, onUnavailable }: LocationMapProps) {
+function PinMap({ position, framing = 'pin', onPositionChange, onUnavailable }: LocationMapProps) {
   const { theme } = useTheme()
   const status = useApiLoadingStatus()
   const map = useMap()
@@ -68,13 +70,13 @@ function PinMap({ position, onPositionChange, onUnavailable }: LocationMapProps)
   // Follow the pin when it comes from the address; without a pin, show the whole city.
   useEffect(() => {
     if (!map) return
-    if (!position) {
+    if (!position || framing === 'city') {
       map.fitBounds(BOGOTA_LAT_LNG_BOUNDS)
       return
     }
     map.panTo({ lat: position.latitude, lng: position.longitude })
     if ((map.getZoom() ?? 0) < PIN_ZOOM) map.setZoom(PIN_ZOOM)
-  }, [map, position])
+  }, [map, position, framing])
 
   function moveTo(point: { lat: number; lng: number } | null | undefined) {
     if (point) onPositionChange({ latitude: point.lat, longitude: point.lng })

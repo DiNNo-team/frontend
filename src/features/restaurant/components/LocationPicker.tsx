@@ -14,10 +14,14 @@ const BOGOTA_MIDDLE: Coordinates = {
   longitude: (BOGOTA_BOUNDS.minLongitude + BOGOTA_BOUNDS.maxLongitude) / 2,
 }
 
-// The two answers of GET /geocode with no point: the person places the pin by hand.
-const NO_POINT_CODES: Record<string, string> = {
-  ADDRESS_NOT_FOUND: LOCATION_TEXT.addressNotFound,
-  GEOCODING_UNAVAILABLE: LOCATION_TEXT.geocodingUnavailable,
+// The two answers of GET /geocode with no point, decided by errorCode (never by the backend message):
+// with the map the person places the pin by hand; without it, the location is completed later.
+const NO_POINT_CODES: Record<string, { withMap: string; withoutMap: string }> = {
+  ADDRESS_NOT_FOUND: { withMap: LOCATION_TEXT.addressNotFound, withoutMap: LOCATION_TEXT.addressNotFoundWithoutMap },
+  GEOCODING_UNAVAILABLE: {
+    withMap: LOCATION_TEXT.geocodingUnavailable,
+    withoutMap: LOCATION_TEXT.geocodingUnavailableWithoutMap,
+  },
 }
 
 interface Notice {
@@ -79,10 +83,10 @@ export function LocationPicker({
           return
         }
         if (mapUnavailable) {
-          setNotice({ type: 'info', text: LOCATION_TEXT.notLocatedWithoutMap })
+          setNotice({ type: 'info', text: noPointText.withoutMap })
           return
         }
-        setNotice({ type: 'info', text: noPointText })
+        setNotice({ type: 'info', text: noPointText.withMap })
         if (!value) setPendingPin(BOGOTA_MIDDLE)
       },
     })
@@ -114,7 +118,13 @@ export function LocationPicker({
         !notice && <Alert type="info">{LOCATION_TEXT.mapUnavailable}</Alert>
       ) : (
         <>
-          <LocationMap position={value ?? pendingPin} onPositionChange={handlePinMove} onUnavailable={onMapUnavailable} />
+          <LocationMap
+            position={value ?? pendingPin}
+            // The pin in the middle after a failed lookup is not a place yet: show the whole city to move it.
+            framing={value ? 'pin' : 'city'}
+            onPositionChange={handlePinMove}
+            onUnavailable={onMapUnavailable}
+          />
           <p className="text-sec text-fg-2">{LOCATION_TEXT.help}</p>
         </>
       )}
