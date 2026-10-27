@@ -5,17 +5,18 @@ import { renderWithProviders } from '@/test/render'
 import { TableCard } from './TableCard'
 
 describe('TableCard', () => {
-  it('is a toggle button named by the table, described by capacity and status', async () => {
+  it('is a button named by the table that opens its picker, described by capacity and status', async () => {
     const onSelect = vi.fn()
     const { user } = renderWithProviders(<TableCard name="Mesa 04" capacity={2} status="occupied" onSelect={onSelect} />)
     const toggle = screen.getByRole('button', { name: 'Mesa 04' })
-    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAttribute('aria-haspopup', 'dialog')
     expect(toggle).toHaveAccessibleDescription('2 personas Ocupada')
     await user.click(toggle)
     expect(onSelect).toHaveBeenCalledTimes(1)
   })
 
-  it('selects with Enter and Space from the keyboard', async () => {
+  it('opens with Enter and Space from the keyboard', async () => {
     const onSelect = vi.fn()
     const { user } = renderWithProviders(<TableCard name="Mesa 04" capacity={2} status="available" onSelect={onSelect} />)
     await user.tab()
@@ -24,9 +25,21 @@ describe('TableCard', () => {
     expect(onSelect).toHaveBeenCalledTimes(2)
   })
 
-  it('reflects selection with aria-pressed', () => {
+  it('D, R and O change the status of the focused card without opening anything', async () => {
+    const onShortcut = vi.fn()
+    const onSelect = vi.fn()
+    const { user } = renderWithProviders(<TableCard name="Mesa 04" capacity={2} status="available" onSelect={onSelect} onShortcut={onShortcut} />)
+    await user.tab()
+    await user.keyboard('o')
+    await user.keyboard('R')
+    await user.keyboard('d')
+    expect(onShortcut.mock.calls.map(([status]) => status)).toEqual(['occupied', 'reserved', 'available'])
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('reflects its open picker with aria-expanded', () => {
     renderWithProviders(<TableCard name="Mesa 04" capacity={2} status="available" selected onSelect={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Mesa 04' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Mesa 04' })).toHaveAttribute('aria-expanded', 'true')
   })
 
   it('has a separate ⋯ menu button (no nested buttons) that opens the actions', async () => {
@@ -51,16 +64,16 @@ describe('TableCard', () => {
     expect(onEdit).toHaveBeenCalledTimes(1)
   })
 
-  it('inactive: cannot be selected, says "Inactiva" and offers "Reactivar"', async () => {
+  it('inactive: says "Inactiva", still opens (to offer "Reactivar mesa") and ignores shortcuts', async () => {
     const onSelect = vi.fn()
-    const onReactivate = vi.fn()
-    const { user } = renderWithProviders(
-      <TableCard name="Mesa 06" capacity={4} status="inactive" onSelect={onSelect} onReactivate={onReactivate} />,
-    )
-    expect(screen.queryByRole('button', { name: 'Mesa 06' })).not.toBeInTheDocument()
+    const onShortcut = vi.fn()
+    const { user } = renderWithProviders(<TableCard name="Mesa 06" capacity={4} status="inactive" onSelect={onSelect} onShortcut={onShortcut} />)
     expect(screen.getByText('Inactiva')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Reactivar' }))
-    expect(onReactivate).toHaveBeenCalledTimes(1)
-    expect(onSelect).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Mesa 06' })).toHaveAccessibleDescription('4 personas Inactiva')
+    await user.tab()
+    await user.keyboard('o')
+    expect(onShortcut).not.toHaveBeenCalled()
+    await user.keyboard('{Enter}')
+    expect(onSelect).toHaveBeenCalledTimes(1)
   })
 })

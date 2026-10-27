@@ -11,8 +11,8 @@ export const restaurantQueryKey = ['restaurant'] as const
  * The session's restaurant with its hours (GET /restaurants/me), for /restaurante (Jacobo).
  * Without a restaurant it fails with 403 RESTAURANT_REQUIRED, and the app goes to /onboarding.
  */
-export function useRestaurantQuery() {
-  return useQuery({ queryKey: restaurantQueryKey, queryFn: () => restaurantApi.get() })
+export function useRestaurantQuery({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({ queryKey: restaurantQueryKey, queryFn: () => restaurantApi.get(), enabled })
 }
 
 /** Registers the session user's restaurant (POST /restaurants). */

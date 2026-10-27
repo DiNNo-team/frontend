@@ -18,7 +18,7 @@ async function renderLoaded() {
 }
 
 describe('TablesPage', () => {
-  it('lists the tables in natural order with name, capacity and status', async () => {
+  it('lists the tables in natural order (inactive last) with name, capacity and status', async () => {
     await renderLoaded()
     const items = within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('listitem')
     expect(items).toHaveLength(8)
@@ -28,18 +28,19 @@ describe('TablesPage', () => {
       'Mesa 03',
       'Mesa 04',
       'Mesa 05',
-      'Mesa 06',
       'Mesa 07',
       'Mesa 08',
+      'Mesa 06',
     ])
     expect(within(items[1]).getByText('2 personas')).toBeInTheDocument()
     expect(within(items[1]).getByText('Ocupada')).toBeInTheDocument()
-    expect(within(items[5]).getByText('Inactiva')).toBeInTheDocument()
+    // Inactive tables go at the end (manual 13.10).
+    expect(within(items[7]).getByText('Inactiva')).toBeInTheDocument()
   })
 
-  it('counts only active tables in libres/reservadas/ocupadas, with singular for one', async () => {
+  it('counts only active tables in disponibles/reservadas/ocupadas, with singular for one', async () => {
     await renderLoaded()
-    expect(screen.getByText('libres').previousSibling).toHaveTextContent('3')
+    expect(screen.getByText('disponibles').previousSibling).toHaveTextContent('3')
     expect(screen.getByText('reservadas').previousSibling).toHaveTextContent('2')
     expect(screen.getByText('ocupadas').previousSibling).toHaveTextContent('2')
     expect(screen.getByText('inactiva').previousSibling).toHaveTextContent('1')
@@ -57,9 +58,10 @@ describe('TablesPage', () => {
     expect(names).toEqual(['Mesa 02', 'Mesa 10', 'Mesa T1'])
   })
 
-  it('has a single primary "Agregar mesa" in the header', async () => {
+  it('has a single "Agregar mesa" in the header, outline during service', async () => {
     await renderLoaded()
     expect(screen.getAllByRole('button', { name: 'Agregar mesa' })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Agregar mesa' })).toHaveClass('border-line-strong')
     expect(screen.getByRole('heading', { level: 1, name: 'Mesas' })).toBeInTheDocument()
   })
 
@@ -69,7 +71,7 @@ describe('TablesPage', () => {
     expect(await screen.findByRole('heading', { name: 'Aún no tienes mesas' })).toBeInTheDocument()
     expect(screen.getByText('Agrega tus mesas para empezar a recibir comensales.')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Agregar mesa' })).toHaveLength(1)
-    expect(screen.queryByText('libres')).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Resumen de mesas' })).not.toBeInTheDocument()
   })
 
   it('load error: explains it and "Intentar de nuevo" fetches the list again', async () => {
@@ -82,6 +84,21 @@ describe('TablesPage', () => {
     await user.click(screen.getByRole('button', { name: 'Intentar de nuevo' }))
     await waitFor(() => expect(screen.getByRole('list', { name: 'Mesas' })).toBeInTheDocument())
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('the summary filters the grid; pressing the active cell or "Ver todas" clears it', async () => {
+    const { user } = await renderLoaded()
+    const reserved = screen.getByRole('button', { name: /reservadas/ })
+    await user.click(reserved)
+    expect(reserved).toHaveAttribute('aria-pressed', 'true')
+    let names = within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('heading').map((heading) => heading.textContent)
+    expect(names).toEqual(['Mesa 03', 'Mesa 08'])
+    await user.click(reserved)
+    expect(within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('listitem')).toHaveLength(8)
+
+    await user.click(screen.getByRole('button', { name: /inactiva/ }))
+    names = within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('heading').map((heading) => heading.textContent)
+    expect(names).toEqual(['Mesa 06'])
   })
 
   it('loading: announces it and shows nothing visual before 300 ms', async () => {

@@ -33,7 +33,7 @@ export function IconButton({
           aria-label={label}
           className={cn(
             'inline-flex shrink-0 cursor-pointer items-center justify-center rounded-input',
-            'transition duration-(--dur-fast) ease-dinno enabled:hover:bg-surface-2',
+            'press enabled:hover:bg-surface-2',
             'disabled:cursor-not-allowed disabled:opacity-45',
             SIZES[size],
             className,

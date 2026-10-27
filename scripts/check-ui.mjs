@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Checks src/ against the hard rules of the DiNNo identity manual v1.1 (sections 0, 8, 16 and 17).
+// Checks src/ against the hard rules of the DiNNo identity manual v2.0 (sections 0, 2.3, 9, 16 and 17).
 // Run with `npm run check:ui`. Exits with code 1 and lists file:line:column for each violation.
 
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -67,6 +67,12 @@ const RULES = [
     pattern: /(?<![\w-])shadow(?:-(?:2xs|xs|sm|md|lg|xl|2xl|inner))?(?![\w-])/g,
     only: ['.ts', '.tsx', '.js', '.jsx'],
     allow: (line, index) => /^shadow\s*[:=(]/.test(line.slice(index)),
+  },
+  {
+    id: 'text-opacity',
+    message: 'Texto con opacidad (manual v2.0, regla 3 y sección 2.3): el texto nunca pierde opacidad. Usa text-fg o text-fg-2.',
+    pattern: /(?<![\w-])text-(?:fg|fg-2|accent-text|on-accent|on-brand|on-inverse|inverse-accent)\/\d{1,3}(?![\w-])/g,
+    only: ['.ts', '.tsx', '.js', '.jsx'],
   },
   {
     id: 'console-log',

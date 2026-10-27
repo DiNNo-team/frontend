@@ -68,7 +68,7 @@ export function Button({
       onClick={handleClick}
       className={cn(
         'inline-grid shrink-0 cursor-pointer select-none rounded-btn px-5 text-btn whitespace-nowrap',
-        'transition duration-(--dur-fast) ease-dinno',
+        'press',
         'disabled:cursor-not-allowed disabled:opacity-45 aria-busy:cursor-progress',
         VARIANTS[variant],
         SIZES[size],

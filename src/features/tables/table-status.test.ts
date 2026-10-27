@@ -19,7 +19,7 @@ describe('table-status', () => {
   })
 
   it('counts inactive tables apart', () => {
-    const base = { id: 'x', identifier: '1', capacity: 2 }
+    const base = { id: 'x', identifier: '1', capacity: 2, planX: null, planY: null, planShape: null }
     expect(
       countTables([
         { ...base, status: 'available', isActive: true },

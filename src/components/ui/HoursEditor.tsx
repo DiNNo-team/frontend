@@ -30,9 +30,10 @@ export interface HoursEditorProps {
 }
 
 /**
- * Weekly opening hours (manual 9): one row per day with an Abierto/Cerrado switch and
- * opening – closing hours. The opening picker's first option is "Abierto 24 horas", which hides
- * the closing hour. Below, "Copiar a todos los días" copies Monday to the rest.
+ * Weekly opening hours (manual 13.1): one row per day with an Abierto/Cerrado switch and
+ * opening – closing hours; a closed day is a single row (the switch already says "Cerrado").
+ * The opening picker's first option is "Abierto 24 horas", which hides the closing hour.
+ * "Copiar el lunes a todos" sits right under Monday, next to what it copies.
  */
 export function HoursEditor({ value, onChange, errors, disabled, className }: HoursEditorProps) {
   const baseId = useId()
@@ -44,7 +45,7 @@ export function HoursEditor({ value, onChange, errors, disabled, className }: Ho
   return (
     // Container queries: the rows switch to one line by the editor's own width (forms are 560 max).
     <div role="group" aria-label="Horarios" className={cn('@container flex flex-col gap-3', className)}>
-      <ul className="flex flex-col divide-y divide-line border-b border-line">
+      <ul className="flex flex-col divide-y divide-line">
         {value.map((entry) => {
           const labels = DAY_LABELS[entry.day]
           const error = errors?.[entry.day]
@@ -102,9 +103,7 @@ export function HoursEditor({ value, onChange, errors, disabled, className }: Ho
                     )}
                     {closesNextDay(entry) && <span className="text-sec whitespace-nowrap text-fg-2">(día siguiente)</span>}
                   </div>
-                ) : (
-                  <span className="text-sec text-fg-2">Cerrado todo el día</span>
-                )}
+                ) : null}
               </div>
               {error && (
                 <p id={errorId} className="flex items-start gap-2 text-sec text-error">
@@ -112,15 +111,17 @@ export function HoursEditor({ value, onChange, errors, disabled, className }: Ho
                   {error}
                 </p>
               )}
+              {entry.day === 'mon' && (
+                <div>
+                  <Button variant="ghost" size="sm" className="px-0" disabled={disabled} onClick={() => onChange(copyMondayToAll(value))}>
+                    Copiar el lunes a todos
+                  </Button>
+                </div>
+              )}
             </li>
           )
         })}
       </ul>
-      <div>
-        <Button variant="ghost" className="px-0" disabled={disabled} onClick={() => onChange(copyMondayToAll(value))}>
-          Copiar a todos los días
-        </Button>
-      </div>
     </div>
   )
 }

@@ -102,7 +102,7 @@ export function Select({
             className={cn(
               'z-(--z-dropdown) min-w-(--radix-select-trigger-width) overflow-hidden rounded-input border border-line bg-surface p-1 shadow-lifted',
               // Radix measures the free space below the trigger; long lists (TimeSelect) scroll inside it.
-              'max-h-(--radix-select-content-available-height) animate-fade-in-fast',
+              'max-h-(--radix-select-content-available-height) origin-(--radix-select-content-transform-origin) data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in',
             )}
           >
             <RadixSelect.Viewport>
@@ -111,7 +111,7 @@ export function Select({
                   key={option.value}
                   value={option.value}
                   className={cn(
-                    'flex h-10 cursor-pointer items-center rounded-input px-3 text-sec whitespace-nowrap text-fg outline-none select-none',
+                    'flex h-10 cursor-pointer items-center rounded-input px-3 text-sec whitespace-nowrap text-fg outline-none select-none pointer-coarse:h-11',
                     'focus-visible:shadow-none data-highlighted:bg-surface-2 data-[state=checked]:font-bold',
                   )}
                 >

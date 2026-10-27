@@ -18,42 +18,49 @@ async function renderPage() {
 }
 
 const card = (name: string) => screen.getByRole('button', { name })
+const picker = (name: string) => screen.getByRole('radiogroup', { name: `Estado de ${name}` })
 const metric = (label: string) => screen.getByText(label).previousSibling
 const storedStatus = (identifier: string) => mockTablesControl.snapshot().find((t) => t.identifier === identifier)?.status
 
 describe('TablesPage · cambiar estado', () => {
-  it('selecting a card shows the status bar; selecting it again hides it', async () => {
+  it('tapping a card opens its status picker next to it; tapping it again closes it', async () => {
     const { user } = await renderPage()
     await user.click(card('Mesa 04'))
-    expect(card('Mesa 04')).toHaveAttribute('aria-pressed', 'true')
-    const bar = screen.getByRole('region', { name: 'Mesa 04' })
-    expect(within(bar).getByText('2 personas')).toBeInTheDocument()
-    expect(within(bar).getByRole('radiogroup', { name: 'Estado de Mesa 04' })).toBeInTheDocument()
-    expect(within(bar).getByRole('radio', { name: 'Disponible' })).toHaveAttribute('aria-checked', 'true')
-    expect(within(bar).queryByRole('radio', { name: 'Inactiva' })).not.toBeInTheDocument()
+    expect(card('Mesa 04')).toHaveAttribute('aria-expanded', 'true')
+    const group = picker('Mesa 04')
+    expect(within(group).getByRole('radio', { name: 'Disponible' })).toHaveAttribute('aria-checked', 'true')
+    expect(within(group).getByRole('radio', { name: 'Reservada' })).toHaveAttribute('aria-checked', 'false')
+    expect(within(group).queryByRole('radio', { name: 'Inactiva' })).not.toBeInTheDocument()
 
     await user.click(card('Mesa 04'))
-    expect(screen.queryByRole('region', { name: 'Mesa 04' })).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('radiogroup', { name: /^Estado de/ })).not.toBeInTheDocument())
+    expect(card('Mesa 04')).toHaveAttribute('aria-expanded', 'false')
   })
 
-  it('only one table is selected at a time and inactive tables cannot be selected', async () => {
+  it('one picker at a time; an inactive table offers "Reactivar mesa" instead of statuses', async () => {
     const { user } = await renderPage()
     await user.click(card('Mesa 01'))
     await user.click(card('Mesa 02'))
-    expect(card('Mesa 01')).toHaveAttribute('aria-pressed', 'false')
-    expect(card('Mesa 02')).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.queryByRole('button', { name: 'Mesa 06' })).not.toBeInTheDocument()
+    expect(card('Mesa 01')).toHaveAttribute('aria-expanded', 'false')
+    expect(card('Mesa 02')).toHaveAttribute('aria-expanded', 'true')
+    await waitFor(() => expect(screen.getAllByRole('radiogroup', { name: /^Estado de/ })).toHaveLength(1))
+
+    await user.click(card('Mesa 06'))
+    expect(await screen.findByText('Mesa 06 está inactiva. No aparece para los comensales.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reactivar mesa' })).toBeInTheDocument()
+    expect(screen.queryByRole('radiogroup', { name: 'Estado de Mesa 06' })).not.toBeInTheDocument()
   })
 
-  it('changes at once (optimistic), persists, updates metrics and toasts with Deshacer', async () => {
+  it('changes at once (optimistic), closes the picker, persists, updates the summary and toasts with Deshacer', async () => {
     const { user } = await renderPage()
     expect(metric('ocupadas')).toHaveTextContent('2')
     await user.click(card('Mesa 04'))
-    await user.click(screen.getByRole('radio', { name: 'Ocupada' }))
+    await user.click(within(picker('Mesa 04')).getByRole('radio', { name: 'Ocupada' }))
 
     expect(card('Mesa 04')).toHaveAccessibleDescription('2 personas Ocupada')
+    await waitFor(() => expect(screen.queryByRole('radiogroup', { name: /^Estado de/ })).not.toBeInTheDocument())
     expect(metric('ocupadas')).toHaveTextContent('3')
-    expect(metric('libres')).toHaveTextContent('2')
+    expect(metric('disponibles')).toHaveTextContent('2')
     expect(await screen.findByRole('button', { name: 'Deshacer' })).toBeInTheDocument()
     expect(screen.getAllByText('Mesa 04 ahora está Ocupada').length).toBeGreaterThan(0)
     expect(storedStatus('04')).toBe('occupied')
@@ -62,7 +69,7 @@ describe('TablesPage · cambiar estado', () => {
   it('"Deshacer" goes back to the previous status with the same call', async () => {
     const { user } = await renderPage()
     await user.click(card('Mesa 04'))
-    await user.click(screen.getByRole('radio', { name: 'Reservada' }))
+    await user.click(within(picker('Mesa 04')).getByRole('radio', { name: 'Reservada' }))
     await user.click(await screen.findByRole('button', { name: 'Deshacer' }))
 
     await waitFor(() => expect(storedStatus('04')).toBe('available'))
@@ -74,9 +81,9 @@ describe('TablesPage · cambiar estado', () => {
   it('several quick changes on the same table: the last one wins', async () => {
     mockTablesControl.setLatency(30)
     const { user } = await renderPage()
-    await user.click(card('Mesa 04'))
-    await user.click(screen.getByRole('radio', { name: 'Ocupada' }))
-    await user.click(screen.getByRole('radio', { name: 'Reservada' }))
+    card('Mesa 04').focus()
+    await user.keyboard('o')
+    await user.keyboard('r')
     expect(card('Mesa 04')).toHaveAccessibleDescription('2 personas Reservada')
     await waitFor(() => expect(storedStatus('04')).toBe('reserved'))
     await waitFor(() => expect(card('Mesa 04')).toHaveAccessibleDescription('2 personas Reservada'))
@@ -86,7 +93,7 @@ describe('TablesPage · cambiar estado', () => {
     mockTablesControl.failOn('status')
     const { user } = await renderPage()
     await user.click(card('Mesa 04'))
-    await user.click(screen.getByRole('radio', { name: 'Ocupada' }))
+    await user.click(within(picker('Mesa 04')).getByRole('radio', { name: 'Ocupada' }))
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('No pudimos cambiar el estado de Mesa 04. Revisa tu conexión e intenta de nuevo.')
@@ -100,20 +107,19 @@ describe('TablesPage · cambiar estado', () => {
     expect(card('Mesa 04')).toHaveAccessibleDescription('2 personas Ocupada')
   })
 
-  it('409 inactive table: refreshes the list, closes the bar and explains it', async () => {
+  it('409 inactive table: refreshes the list and explains it', async () => {
     const { user } = await renderPage()
     await user.click(card('Mesa 04'))
     // Someone deactivated Mesa 04 meanwhile.
     mockTablesControl.reset(mockTablesControl.snapshot().map((t) => (t.identifier === '04' ? { ...t, isActive: false } : t)))
-    await user.click(screen.getByRole('radio', { name: 'Ocupada' }))
+    await user.click(within(picker('Mesa 04')).getByRole('radio', { name: 'Ocupada' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Mesa 04 está inactiva. Reactívala para cambiar su estado.')
     expect(within(screen.getByRole('alert')).queryByRole('button')).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Mesa 04' })).not.toBeInTheDocument()
     await waitFor(() => expect(metric('inactivas')).toHaveTextContent('2'))
   })
 
-  it('keyboard: Tab to a card, Enter selects and focuses the active segment, arrows + Enter apply, Esc closes', async () => {
+  it('keyboard: Enter opens on the current status, arrows move, Enter applies and focus returns; Esc closes', async () => {
     const { user } = await renderPage()
     card('Mesa 01').focus()
     await user.tab()
@@ -122,27 +128,29 @@ describe('TablesPage · cambiar estado', () => {
     expect(card('Mesa 02')).toHaveFocus()
 
     await user.keyboard('{Enter}')
-    const bar = screen.getByRole('region', { name: 'Mesa 02' })
-    await waitFor(() => expect(within(bar).getByRole('radio', { name: 'Ocupada' })).toHaveFocus())
-
-    await user.keyboard('{ArrowLeft}')
-    expect(within(bar).getByRole('radio', { name: 'Reservada' })).toHaveFocus()
+    await waitFor(() => expect(within(picker('Mesa 02')).getByRole('radio', { name: 'Ocupada' })).toHaveFocus())
+    await user.keyboard('{ArrowUp}')
+    expect(within(picker('Mesa 02')).getByRole('radio', { name: 'Reservada' })).toHaveFocus()
     expect(storedStatus('02')).toBe('occupied')
     await user.keyboard('{Enter}')
     await waitFor(() => expect(storedStatus('02')).toBe('reserved'))
+    await waitFor(() => expect(card('Mesa 02')).toHaveFocus())
 
+    await user.keyboard('{Enter}')
+    await screen.findByRole('radiogroup', { name: 'Estado de Mesa 02' })
     await user.keyboard('{Escape}')
-    expect(screen.queryByRole('region', { name: 'Mesa 02' })).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('radiogroup', { name: /^Estado de/ })).not.toBeInTheDocument())
     expect(card('Mesa 02')).toHaveFocus()
-    expect(card('Mesa 02')).toHaveAttribute('aria-pressed', 'false')
+    expect(card('Mesa 02')).toHaveAttribute('aria-expanded', 'false')
   })
 
-  it('Esc inside the create dialog closes only the dialog, not the selection', async () => {
+  it('D, R and O on a focused card change its status without opening the picker', async () => {
     const { user } = await renderPage()
-    await user.click(card('Mesa 04'))
-    await user.click(screen.getByRole('button', { name: 'Agregar mesa' }))
-    await user.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Mesa 04' })).toBeInTheDocument()
+    card('Mesa 07').focus()
+    await user.keyboard('o')
+    expect(card('Mesa 07')).toHaveAccessibleDescription('2 personas Ocupada')
+    expect(screen.queryByRole('radiogroup', { name: /^Estado de/ })).not.toBeInTheDocument()
+    await waitFor(() => expect(storedStatus('07')).toBe('occupied'))
+    expect(screen.getAllByText('Mesa 07 ahora está Ocupada').length).toBeGreaterThan(0)
   })
 })

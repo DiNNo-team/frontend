@@ -16,6 +16,7 @@ import {
   SegmentedControl,
   Select,
   Skeleton,
+  StatStrip,
   StatTile,
   StatusChip,
   Switch,
@@ -251,7 +252,7 @@ function TableCardsDemo() {
         name="Mesa 06"
         capacity={1}
         status="inactive"
-        onReactivate={() => undefined}
+        onSelect={() => undefined}
         menuItems={[
           { label: 'Editar', icon: Pencil, onSelect: () => undefined },
           { label: 'Reactivar', icon: RotateCcw, onSelect: () => undefined },
@@ -317,11 +318,17 @@ export function KitDay2Sections() {
         </div>
       </KitSection>
 
-      <KitSection title="StatTile · TableCard" note="Seleccionada: borde naranja de 2 px sin cambiar de tamaño. Inactiva: punteada al 55 %.">
+      <KitSection title="StatStrip · TableCard" note="Superficie de estado (tinte + borde + forma + palabra). Selector abierto: borde de selección de 2 px. Inactiva: punteada, sin opacidad.">
+        <StatStrip
+          aria-label="Resumen de mesas (ejemplo)"
+          items={[
+            { value: 'available', status: 'available', count: 3, label: 'disponibles' },
+            { value: 'reserved', status: 'reserved', count: 2, label: 'reservadas' },
+            { value: 'occupied', status: 'occupied', count: 2, label: 'ocupadas' },
+            { value: 'inactive', status: 'inactive', count: 1, label: 'inactiva' },
+          ]}
+        />
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile value={3} label="libres" />
-          <StatTile value={2} label="reservadas" />
-          <StatTile value={2} label="ocupadas" />
           <StatTile value="09:42" label="próxima llegada" highlight />
         </div>
         <TableCardsDemo />

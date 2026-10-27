@@ -16,14 +16,17 @@ const COLUMNS: DataTableColumn<TableLog>[] = [
     header: TABLE_LOG_TEXT.columnDate,
     cell: (log) => formatDateTime(log.changedAt),
     className: 'tabular-nums whitespace-nowrap',
+    mobileLine: 2,
   },
-  { key: 'table', header: TABLE_LOG_TEXT.columnTable, cell: (log) => formatTableName(log.tableIdentifier) },
+  // Two-line rows on phones (manual 13.4): "Mesa 04 · Disponible → Ocupada", then date · user.
+  { key: 'table', header: TABLE_LOG_TEXT.columnTable, cell: (log) => formatTableName(log.tableIdentifier), className: 'font-bold md:font-medium', mobileLine: 1 },
   {
     key: 'change',
     header: TABLE_LOG_TEXT.columnChange,
     cell: (log) => <TableLogChange previousStatus={log.previousStatus} newStatus={log.newStatus} />,
+    mobileLine: 1,
   },
-  { key: 'user', header: TABLE_LOG_TEXT.columnUser, cell: (log) => log.userEmail, className: 'break-all' },
+  { key: 'user', header: TABLE_LOG_TEXT.columnUser, cell: (log) => log.userEmail, className: 'break-all', mobileLine: 2 },
 ]
 
 /** The backend already answers newest first; sorting again keeps the order whatever the source. */

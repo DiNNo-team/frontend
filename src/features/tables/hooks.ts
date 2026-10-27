@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { tablesApi } from './api'
-import type { CreateTableInput, Table, TableStatus, UpdateTableInput } from './types'
+import type { CreateTableInput, Table, TablePlanItem, TableStatus, UpdateTableInput } from './types'
 
 export const tablesQueryKey = ['tables'] as const
 export const tableStatusMutationKey = ['tables', 'status'] as const
@@ -84,5 +84,14 @@ export function useUpdateTableStatus() {
         void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
       }
     },
+  })
+}
+
+/** Saves the whole floor plan; the answer (every table) replaces the cached list. */
+export function useSaveTablePlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (items: TablePlanItem[]) => tablesApi.savePlan(items),
+    onSuccess: (tables) => queryClient.setQueryData<Table[]>(tablesQueryKey, tables),
   })
 }

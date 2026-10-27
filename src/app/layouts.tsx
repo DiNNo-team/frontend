@@ -6,12 +6,16 @@ import { WrongAccountScreen } from './WrongAccountScreen'
 import { RestaurantStatusBanner } from '@/features/restaurant-status/components/RestaurantStatusBanner'
 import { RestaurantStatusControl } from '@/features/restaurant-status/components/RestaurantStatusControl'
 import { LocationBanner } from '@/features/restaurant/components/LocationBanner'
+import { useRestaurantQuery } from '@/features/restaurant/hooks'
 import { useToast } from '@/components/ui'
 
 export function DashboardLayout() {
   const navigate = useNavigate()
   const { user, authEvent, accountEvent, signOut } = useAuth()
   const toast = useToast()
+  // The topbar shows the restaurant's real name (manual 12.2); Firebase's displayName is the person, or empty.
+  const restaurantQuery = useRestaurantQuery({ enabled: !accountEvent && authEvent !== 'email-not-verified' })
+  const restaurantName = restaurantQuery.isPending && restaurantQuery.fetchStatus !== 'idle' ? undefined : (restaurantQuery.data?.name ?? '')
 
   function handleSignOut() {
     void signOut()
@@ -21,7 +25,7 @@ export function DashboardLayout() {
 
   return (
     <AppShell
-      restaurantName={user?.displayName ?? 'Restaurante'}
+      restaurantName={restaurantName}
       userEmail={user?.email ?? ''}
       onSignOut={handleSignOut}
       statusSlot={accountEvent ? undefined : <RestaurantStatusControl />}
