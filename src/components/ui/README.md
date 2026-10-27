@@ -9,6 +9,7 @@ Las pantallas se arman **solo** con estas piezas. Ninguna feature crea botones, 
 - **Íconos:** `Icon` de `@/lib/icon` con íconos de `lucide-react` (16 / 20 / 24). Los componentes que reciben `icon` esperan el componente de Lucide, no el elemento: `icon={Plus}`.
 - **Modo oscuro:** los componentes no necesitan `dark:`; los tokens cambian solos con `data-theme="dark"`.
 - **Antes del PR:** `npm run check:ui` tiene que decir "sin problemas".
+- **v2.1 "Salón de vidrio" (manual, sección 20):** todo el dashboard va sobre una hoja de vidrio (`glass-sheet`). Sobre la hoja, el texto secundario se oscurece solo (`--text-2-sheet`, AA). Las tarjetas de contenido son `glass-card`; las tarjetas de mesa siguen sólidas con su tinte. Utilidades: `glass-sheet`, `glass-card`, `glass-pill`, `glass-dock`, `bg-highlight`, `lift` (sube 3 px al pasar el puntero; se suma a `press`).
 
 ---
 
@@ -82,7 +83,7 @@ Valida al salir del campo y al enviar, **nunca en cada tecla** (manual 10).
 
 ## Card
 
-Tarjeta de contenido (nivel 1): radio 20, borde fino y sin sombra en reposo, padding 24 (16 en móvil). **Nunca pongas otra `Card` dentro de una `Card`.**
+Tarjeta de contenido de vidrio (`glass-card`, v2.1): radio 20, borde de vidrio y plana en reposo, padding 24 (16 en móvil). **Nunca pongas otra `Card` dentro de una `Card`** (la hoja de contenido no cuenta).
 
 | Prop | Tipo | Por defecto |
 |---|---|---|
@@ -242,7 +243,7 @@ Props: `title?`, `children`, `action?` (un `Button size="sm"`), `onClose?`.
 
 ## Toast (`useToast`)
 
-Aviso temporal, **uno a la vez** (el nuevo reemplaza al anterior). 4 s; 6 s si trae acción. Se pausa con hover o foco. El `ToastProvider` ya está en `app/providers.tsx`.
+Aviso temporal, **uno a la vez** (el nuevo reemplaza al anterior), arriba al centro bajo la barra superior (v2.1: abajo vive el dock). 4 s; 6 s si trae acción. Se pausa con hover o foco. El `ToastProvider` ya está en `app/providers.tsx`.
 
 ```tsx
 const toast = useToast()
@@ -288,7 +289,7 @@ Si las acciones viven dentro de tu propio `<form>` (para que Enter envíe), no u
 
 ## DropdownMenu
 
-Menú de acciones (⋯). Recibe el disparador y una lista de ítems; los `destructive` van en rojo y separados por una línea.
+Menú de acciones (⋯). Recibe el disparador y una lista de ítems; los `destructive` van en rojo y separados por una línea. `header` (opcional) pone un bloque no interactivo arriba, separado por una línea: la cuenta en el menú de usuario.
 
 ```tsx
 <DropdownMenu
@@ -319,14 +320,14 @@ const showSkeleton = useDelayedFlag(query.isPending)
 
 ## StatStrip
 
-Franja de resumen (manual 12.2): un solo contenedor dividido por líneas finas, cifras como tipografía (`text-metric`). Con `onSelectedChange` cada celda es un botón que filtra (`aria-pressed`); pulsar la activa limpia el filtro. 2 × 2 en < 640.
+Tarjetas de resumen (manual 12.2, v2.1): una tarjeta de vidrio por estado, todas iguales, con la forma y la palabra arriba (mayúscula inicial: "Disponibles") y la cifra en `text-display`. Con `onSelectedChange` cada tarjeta es un botón que filtra (`aria-pressed`); pulsar la activa limpia el filtro. 2 × 2 en < 1024.
 
 ```tsx
 <StatStrip
   aria-label="Resumen de mesas"
   selected={filter}
   onSelectedChange={setFilter}
-  items={[{ value: 'available', status: 'available', count: 3, label: 'disponibles' }, …]}
+  items={[{ value: 'available', status: 'available', count: 3, label: 'Disponibles' }, …]}
 />
 ```
 
@@ -382,7 +383,7 @@ Filas etiqueta + valor con divisor (modo lectura de `/restaurante`). Desde 768 p
 
 ## FloatingBar
 
-Barra flotante de vidrio (nivel 3) abajo del contenido: edición del plano y acciones masivas. **Va de último en la pantalla**: se queda visible al hacer scroll, no tapa el sidebar y ocupa su propio espacio, así que nunca esconde la última fila ni el foco. Mientras está visible, los toasts suben para no taparla.
+Barra flotante de vidrio (nivel 3, `glass-pill`) abajo del contenido, justo encima del dock de navegación: edición del plano. **Va de último en la pantalla**: se queda visible al hacer scroll, no tapa el sidebar y ocupa su propio espacio, así que nunca esconde la última fila ni el foco. Mientras está visible, los toasts suben para no taparla.
 
 ```tsx
 <FloatingBar title="Editar plano" description="3 mesas sin ubicar">
@@ -413,16 +414,17 @@ Tabla genérica (bitácora). Encabezados `text-label` con mayúscula inicial. En
 
 ## PageHeader
 
-`<h1>` de la página + descripción + `actions` a la derecha (aquí va el único primario). En móvil las acciones bajan.
+`<h1>` de la página + descripción **en tinta** (va sobre la hoja) + `actions` a la derecha. En móvil las acciones bajan. `variant="hero"` es el saludo grande de `/mesas` (`text-hero` 36/40), sin el nombre: el nombre del restaurante ya está en la barra superior.
 
 ```tsx
 <PageHeader title="Bitácora" description="Cambios de estado de tus mesas" />
+<PageHeader variant="hero" title="Buenas noches" description="Martes, 27 de octubre · 3 mesas disponibles de 7" />
 ```
 
 ---
 
 ## Layout (`@/components/layout`)
 
-- **`AppShell`**: sidebar (≥ 1024) o drawer (< 1024), topbar y contenido de 1200 máx. Ya está montado en el router para `/mesas`, `/restaurante` y `/bitacora`: **tu pantalla solo renderiza su contenido** (empieza con `PageHeader`). Props: `restaurantName`, `userEmail`, `onSignOut`, `statusSlot` (switch de Sergio en el topbar), `banner` (aviso de cerrado arriba del contenido).
-- **`OnboardingShell`**: topbar solo con el logo y contenido centrado de 560 máx. Ya envuelve `/onboarding`.
+- **`AppShell`** (v2.1): la luz del salón (`AmbientGround`) detrás de todo; la barra superior en píldora (`Topbar`, con el nombre del restaurante y la cuenta) y la hoja de vidrio con el contenido, centradas; y el dock de navegación `NavDock` abajo, como el de macOS, en todos los tamaños (su vidrio sigue al tema). Ya está montado en el router para `/mesas`, `/restaurante` y `/bitacora`: **tu pantalla solo renderiza su contenido** (empieza con `PageHeader`). Props: `restaurantName`, `userEmail`, `onSignOut`, `statusSlot` (switch de Sergio), `banner` (aviso de cerrado arriba del contenido) y `lit` (restaurante abierto: luz cálida; cerrado: apagada).
+- **`OnboardingShell`**: la misma luz, el logo en una píldora y el formulario en la hoja, centrado de 560 máx. Ya envuelve `/onboarding`.
 - Los datos de sesión de ejemplo ("Casa 72" · "admin@casa72.co") están en un solo lugar: `src/app/layouts.tsx`.

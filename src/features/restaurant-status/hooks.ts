@@ -15,8 +15,8 @@ export interface StatusChangeVariables {
 }
 
 /** Open/closed status of the session's restaurant. Shared by the topbar switch and the banner. */
-export function useRestaurantStatusQuery() {
-  return useQuery({ queryKey: restaurantStatusQueryKey, queryFn: () => restaurantStatusApi.get() })
+export function useRestaurantStatusQuery({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({ queryKey: restaurantStatusQueryKey, queryFn: () => restaurantStatusApi.get(), enabled })
 }
 
 /**

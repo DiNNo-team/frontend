@@ -19,7 +19,7 @@ async function renderPage() {
 
 const card = (name: string) => screen.getByRole('button', { name })
 const picker = (name: string) => screen.getByRole('radiogroup', { name: `Estado de ${name}` })
-const metric = (label: string) => screen.getByText(label).previousSibling
+const metric = (label: string) => within(screen.getByRole('group', { name: 'Resumen de mesas' })).getByText(label).parentElement?.nextElementSibling
 const storedStatus = (identifier: string) => mockTablesControl.snapshot().find((t) => t.identifier === identifier)?.status
 
 describe('TablesPage · cambiar estado', () => {
@@ -53,14 +53,14 @@ describe('TablesPage · cambiar estado', () => {
 
   it('changes at once (optimistic), closes the picker, persists, updates the summary and toasts with Deshacer', async () => {
     const { user } = await renderPage()
-    expect(metric('ocupadas')).toHaveTextContent('2')
+    expect(metric('Ocupadas')).toHaveTextContent('2')
     await user.click(card('Mesa 04'))
     await user.click(within(picker('Mesa 04')).getByRole('radio', { name: 'Ocupada' }))
 
     expect(card('Mesa 04')).toHaveAccessibleDescription('2 personas Ocupada')
     await waitFor(() => expect(screen.queryByRole('radiogroup', { name: /^Estado de/ })).not.toBeInTheDocument())
-    expect(metric('ocupadas')).toHaveTextContent('3')
-    expect(metric('disponibles')).toHaveTextContent('2')
+    expect(metric('Ocupadas')).toHaveTextContent('3')
+    expect(metric('Disponibles')).toHaveTextContent('2')
     expect(await screen.findByRole('button', { name: 'Deshacer' })).toBeInTheDocument()
     expect(screen.getAllByText('Mesa 04 ahora está Ocupada').length).toBeGreaterThan(0)
     expect(storedStatus('04')).toBe('occupied')
@@ -116,7 +116,7 @@ describe('TablesPage · cambiar estado', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Mesa 04 está inactiva. Reactívala para cambiar su estado.')
     expect(within(screen.getByRole('alert')).queryByRole('button')).not.toBeInTheDocument()
-    await waitFor(() => expect(metric('inactivas')).toHaveTextContent('2'))
+    await waitFor(() => expect(metric('Inactivas')).toHaveTextContent('2'))
   })
 
   it('keyboard: Enter opens on the current status, arrows move, Enter applies and focus returns; Esc closes', async () => {

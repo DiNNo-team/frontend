@@ -7,6 +7,7 @@ import { RestaurantStatusBanner } from '@/features/restaurant-status/components/
 import { RestaurantStatusControl } from '@/features/restaurant-status/components/RestaurantStatusControl'
 import { LocationBanner } from '@/features/restaurant/components/LocationBanner'
 import { useRestaurantQuery } from '@/features/restaurant/hooks'
+import { useRestaurantStatusQuery } from '@/features/restaurant-status/hooks'
 import { useToast } from '@/components/ui'
 
 export function DashboardLayout() {
@@ -16,6 +17,9 @@ export function DashboardLayout() {
   // The topbar shows the restaurant's real name (manual 12.2); Firebase's displayName is the person, or empty.
   const restaurantQuery = useRestaurantQuery({ enabled: !accountEvent && authEvent !== 'email-not-verified' })
   const restaurantName = restaurantQuery.isPending && restaurantQuery.fetchStatus !== 'idle' ? undefined : (restaurantQuery.data?.name ?? '')
+  // The room's light follows the restaurant (manual v2.1): warm while open or still loading, out once it is closed.
+  const statusQuery = useRestaurantStatusQuery({ enabled: !accountEvent && authEvent !== 'email-not-verified' })
+  const lit = statusQuery.data?.isOpen !== false
 
   function handleSignOut() {
     void signOut()
@@ -28,6 +32,7 @@ export function DashboardLayout() {
       restaurantName={restaurantName}
       userEmail={user?.email ?? ''}
       onSignOut={handleSignOut}
+      lit={lit}
       statusSlot={accountEvent ? undefined : <RestaurantStatusControl />}
       banner={
         accountEvent ? undefined : (
