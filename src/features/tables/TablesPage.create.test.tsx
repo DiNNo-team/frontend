@@ -38,7 +38,7 @@ describe('TablesPage · crear mesa', () => {
     const created = within(grid).getByRole('heading', { name: 'Mesa 09' }).closest('li') as HTMLElement
     expect(within(created).getByText('5 personas')).toBeInTheDocument()
     expect(within(created).getByText('Disponible')).toBeInTheDocument()
-    expect(screen.getByText('libres').previousSibling).toHaveTextContent('4')
+    expect(screen.getByText('disponibles').previousSibling).toHaveTextContent('4')
     expect(mockTablesControl.snapshot()).toHaveLength(9)
   })
 
@@ -107,6 +107,6 @@ describe('TablesPage · crear mesa', () => {
     await user.type(screen.getByLabelText('Identificador'), '1')
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Agregar mesa' }))
     expect(await screen.findByRole('list', { name: 'Mesas' })).toBeInTheDocument()
-    expect(screen.getByText('libre').previousSibling).toHaveTextContent('1')
+    expect(screen.getByText('disponible').previousSibling).toHaveTextContent('1')
   })
 })

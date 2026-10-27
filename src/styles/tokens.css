@@ -1,7 +1,7 @@
-/* No editar: copia exacta del Manual de identidad v1.1, sección 16.3 */
-/* ===== DiNNo design tokens v1.1 ===== */
+/* No editar: copia exacta del Manual de identidad v2.0, sección 16.3 */
+/* ===== DiNNo design tokens v2.0 ===== */
 :root{
-  /* marca: no cambian con el tema */
+  /* marca: no cambian con el tema (idénticos a v1.1) */
   --petrol:#103B46; --petrol-mid:#1D5661; --petrol-deep:#0B2D36;
   --orange:#F46935; --orange-deep:#B83F14; --orange-pressed:#DB5626; --orange-night:#FF8456; --amber:#F7A43B;
   --cream:#FAF7F1; --white:#FFFFFF; --ink:#10252B;
@@ -14,10 +14,17 @@
   /* tipografía */
   --font:"Plus Jakarta Sans",system-ui,sans-serif;
   /* motion */
-  --ease:cubic-bezier(.2,.8,.2,1); --dur-fast:150ms; --dur-base:200ms; --dur-slow:300ms;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --ease-enter:cubic-bezier(.23,1,.32,1); --ease-move:cubic-bezier(.77,0,.175,1); --ease-sheet:cubic-bezier(.32,.72,0,1);
+  --dur-press:120ms; --dur-fast:150ms; --dur-base:200ms; --dur-slow:300ms; --dur-highlight:700ms;
+  --motion-rise:8px; --motion-scale:.97;
+  /* vidrio */
+  --glass-blur-panel:20px; --glass-blur-bar:16px; --glass-blur-map:16px; --glass-saturate:1.4;
   /* capas */
   --z-sticky:10; --z-dropdown:20; --z-drawer:30; --z-overlay:40; --z-modal:50; --z-toast:60;
 }
+@media (prefers-reduced-motion: reduce){ :root{ --motion-rise:0px; --motion-scale:1; } }
+
 /* semánticos: claro (por defecto) */
 :root, .t-light, [data-theme="light"]{
   --bg:#FAF7F1; --surface:#FFFFFF; --surface-2:#F2EFE8;
@@ -32,6 +39,20 @@
   --shadow-soft:0 1px 2px rgba(16,37,43,.05),0 10px 28px -12px rgba(16,37,43,.18);
   --shadow-float:0 12px 32px -12px rgba(16,37,43,.28);
   --m-ground:#E6E9E3; --m-block:#F6F4EE; --m-park:#D3E2D3; --m-water:#CBDFE3; --m-ave:#D5DCD7;
+  /* v2.0 */
+  --selection:#DB5626;
+  --tint-ok:color-mix(in srgb,var(--ok) 18%,var(--surface));
+  --tint-reserved:color-mix(in srgb,var(--reserved) 18%,var(--surface));
+  --tint-busy:color-mix(in srgb,var(--busy) 18%,var(--surface));
+  --tint-limited:color-mix(in srgb,var(--limited) 18%,var(--surface));
+  --edge-ok:color-mix(in srgb,var(--ok) 45%,var(--surface));
+  --edge-reserved:color-mix(in srgb,var(--reserved) 45%,var(--surface));
+  --edge-busy:color-mix(in srgb,var(--busy) 45%,var(--surface));
+  --edge-limited:color-mix(in srgb,var(--limited) 45%,var(--surface));
+  --hatch-busy:color-mix(in srgb,var(--busy) 20%,transparent);
+  --glass-panel-bg:color-mix(in srgb,var(--surface) 50%,transparent);
+  --glass-bar-bg:color-mix(in srgb,var(--bg) 85%,transparent);
+  --plan-canvas:var(--surface-2); --plan-dot:color-mix(in srgb,var(--border-strong) 45%,transparent);
 }
 /* semánticos: oscuro */
 .t-dark, [data-theme="dark"]{
@@ -47,4 +68,18 @@
   --shadow-soft:0 1px 2px rgba(0,0,0,.25),0 10px 28px -12px rgba(0,0,0,.5);
   --shadow-float:0 12px 32px -12px rgba(0,0,0,.6);
   --m-ground:#0F3540; --m-block:#134451; --m-park:#14463F; --m-water:#0E4B5A; --m-ave:#1A5360;
+  /* v2.0 */
+  --selection:#FF8456;
+  --tint-ok:color-mix(in srgb,var(--ok) 22%,var(--surface));
+  --tint-reserved:color-mix(in srgb,var(--reserved) 22%,var(--surface));
+  --tint-busy:color-mix(in srgb,var(--busy) 22%,var(--surface));
+  --tint-limited:color-mix(in srgb,var(--limited) 22%,var(--surface));
+  --edge-ok:color-mix(in srgb,var(--ok) 50%,var(--surface));
+  --edge-reserved:color-mix(in srgb,var(--reserved) 50%,var(--surface));
+  --edge-busy:color-mix(in srgb,var(--busy) 50%,var(--surface));
+  --edge-limited:color-mix(in srgb,var(--limited) 50%,var(--surface));
+  --hatch-busy:color-mix(in srgb,var(--busy) 20%,transparent);
+  --glass-panel-bg:color-mix(in srgb,var(--surface) 50%,transparent);
+  --glass-bar-bg:color-mix(in srgb,var(--bg) 85%,transparent);
+  --plan-canvas:var(--surface-2); --plan-dot:color-mix(in srgb,var(--border-strong) 45%,transparent);
 }

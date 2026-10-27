@@ -9,10 +9,10 @@ export interface CardProps extends Omit<ComponentPropsWithRef<'div'>, 'title'> {
   as?: 'div' | 'section' | 'article' | 'aside'
 }
 
-/** Content card (manual 6 and 9). Never put another Card inside a Card. */
+/** Content card (manual 6.3, level 1): border only while resting. Never put another Card inside a Card. */
 export function Card({ title, titleAs: Heading = 'h2', as: Element = 'div', className, children, ...props }: CardProps) {
   return (
-    <Element className={cn('rounded-card border border-line bg-surface p-4 shadow-card md:p-6', className)} {...props}>
+    <Element className={cn('rounded-card border border-line bg-surface p-4 md:p-6', className)} {...props}>
       {title && <Heading className="mb-4 text-h3 text-fg">{title}</Heading>}
       {children}
     </Element>

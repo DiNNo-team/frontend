@@ -242,14 +242,15 @@ describe('ActivityLogPage', () => {
     await waitFor(() => expect(list).toHaveBeenCalledTimes(2))
   })
 
-  it('mobile list: each row shows the four fields with their labels', async () => {
+  it('mobile list: two lines per change, table and change first, then date and user (no field is lost)', async () => {
     mockTableLogsControl.reset([log({ id: 'a', changedAt: '2026-10-01T00:30:00Z' })])
     await renderPage()
 
     const list = screen.getByRole('list', { name: 'Bitácora de cambios de mesas' })
     const item = within(list).getAllByRole('listitem')[0]
-    for (const text of ['Fecha y hora', '30 sept · 7:30 p. m.', 'Mesa', 'Mesa 04', 'Cambio', 'Disponible a Ocupada', 'Usuario', 'admin@casa72.co']) {
-      expect(item).toHaveTextContent(text)
-    }
+    const [first, second] = Array.from(item.children)
+    expect(first).toHaveTextContent('Mesa 04')
+    expect(first).toHaveTextContent('Disponible a Ocupada')
+    expect(second).toHaveTextContent('30 sept · 7:30 p. m. · admin@casa72.co')
   })
 })

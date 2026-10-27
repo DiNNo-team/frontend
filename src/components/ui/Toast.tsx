@@ -51,7 +51,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               onOpenChange={(open) => {
                 if (!open) setCurrent(null)
               }}
-              className="flex w-full max-w-100 animate-rise-in-fast items-center gap-3 rounded-btn bg-inverse px-4 py-3 text-sec text-on-inverse shadow-lifted"
+              className="flex w-full max-w-100 items-center gap-3 rounded-btn bg-inverse px-4 py-3 text-sec text-on-inverse shadow-lifted data-[state=closed]:animate-sink-out data-[state=open]:animate-rise-in-fast"
             >
               <span className={cn('inline-flex shrink-0', inverseScope)}>
                 <Icon icon={icon.icon} size={20} className={icon.color} />

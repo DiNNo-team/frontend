@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Pencil } from 'lucide-react'
 import { useBlocker } from 'react-router'
-import { Alert, Button, Card, ConfirmDialog, PageHeader, Skeleton, useToast } from '@/components/ui'
+import { Alert, Button, Card, ConfirmDialog, DetailList, PageHeader, Skeleton, useToast } from '@/components/ui'
 import { DAY_LABELS, closesNextDay } from '@/components/ui/hours'
 import { getApiErrorMessage, isAccessError } from '@/lib/api-client'
 import { formatTime12h } from '@/lib/format'
@@ -56,15 +57,6 @@ function createUpdateInput(restaurant: RestaurantProfile, values: ValidRestauran
     update.schedules = updatedPayload.schedules
   }
   return update
-}
-
-function ProfileField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <dt className="text-sec text-fg-2">{label}</dt>
-      <dd className="break-words text-body text-fg">{value}</dd>
-    </div>
-  )
 }
 
 export default function RestaurantPage() {
@@ -188,7 +180,14 @@ export default function RestaurantPage() {
     <>
       <PageHeader
         title="Restaurante"
-        actions={editing ? undefined : <Button onClick={() => setEditing(true)}>Editar</Button>}
+        actions={
+          editing ? undefined : (
+            // Manual 12.2: "Editar" is an alternative, not the page's main action.
+            <Button variant="outline" icon={Pencil} onClick={() => setEditing(true)}>
+              Editar
+            </Button>
+          )
+        }
       />
 
       {editing ? (
@@ -204,24 +203,24 @@ export default function RestaurantPage() {
       ) : (
         <div className="flex flex-col gap-6">
           <Card as="section" title="Tu restaurante">
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <ProfileField label="Nombre" value={displayValue(restaurant.name)} />
-              <ProfileField
-                label="Categoría"
-                value={restaurant.category ? RESTAURANT_CATEGORY_LABELS[restaurant.category] ?? INCOMPLETE : INCOMPLETE}
-              />
-            </dl>
+            <DetailList
+              items={[
+                { label: 'Nombre', value: displayValue(restaurant.name) },
+                {
+                  label: 'Categoría',
+                  value: restaurant.category ? RESTAURANT_CATEGORY_LABELS[restaurant.category] ?? INCOMPLETE : INCOMPLETE,
+                },
+              ]}
+            />
           </Card>
 
           <Card as="section" title="Ubicación">
-            <dl className="grid gap-4">
-              <ProfileField label="Dirección" value={displayValue(restaurant.address)} />
-            </dl>
+            <DetailList items={[{ label: 'Dirección', value: displayValue(restaurant.address) }]} />
           </Card>
 
           <Card as="section" title="Horarios">
-            <dl className="flex flex-col divide-y divide-line">
-              {initialValues.hours.map((day) => {
+            <DetailList
+              items={initialValues.hours.map((day) => {
                 let value = 'Cerrado'
                 if (!schedulesReturned) value = INCOMPLETE
                 else if (day.isOpen24h) value = 'Abierto 24 horas'
@@ -230,9 +229,9 @@ export default function RestaurantPage() {
                     closesNextDay(day) ? ' (día siguiente)' : ''
                   }`
                 }
-                return <ProfileField key={day.day} label={DAY_LABELS[day.day].long} value={value} />
+                return { label: DAY_LABELS[day.day].long, value }
               })}
-            </dl>
+            />
           </Card>
         </div>
       )}

@@ -5,7 +5,8 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
 export interface AppShellProps {
-  restaurantName: string
+  /** The restaurant's real name; `undefined` while it loads. */
+  restaurantName?: string
   userEmail: string
   onSignOut: () => void
   /** Topbar right side: "Estado del restaurante" + Switch (Sergio). */
@@ -23,7 +24,7 @@ const DESKTOP_QUERY = '(min-width: 1024px)'
  */
 export function AppShell({ restaurantName, userEmail, onSignOut, statusSlot, banner, children }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const userMenu = { restaurantName, userEmail, onSignOut }
+  const userMenu = { restaurantName: restaurantName ?? '', userEmail, onSignOut }
   const returnFocus = useReturnFocus()
 
   useEffect(() => {

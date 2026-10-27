@@ -20,7 +20,7 @@ export interface DialogProps {
 }
 
 /**
- * Modal dialog (manual 9 and 11.3). Solid, no glass. Focus is trapped inside and returns to
+ * Modal dialog (manual 12.2 and 11.3). Solid, no glass; enters with a rise and leaves the same way, faster. Focus is trapped inside and returns to
  * the element that opened it.
  */
 export function Dialog({ open, onOpenChange, title, description, children, footer, size = 'sm', preventClose = false }: DialogProps) {
@@ -39,7 +39,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
       }}
     >
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 z-(--z-overlay) grid animate-fade-in place-items-center overflow-y-auto bg-(--overlay) p-4">
+        <RadixDialog.Overlay className="fixed inset-0 z-(--z-overlay) grid place-items-center overflow-y-auto bg-(--overlay) p-4 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in">
           <RadixDialog.Content
             // Without a description Radix expects an explicit `undefined` to skip its warning.
             {...(description ? {} : { 'aria-describedby': undefined })}
@@ -49,7 +49,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
             onPointerDownOutside={blockWhileSaving}
             onInteractOutside={blockWhileSaving}
             className={cn(
-              'relative z-(--z-modal) w-full animate-rise-in rounded-card bg-surface p-6 text-fg shadow-lifted',
+              'relative z-(--z-modal) w-full rounded-card bg-surface p-6 text-fg shadow-lifted data-[state=closed]:animate-sink-out data-[state=open]:animate-rise-in',
               size === 'sm' ? 'max-w-120' : 'max-w-140',
             )}
           >

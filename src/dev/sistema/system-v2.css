@@ -1,0 +1,169 @@
+/* Preview of the identity manual v2.0 (docs/DiNNo_Manual_Identidad_v2_0.md, section 16), scoped to /sistema.
+   Development only: tokens.css and globals.css stay on v1.1 until the manual is approved. */
+
+.sv2 {
+  --ease-enter: cubic-bezier(.23, 1, .32, 1);
+  --ease-move: cubic-bezier(.77, 0, .175, 1);
+  --ease-sheet: cubic-bezier(.32, .72, 0, 1);
+  --dur-press: 120ms;
+  --dur-highlight: 700ms;
+  --motion-rise: 8px;
+  --motion-scale: .97;
+  --glass-blur-panel: 20px;
+  --glass-blur-bar: 16px;
+  --glass-saturate: 1.4;
+  /* --sv2-alpha comes from the opacity control on /sistema; the popovers live in a portal, so it is set on <html>. */
+  --glass-panel-alpha: var(--sv2-alpha, 50%);
+  --tint-alpha: 18%;
+  --edge-alpha: 45%;
+  --selection: var(--accent-pressed);
+  --tint-ok: color-mix(in srgb, var(--ok) var(--tint-alpha), var(--surface));
+  --tint-reserved: color-mix(in srgb, var(--reserved) var(--tint-alpha), var(--surface));
+  --tint-busy: color-mix(in srgb, var(--busy) var(--tint-alpha), var(--surface));
+  --hatch-busy: color-mix(in srgb, var(--busy) 20%, transparent);
+  --edge-ok: color-mix(in srgb, var(--ok) var(--edge-alpha), var(--surface));
+  --edge-reserved: color-mix(in srgb, var(--reserved) var(--edge-alpha), var(--surface));
+  --edge-busy: color-mix(in srgb, var(--busy) var(--edge-alpha), var(--surface));
+  --glass-panel-bg: color-mix(in srgb, var(--surface) var(--glass-panel-alpha), transparent);
+  --glass-bar-bg: color-mix(in srgb, var(--bg) 85%, transparent);
+  --plan-dot: color-mix(in srgb, var(--border-strong) 45%, transparent);
+}
+[data-theme="dark"] .sv2 {
+  --glass-panel-alpha: var(--sv2-alpha, 50%);
+  --tint-alpha: 22%;
+  --edge-alpha: 50%;
+  --selection: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sv2 { --motion-rise: 0px; --motion-scale: 1; }
+}
+
+/* Type scale v2.0 (manual 4) */
+.sv2-h1 { font-size: 28px; line-height: 32px; letter-spacing: -0.025em; font-weight: 800; }
+.sv2-h2 { font-size: 22px; line-height: 28px; letter-spacing: -0.015em; font-weight: 700; }
+.sv2-label { font-size: 12px; line-height: 16px; letter-spacing: 0.01em; font-weight: 700; }
+.sv2-kicker { font-size: 11px; line-height: 14px; letter-spacing: 0.08em; font-weight: 700; text-transform: uppercase; }
+.sv2-metric { font-size: 28px; line-height: 32px; letter-spacing: -0.03em; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Glass (manual 7) with its solid fallback */
+.sv2-glass-panel {
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: blur(var(--glass-blur-panel)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-panel)) saturate(var(--glass-saturate));
+}
+.sv2-glass-bar {
+  background: var(--glass-bar-bg);
+  backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturate));
+}
+[data-sv2-solid] .sv2-glass-panel, [data-sv2-solid] .sv2-glass-bar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+@supports not (backdrop-filter: blur(1px)) {
+  .sv2-glass-panel { background: var(--surface); }
+  .sv2-glass-bar { background: var(--bg); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .sv2-glass-panel, .sv2-glass-bar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .sv2-glass-panel { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+/* Press (manual 11.3) */
+.sv2-press { transition: transform var(--dur-press) var(--ease-enter); }
+.sv2-press:active:not(:disabled):not([aria-disabled="true"]) { transform: scale(var(--motion-scale)); }
+
+/* Table surface (manual 3.6 and 12.2 TableCard / TableNode) */
+.sv2-table {
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: background-color var(--dur-base) var(--ease), border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.sv2-table[data-status="available"] { background-color: var(--tint-ok); border-color: var(--edge-ok); }
+.sv2-table[data-status="reserved"] { background-color: var(--tint-reserved); border-color: var(--edge-reserved); }
+.sv2-table[data-status="occupied"] {
+  background-color: var(--tint-busy);
+  border-color: var(--edge-busy);
+  background-image: repeating-linear-gradient(135deg, var(--hatch-busy) 0 2px, transparent 2px 8px);
+}
+.sv2-table[data-status="inactive"] {
+  background: transparent;
+  border: 1.5px dashed var(--border-strong);
+  color: var(--text-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sv2-table:not([data-status="inactive"]):hover { box-shadow: var(--shadow-soft); }
+}
+.sv2-table[data-open="true"] { border: 2px solid var(--selection); box-shadow: var(--shadow-soft); }
+.sv2-table-trigger { position: absolute; inset: 0; border-radius: inherit; cursor: pointer; }
+.sv2-table-trigger:focus-visible { box-shadow: var(--focus-ring); }
+
+/* Remote change (manual 11.3): a ring that grows once and fades */
+.sv2-ring {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid currentColor;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: sv2-ring var(--dur-highlight) var(--ease-enter) 1 forwards;
+}
+@keyframes sv2-ring { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(calc(2 - var(--motion-scale))); } }
+
+/* Status picker (manual 12.2 StatusPicker) */
+.sv2-picker { transform-origin: var(--radix-popover-content-transform-origin); width: 260px; }
+.sv2-picker[data-state="open"] { animation: sv2-pop-in var(--dur-base) var(--ease-enter); }
+.sv2-picker[data-state="closed"] { animation: sv2-pop-out 150ms var(--ease-enter) forwards; }
+@keyframes sv2-pop-in { from { opacity: 0; transform: scale(var(--motion-scale)); } to { opacity: 1; transform: none; } }
+@keyframes sv2-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(var(--motion-scale)); } }
+.sv2-picker-option[data-current="true"][data-status="available"] { background: var(--tint-ok); }
+.sv2-picker-option[data-current="true"][data-status="reserved"] { background: var(--tint-reserved); }
+.sv2-picker-option[data-current="true"][data-status="occupied"] { background: var(--tint-busy); }
+
+/* Floor plan (manual 12.2 FloorPlan) */
+.sv2-canvas {
+  position: relative;
+  background-color: var(--surface-2);
+  background-image: radial-gradient(circle, var(--plan-dot) 1px, transparent 1.5px);
+  background-size: var(--plan-cell) var(--plan-cell);
+  background-position: calc(var(--plan-cell) / -2) calc(var(--plan-cell) / -2);
+  overflow: hidden;
+}
+.sv2-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none;
+  transition: transform var(--dur-base) var(--ease-enter), background-color var(--dur-base) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.sv2-node[data-dragging="true"] { transition: none; box-shadow: var(--shadow-float); z-index: 2; cursor: grabbing; }
+.sv2-node[data-returning="true"] { transition-duration: 220ms; transition-timing-function: var(--ease-move); }
+.sv2-node[data-instant="true"] { transition: none; }
+.sv2-edit .sv2-node { cursor: grab; }
+.sv2-drop { position: absolute; top: 0; left: 0; border: 2px dashed var(--selection); pointer-events: none; }
+.sv2-drop[data-valid="false"] { border-color: var(--error); }
+@media (prefers-reduced-motion: reduce) {
+  .sv2-node { transition: background-color var(--dur-base) var(--ease); }
+}
+
+/* Grid ↔ plan (manual 11.3, View Transitions) */
+::view-transition-group(*) { animation-duration: 300ms; animation-timing-function: var(--ease-move, ease); }
+
+/* Live indicator dot (manual 12.2 LiveIndicator) */
+.sv2-live-dot { position: relative; display: inline-flex; width: 8px; height: 8px; }
+.sv2-live-dot::before { content: ""; position: absolute; inset: -3px; border-radius: 999px; background: currentColor; opacity: .3; animation: live-pulse 2s var(--ease) infinite; }
+.sv2-live-dot::after { content: ""; position: absolute; inset: 0; border-radius: 999px; background: currentColor; }
+@media (prefers-reduced-motion: reduce) { .sv2-live-dot::before { animation: none; } }
+
+/* Motion curves demo */
+.sv2-track { position: relative; height: 12px; border-radius: 999px; background: var(--surface-2); }
+.sv2-puck { position: absolute; top: 0; left: 0; width: 12px; height: 12px; border-radius: 999px; background: var(--brand); transition: transform var(--dur-slow); }
+.sv2-puck[data-curve="v1"] { transition-timing-function: var(--ease); }
+.sv2-puck[data-curve="enter"] { transition-timing-function: var(--ease-enter); }
+.sv2-puck[data-curve="move"] { transition-timing-function: var(--ease-move); }
+.sv2-puck[data-curve="sheet"] { transition-timing-function: var(--ease-sheet); }
+
+.sv2-range { accent-color: var(--accent); width: 100%; }
+.sv2-check { accent-color: var(--accent); width: 20px; height: 20px; flex-shrink: 0; }
