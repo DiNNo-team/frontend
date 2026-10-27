@@ -5,6 +5,59 @@
 
 ---
 
+## 27 oct 2026 · Sebastián · Plano de mesas en `/mesas` (en curso, sin PR todavía)
+
+**Qué cambió**
+- **`/mesas`:** el selector **Plano · Cuadrícula**.
+  - El plano muestra cada mesa en su lugar del salón, con número, capacidad y estado.
+  - El modo Editar existe solo desde 768 px.
+  - La vista elegida se recuerda en cada dispositivo.
+- **Tipo `Table`** (`features/tables/types.ts`): agrega `planX`, `planY` y `planShape`, en `null` mientras la mesa no está en el plano. Si armas una mesa a mano en una prueba, agrega los tres en `null`.
+- **Kit:**
+  - Nuevo `TableNode`.
+  - `StatusPicker` suma tres props opcionales: `details`, `actions` y `anchorStyle`. Las pantallas que ya lo usan no cambian.
+  - La descripción de `FloatingBar` va en tinta.
+- **`CLAUDE.md` (secciones 2 y 8, iguales en los tres repos):** el manual que manda ahora es el **v2.0** (`frontend/docs/DiNNo_Manual_Identidad_v2_0.md`); el v1.1 queda como histórico. Lo que el v2.0 todavía no implementa está en su sección 19. La sección 8 suma la decisión del plano de mesas.
+- **`CLAUDE.md`, sección 11 (este repo):** las reglas de diseño siguen al v2.0: vidrio solo en la capa flotante, gradientes solo en el login, mayúsculas solo en `text-kicker` y ningún texto con opacidad.
+- **Backend:** `PUT /v1/tables/plan`, en la rama `feat/sprint2-plano-mesas` del backend. Mientras no llegue a Render, la web lee los campos del plano como `null` y todo sigue funcionando.
+
+**Qué tienes que hacer**
+- Nada, salvo si escribes pruebas con mesas: agrega los tres campos nuevos.
+- En `/mesas`, `getByRole('radiogroup')` ya no es único (el selector de vista también lo es): nómbralo, por ejemplo `{ name: 'Estado de Mesa 04' }`.
+- Para ver el plano con datos de ejemplo: `/mesas?mockPlan` (8 mesas) o `/mesas?mockPlan&mockMany` (40).
+
+---
+
+## 26 oct 2026 · Sebastián · Manual de identidad v2.0 y dashboard renovado (en curso, sin PR todavía)
+
+**Qué cambió**
+- **Nuevo manual:** `docs/DiNNo_Manual_Identidad_v2_0.md` es la fuente de diseño; el v1.1 queda como histórico.
+  - La paleta y el logo no cambian.
+  - Cambian la escala tipográfica (títulos de página de 28, etiquetas de 12 con mayúscula inicial), la elevación (las tarjetas ya no llevan sombra en reposo), el vidrio en la capa flotante y el motion (presionar, salidas, reducir movimiento sin apagarlo todo).
+- **Tokens:** `tokens.css` y `globals.css` en v2.0. No cambió el valor de ningún color; se agregaron tokens (tintes y bordes de estado, vidrio, curvas).
+- **Kit nuevo:** `StatusLine`, `StatStrip`, `StatusPicker`, `DetailList` y `useMediaQuery` (`@/lib/use-media-query`). `TableCard` se reescribió (ya no tiene `onReactivate` ni `reactivating`). Detalle en `src/components/ui/README.md`.
+- **`/mesas`:**
+  - Tocar una mesa abre su selector de estado junto a ella (en el teléfono, una hoja). Con la mesa enfocada, D, R u O cambian su estado.
+  - La franja de resumen filtra.
+  - "Agregar mesa" pasa a borde y las inactivas van al final.
+  - La barra fija de estado se eliminó.
+- **Topbar:** muestra el nombre real del restaurante, no el de la cuenta de Google.
+- **El login no cambió.**
+
+**Para quién**
+- **Todos:**
+  - Las pantallas nuevas se arman con el manual v2.0.
+  - "libres" ahora es "disponibles" (glosario).
+  - Si una prueba busca la métrica por "libres", cámbiala.
+- **Jacobo:** en `/restaurante`, "Editar" pasa a botón de borde y el modo lectura usa `DetailList`. Tu lógica de edición no cambió. Además, `useRestaurantQuery` acepta `{ enabled }`; sin parámetros funciona igual que antes.
+- **Sergio:** la bitácora en el teléfono muestra dos líneas por cambio (mesa y cambio; fecha y usuario). La pantalla de escritorio y los datos son los mismos. En `layouts.tsx`, tu switch y tu banner siguen en sus slots.
+- **Santiago:** el horario del registro muestra cada día cerrado en una fila, y el botón ahora dice "Copiar el lunes a todos" y está debajo del lunes. Las reglas y los datos no cambiaron.
+
+**Rama / PR**
+- `docs/sprint2-manual-v2` (manual) y `refactor/sprint2-dashboard-v2` (código). Todavía sin commit ni PR.
+
+---
+
 ## 26 oct 2026 · Sebastián · `/login` vuelve a tener pestañas, sin registro público
 
 **Qué cambió**

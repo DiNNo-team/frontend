@@ -30,7 +30,7 @@
 ## 2. Antes de empezar cualquier tarea
 
 1. **Pregunta qué PBI o tarea de Azure DevOps se está trabajando**, si la persona no lo dijo. No trabajes sin saber el alcance.
-2. **Si no tienes en el contexto el manual de identidad v1.1 ni el plan del Sprint 1, pídelos** antes de tocar algo visual o algo que dependa de otra persona. No inventes colores, componentes, textos ni flujos.
+2. **Si no tienes en el contexto el manual de identidad v2.0 (`frontend/docs/DiNNo_Manual_Identidad_v2_0.md`) ni el plan del sprint, pídelos** antes de tocar algo visual o algo que dependa de otra persona. No inventes colores, componentes, textos ni flujos.
 3. **Confirma qué está dentro y qué está fuera de la tarea.** Si algo parece necesario pero es de otra persona (ver la tabla de responsables), dilo en vez de hacerlo.
 4. **Busca si ya existe algo parecido** en el repo (componente, servicio, validación, utilidad) antes de crear algo nuevo.
 5. **Verifica que la rama esté actualizada con `develop`** antes de empezar (ver sección 3).
@@ -118,11 +118,12 @@ Las decisiones y contratos del Sprint 2 están en la sección 10.
 - **Autenticación:** Firebase Authentication (confirmado). Se usa en la web (restaurantes) y en la app móvil (comensales), con Google y con correo y clave. El backend valida el token de Firebase y decide el rol; ver sección 10.
 - **Estados de mesa:** Disponible, Reservada y Ocupada. *Inactiva* es una mesa desactivada, no un estado del control. “Pocas mesas” es disponibilidad del restaurante para el comensal, no un estado de mesa.
 - **Estado del restaurante:** Abierto o Cerrado.
-- **Diseño:** el manual de identidad v1.1 manda sobre cualquier otra preferencia. Un solo kit de componentes; nadie crea estilos propios.
+- **Diseño:** el manual de identidad v2.0 manda sobre cualquier otra preferencia (el v1.1 queda como histórico; lo que el v2.0 todavía no implementa está en su sección 19). Un solo kit de componentes; nadie crea estilos propios.
 - **API:** prefijo `/v1`, contrato documentado en Swagger (`/docs`).
 - **Base de datos:** cambios de esquema solo con migraciones; nunca `synchronize`.
 - **Identificador de mesa:** corto ("04", "T1") y se muestra "Mesa 04"; "4", "04" y "Mesa 4" son la misma mesa; máximo 10 caracteres; en la interfaz se llama "Identificador" (manual 12.4).
 - **Bitácora de mesas:** cambiar el estado, desactivar (`<estado>` → `inactive`) y reactivar (`inactive` → `available`) se registran; editar el identificador o la capacidad no.
+- **Plano de mesas:** la posición de cada mesa vive en `tables` (`plan_x`, `plan_y`, `plan_shape`, en NULL mientras no está ubicada) y se guarda con `PUT /v1/tables/plan`, que reemplaza el plano completo (gana el último que guarda). No se registra en la bitácora ni cambia la disponibilidad.
 - Nuevas decisiones: se agregan aquí, en una línea, en el mismo PR que las aplica.
 
 ---
@@ -249,18 +250,18 @@ npm run preview   # sirve el build
 ```
 **Antes de dar una tarea por terminada:** `npm run lint`, `npm run build`, `npm test` y `npm run check:ui` sin errores (`build` también revisa los tipos).
 
-### Diseño: el manual de identidad v1.1 manda
+### Diseño: el manual de identidad v2.0 manda
 - Si no tienes el manual en el contexto, **pídelo antes de hacer cualquier pantalla o componente.**
-- El manual y los mockups están en `docs/DiNNo_Manual_Identidad_v1_1.md` y `docs/mockups/`; el reparto del sprint, en `docs/DiNNo_Sprint1_Reparto.md`. Si una imagen y el texto del manual difieren, manda el texto.
-- Los tokens del manual van en `src/styles/tokens.css` (copiados tal cual, **no se editan**) y se mapean a Tailwind con `@theme inline` en `src/styles/globals.css` (manual, sección 16). Lo que el manual define sin token va como `@utility` en el bloque de extensiones de `globals.css`, con la sección del manual en un comentario. **No uses colores, radios, sombras ni tamaños sueltos, ni valores arbitrarios de Tailwind** (`bg-[#...]`, `rounded-[...]`, `text-[13px]`). Las clases genéricas de Tailwind (`bg-blue-600`, `text-slate-...`, `bg-white`, `rounded-lg`, `shadow-md`) no se usan: solo los tokens (`bg-surface`, `text-fg-2`, `rounded-card`, `shadow-card`, `text-h1`…). La escala estándar de Tailwind solo vale cuando coincide exacta con el manual (`h-12` = 48, espaciados 1·2·3·4·6·8·12). Si un token no tiene clase: `bg-(--overlay)`, `z-(--z-modal)`. `npm run check:ui` lo revisa.
+- El manual está en `docs/DiNNo_Manual_Identidad_v2_0.md` (el v1.1 queda como histórico) y su memoria de trabajo, en `docs/renovacion-v2/`. Los mockups de `docs/mockups/` son del v1.1: si una imagen y el texto del manual difieren, manda el texto.
+- Los tokens del manual van en `src/styles/tokens.css` (copiados tal cual de la sección 16.3, **no se editan**) y se mapean a Tailwind con `@theme inline` en `src/styles/globals.css` (manual, sección 16). Lo que el manual define sin token va como `@utility` en el bloque de extensiones de `globals.css`, con la sección del manual en un comentario. **No uses colores, radios, sombras ni tamaños sueltos, ni valores arbitrarios de Tailwind** (`bg-[#...]`, `rounded-[...]`, `text-[13px]`). Las clases genéricas de Tailwind (`bg-blue-600`, `text-slate-...`, `bg-white`, `rounded-lg`, `shadow-md`) no se usan: solo los tokens (`bg-surface`, `text-fg-2`, `rounded-card`, `shadow-card`, `text-h1`…). La escala estándar de Tailwind solo vale cuando coincide exacta con el manual (`h-12` = 48, espaciados 1·2·3·4·6·8·12). Si un token no tiene clase: `bg-(--overlay)`, `z-(--z-modal)`. `npm run check:ui` lo revisa.
 - **Modo oscuro:** claro por defecto; oscuro con `data-theme="dark"` en `<html>` (`useTheme()` de `@/lib/theme-context`). Los tokens cambian solos: casi nunca hace falta `dark:`.
-- Tipografía Plus Jakarta Sans 500 / 700 / 800 (sin cursivas; mayúsculas completas solo en `text-label`; `tabular-nums` en números que cambian).
+- Tipografía Plus Jakarta Sans 500 / 700 / 800 (sin cursivas; mayúsculas completas solo en `text-kicker`; `tabular-nums` en números que cambian). El login conserva su escala del v1.1 con una regla acotada a `.glass-login` (manual 13.9).
 - Íconos solo de `lucide-react` a través de `Icon` (`@/lib/icon`): trazo 1.75, tamaños 16 / 20 / 24, siempre con texto en navegación y botones. **Prohibidos:** `Utensils`, `ChefHat`, `Pizza`, `Coffee`, `Hamburger`, `MapPin` y cualquier pin genérico. Sin emojis.
 - Naranja = acción o "ahora": texto naranja sobre claro es `text-accent-text`; nunca texto blanco sobre naranja; **los estados nunca son naranja**. Una tarjeta nunca va dentro de otra.
 - Un solo botón principal naranja por pantalla, con texto oscuro.
-- Estados con **color + forma + palabra**. Sin vidrio ni gradientes en el dashboard (salvo el panel de marca del login).
+- Estados con **color + forma + palabra**. Vidrio solo en la capa flotante (manual 7: selector de estado, barra flotante, topbar al hacer scroll, login), con texto en tinta encima; gradientes solo en el login (manual 8). **Ningún texto con opacidad** (`check:ui`, regla `text-opacity`).
 - Toda pantalla con estados de **carga, vacío y error**, y funcionando en **modo claro y oscuro**.
-- Antes del PR, pasa el **checklist del manual (sección 17)**.
+- Antes del PR, pasa el **checklist del manual (sección 17.4)**.
 
 ### Kit de componentes: usar siempre el de Sebastián
 - **Antes de hacer una pantalla, lee `src/components/ui/README.md`, abre http://localhost:5173/kit (solo en `npm run dev`)** y revisa `src/components/layout/` y una pantalla existente como referencia de espaciado y estructura.
