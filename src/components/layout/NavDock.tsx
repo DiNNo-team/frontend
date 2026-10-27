@@ -20,10 +20,10 @@ export function NavDock() {
 
   return (
     <div className="glass-dock dock-position flex items-center gap-1.5 rounded-sheet px-2 py-1.5 text-(--dock-fg)">
-      {/* The pin fills only the middle of its square file. The file is drawn at 72 px, centered in a 44 px box that crops
-          its empty edges: the visible pin is about 44 px tall and the dock does not grow. */}
+      {/* The pin fills only the middle of its square file. The file is drawn at 60 px, centered in a 44 px box that crops
+          its empty edges: the visible pin is about 36 px tall and the dock does not grow. Never resize one axis alone. */}
       <span className="hidden size-11 shrink-0 items-center justify-center overflow-hidden sm:flex">
-        <Logo symbolOnly className="size-18 max-w-none shrink-0" />
+        <Logo symbolOnly className="size-15 max-w-none shrink-0" />
       </span>
       <span className="hidden sm:contents">{separator}</span>
       <nav aria-label="Principal">
