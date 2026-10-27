@@ -1,3 +1,5 @@
+> **Histórico. Este manual fue reemplazado por el [Manual de identidad v2.0](DiNNo_Manual_Identidad_v2_0.md) (26 oct 2026).** Se conserva solo como referencia; la fuente única de diseño es el v2.0.
+
 # DiNNo · Manual de identidad v1.1 (30 sept 2026)
 
 > Fuente única de diseño para el equipo. Si una decisión visual no está aquí, se pregunta antes de inventarla.
