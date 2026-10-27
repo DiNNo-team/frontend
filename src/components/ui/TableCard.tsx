@@ -81,7 +81,7 @@ export function TableCard({
     <article
       className={cn(
         'relative flex min-w-42 flex-col justify-between gap-3 rounded-tile border p-4 text-fg',
-        'press hover:shadow-card',
+        'press lift',
         SURFACE[status],
         selected && 'border-selection shadow-card ring-1 ring-selection ring-inset',
         className,

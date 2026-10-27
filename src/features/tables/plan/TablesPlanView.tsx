@@ -20,7 +20,8 @@ import type { PlanEditor } from './use-plan-editor'
  */
 const CELL_STEPS = [36, 44, 52, 60, 72] as const
 const FIT_MIN = 36
-const FIT_MAX = 56
+// Fitting may grow past the zoom steps so the canvas fills its frame on wide screens (no seam at the right).
+const FIT_MAX = 76
 /** Empty rows under the lowest table: one in service, room to drag down while editing. */
 const ROOM_SERVICE = 1
 const ROOM_EDITING = 6
@@ -203,7 +204,7 @@ export function TablesPlanView({
   return (
     <section aria-label="Plano" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-2 text-sec text-fg-2">
+        <p className="flex items-center gap-2 text-sec text-fg">
           <Icon icon={editing ? Move : Frame} size={16} />
           {modeHint}
         </p>
@@ -221,15 +222,15 @@ export function TablesPlanView({
         </div>
       </div>
 
-      {!canEdit && <p className="text-sec text-fg-2">Edita el plano desde una tablet o un computador.</p>}
+      {!canEdit && <p className="text-sec text-fg">Edita el plano desde una tablet o un computador.</p>}
       {!editing && placedCount > 0 && editor.unplaced.length > 0 && (
-        <p className="text-sec text-fg-2">
+        <p className="text-sec text-fg">
           {editor.unplaced.length === 1 ? '1 mesa no está' : `${editor.unplaced.length} mesas no están`} en el plano:{' '}
           {editor.unplaced.map((table) => formatTableName(table.identifier)).join(', ')}. Las ves en la cuadrícula.
         </p>
       )}
 
-      <div ref={frame} className="overflow-auto rounded-card border border-line">
+      <div ref={frame} className="overflow-auto rounded-card border border-(--glass-edge) bg-(--plan-canvas) shadow-(--glass-sheen)">
         {placedCount === 0 && !editing ? (
           <div className="plan-canvas flex min-h-80 flex-col items-center justify-center gap-3 p-6 text-center">
             <p className="text-h3 text-fg">Aún no hay mesas en el plano</p>
@@ -263,7 +264,7 @@ export function TablesPlanView({
 
       {editing && (
         <div className="grid gap-3 md:grid-cols-2">
-          <section aria-label="Sin ubicar" className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4">
+          <section aria-label="Sin ubicar" className="glass-card flex flex-col gap-3 rounded-card p-4">
             <p className="text-label text-fg">Sin ubicar ({editor.unplaced.length})</p>
             {editor.unplaced.length === 0 ? (
               <p className="text-sec text-fg-2">Todas las mesas están en el plano.</p>
@@ -280,7 +281,7 @@ export function TablesPlanView({
             )}
           </section>
 
-          <section aria-label="Mesa seleccionada" className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4">
+          <section aria-label="Mesa seleccionada" className="glass-card flex flex-col gap-3 rounded-card p-4">
             {selected && selectedPlacement ? (
               <>
                 <p className="text-h3 text-fg">

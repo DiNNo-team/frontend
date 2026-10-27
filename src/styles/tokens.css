@@ -18,6 +18,8 @@
   --ease-enter:cubic-bezier(.23,1,.32,1); --ease-move:cubic-bezier(.77,0,.175,1); --ease-sheet:cubic-bezier(.32,.72,0,1);
   --dur-press:120ms; --dur-fast:150ms; --dur-base:200ms; --dur-slow:300ms; --dur-highlight:700ms;
   --motion-rise:8px; --motion-scale:.97;
+  /* Espacio que el dock de navegación reserva abajo (v2.1): su alto + su margen + aire. */
+  --dock-clearance:112px;
   /* vidrio */
   --glass-blur-panel:20px; --glass-blur-bar:16px; --glass-blur-map:16px; --glass-saturate:1.4;
   /* capas */
@@ -82,4 +84,48 @@
   --glass-panel-bg:color-mix(in srgb,var(--surface) 50%,transparent);
   --glass-bar-bg:color-mix(in srgb,var(--bg) 85%,transparent);
   --plan-canvas:var(--surface-2); --plan-dot:color-mix(in srgb,var(--border-strong) 45%,transparent);
+}
+
+/* ===== v2.1 "Salón de vidrio" (27 oct 2026): el dashboard vive sobre la luz del login =====
+   Fondo: las dos formas de marca del login, convertidas en luz difusa (sin bordes). Abierto = cálido; cerrado = apagado.
+   Vidrio: hoja de contenido + tarjetas encima; riel de navegación en petróleo. Solo mezclas de la paleta. */
+:root, .t-light, [data-theme="light"]{
+  --amb-base:var(--cream);
+  --amb-warm:color-mix(in srgb,var(--orange) 55%,transparent);
+  --amb-glow:color-mix(in srgb,var(--amber) 36%,transparent);
+  --amb-cool:color-mix(in srgb,var(--petrol) 42%,transparent);
+  --amb-off:color-mix(in srgb,var(--inactive) 34%,transparent);
+  --glass-sheet-bg:color-mix(in srgb,var(--surface) 30%,transparent);
+  /* Texto secundario sobre la hoja: casi tinta (AA con la luz más fuerte detrás); en tarjetas vuelve a --text-2-base. */
+  --text-2-sheet:color-mix(in srgb,var(--ink) 85%,var(--white)); --text-2-base:#5E6B70;
+  --glass-card-bg:color-mix(in srgb,var(--surface) 72%,transparent);
+  --glass-pill-bg:color-mix(in srgb,var(--surface) 64%,transparent);
+  /* Dock de navegación (v2.1): sigue al tema. Claro: vidrio claro con la activa en petróleo. */
+  --dock-bg:var(--glass-pill-bg); --dock-fg:var(--text); --dock-active-bg:var(--petrol); --dock-active-fg:var(--cream);
+  --dock-hover:color-mix(in srgb,var(--petrol) 8%,transparent); --dock-glow:color-mix(in srgb,var(--orange) 14%,transparent);
+  --glass-edge:rgba(255,255,255,.62);
+  --glass-sheen:inset 0 1px 0 rgba(255,255,255,.7);
+  --shadow-sheet:0 2px 8px -4px rgba(16,37,43,.10),0 48px 96px -56px rgba(16,37,43,.45);
+  --shadow-lift:0 2px 6px -2px rgba(16,37,43,.08),0 22px 40px -22px rgba(16,37,43,.38);
+  --grad-highlight:linear-gradient(140deg,var(--petrol-deep) 0%,var(--petrol) 42%,#1C6A6E 72%,var(--ok) 100%);
+  --plan-canvas:color-mix(in srgb,var(--surface) 56%,transparent);
+}
+.t-dark, [data-theme="dark"]{
+  --amb-base:var(--petrol-deep);
+  --amb-warm:color-mix(in srgb,var(--orange) 34%,transparent);
+  --amb-glow:color-mix(in srgb,var(--amber) 14%,transparent);
+  --amb-cool:color-mix(in srgb,#1C6A6E 55%,transparent);
+  --amb-off:color-mix(in srgb,var(--inactive) 18%,transparent);
+  --glass-sheet-bg:color-mix(in srgb,var(--surface) 40%,transparent);
+  --text-2-sheet:#A9BDC0; --text-2-base:#A9BDC0;
+  --glass-card-bg:color-mix(in srgb,var(--surface) 72%,transparent);
+  --glass-pill-bg:color-mix(in srgb,var(--surface) 70%,transparent);
+  --dock-bg:color-mix(in srgb,var(--petrol-deep) 76%,transparent); --dock-fg:var(--cream); --dock-active-bg:var(--cream); --dock-active-fg:var(--petrol);
+  --dock-hover:rgba(255,255,255,.08); --dock-glow:color-mix(in srgb,var(--orange) 20%,transparent);
+  --glass-edge:rgba(255,255,255,.10);
+  --glass-sheen:inset 0 1px 0 rgba(255,255,255,.08);
+  --shadow-sheet:0 2px 8px -4px rgba(0,0,0,.3),0 48px 96px -56px rgba(0,0,0,.7);
+  --shadow-lift:0 2px 6px -2px rgba(0,0,0,.3),0 22px 40px -22px rgba(0,0,0,.7);
+  --grad-highlight:linear-gradient(140deg,#12505A 0%,#1C6A6E 48%,#2B8F62 78%,var(--ok) 100%);
+  --plan-canvas:color-mix(in srgb,var(--surface) 62%,transparent);
 }

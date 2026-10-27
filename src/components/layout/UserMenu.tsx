@@ -9,16 +9,24 @@ export interface UserMenuProps {
   onSignOut: () => void
 }
 
-/** User block at the bottom of the sidebar: theme switch and "Cerrar sesión". */
+/**
+ * Account menu at the right of the top bar (manual v2.1): the restaurant's initial on the brand gradient; the menu
+ * shows who is signed in, the theme switch and "Cerrar sesión".
+ */
 export function UserMenu({ restaurantName, userEmail, onSignOut }: UserMenuProps) {
   const { theme, toggleTheme } = useTheme()
-  const initial = restaurantName.trim().charAt(0).toUpperCase()
-  const display = restaurantName.trim() || userEmail
+  const initial = restaurantName.trim().charAt(0).toUpperCase() || userEmail.charAt(0).toUpperCase()
+  const name = restaurantName.trim()
 
   return (
     <DropdownMenu
-      side="top"
-      align="start"
+      align="end"
+      header={
+        <div className="flex min-w-0 flex-col">
+          {name && <span className="truncate text-sec font-bold text-fg">{name}</span>}
+          <span className="truncate text-sec text-fg-2">{userEmail}</span>
+        </div>
+      }
       items={[
         theme === 'dark'
           ? { label: 'Tema claro', icon: Sun, onSelect: toggleTheme }
@@ -28,19 +36,16 @@ export function UserMenu({ restaurantName, userEmail, onSignOut }: UserMenuProps
       trigger={
         <button
           type="button"
-          className="flex w-full cursor-pointer items-center gap-3 rounded-input p-2 text-left transition-colors duration-(--dur-fast) ease-dinno hover:bg-nav-active/50"
+          aria-label={`Cuenta de ${name || userEmail}`}
+          className="press flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full p-1 pr-2 text-fg hover:bg-(--glass-card-bg)"
         >
           <span
             aria-hidden="true"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-nav-active text-sec font-bold text-nav-fg"
+            className="bg-highlight inline-flex size-9 items-center justify-center rounded-full text-sec font-bold text-(--cream)"
           >
             {initial}
           </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sec font-bold text-nav-fg">{display}</span>
-            {display !== userEmail && <span className="truncate text-sec text-nav-fg-2">{userEmail}</span>}
-          </span>
-          <Icon icon={ChevronDown} size={16} className="shrink-0 text-nav-fg-2" />
+          <Icon icon={ChevronDown} size={16} />
         </button>
       }
     />

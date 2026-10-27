@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn'
 import { Icon } from '@/lib/icon'
 import { useTheme } from '@/lib/theme-context'
 import { IconButton } from './IconButton'
-import { ToastContext, ToastLayoutContext, type ToastOptions, type ToastType } from './toast-context'
+import { ToastContext, type ToastOptions, type ToastType } from './toast-context'
 
 const ICONS: Record<ToastType, { icon: LucideIcon; color: string }> = {
   success: { icon: CircleCheck, color: 'text-ok' },
@@ -19,12 +19,12 @@ interface ActiveToast extends ToastOptions {
 }
 
 /**
- * Temporary notice (manual 11.2): bottom right on desktop (24 from the edge), bottom center on mobile,
- * one at a time, pauses on hover or focus. Announced politely; errors assertively.
+ * Temporary notice (manual 12.2, v2.1): centered at the top, under the bar, like the phone's banners; the bottom
+ * belongs to the navigation dock. One at a time, pauses on hover or focus, comes in and leaves
+ * through the top. Announced politely; errors assertively.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [current, setCurrent] = useState<ActiveToast | null>(null)
-  const [barVisible, setBarVisible] = useState(false)
   const { theme } = useTheme()
   // The toast sits on the inverse surface, so its icon and close button read the opposite theme's tokens.
   const inverseScope = theme === 'dark' ? 't-light' : 't-dark'
@@ -40,8 +40,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   return (
     <ToastContext.Provider value={api}>
-      <ToastLayoutContext.Provider value={setBarVisible}>
-        <RadixToast.Provider swipeDirection="down" label="Avisos">
+      <RadixToast.Provider swipeDirection="up" label="Avisos">
           {children}
           {current && (
             <RadixToast.Root
@@ -51,7 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               onOpenChange={(open) => {
                 if (!open) setCurrent(null)
               }}
-              className="flex w-full max-w-100 items-center gap-3 rounded-btn bg-inverse px-4 py-3 text-sec text-on-inverse shadow-lifted data-[state=closed]:animate-sink-out data-[state=open]:animate-rise-in-fast"
+              className="flex w-full max-w-100 items-center gap-3 rounded-btn bg-inverse px-4 py-3 text-sec text-on-inverse shadow-lifted data-[state=closed]:animate-lift-out data-[state=open]:animate-drop-in"
             >
               <span className={cn('inline-flex shrink-0', inverseScope)}>
                 <Icon icon={icon.icon} size={20} className={icon.color} />
@@ -76,13 +75,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <RadixToast.Viewport
             label="Avisos ({hotkey})"
             className={cn(
-              'fixed inset-x-4 z-(--z-toast) flex flex-col items-center outline-none md:inset-x-auto md:right-6 md:items-end',
-              // Above the FloatingBar (taller on mobile, where its control drops below the title).
-              barVisible ? 'bottom-44 md:bottom-28' : 'bottom-4 md:bottom-6',
+              // Centered under the top bar (16 + 64 + 12): on desktop it lands between the greeting and the page's actions,
+              // so it never covers the primary button; the dock owns the bottom of the screen.
+              'fixed inset-x-4 top-23 z-(--z-toast) flex flex-col items-center outline-none',
             )}
           />
         </RadixToast.Provider>
-      </ToastLayoutContext.Provider>
     </ToastContext.Provider>
   )
 }

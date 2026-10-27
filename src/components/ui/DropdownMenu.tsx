@@ -1,4 +1,4 @@
-import { Fragment, type ReactElement } from 'react'
+import { Fragment, type ReactElement, type ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { DropdownMenu as RadixDropdownMenu } from 'radix-ui'
 import { cn } from '@/lib/cn'
@@ -19,13 +19,15 @@ export interface DropdownMenuProps {
   items: DropdownMenuItem[]
   align?: 'start' | 'center' | 'end'
   side?: 'top' | 'right' | 'bottom' | 'left'
+  /** Non-interactive block above the items, e.g. the account: restaurant name and email. */
+  header?: ReactNode
 }
 
 /**
  * Actions menu (manual 12.2): 40 px items (44 on touch) with a 16 px icon; destructive items go last, after a divider.
  * Grows from its trigger and leaves the same way (manual 11.3).
  */
-export function DropdownMenu({ trigger, items, align = 'end', side = 'bottom' }: DropdownMenuProps) {
+export function DropdownMenu({ trigger, items, align = 'end', side = 'bottom', header }: DropdownMenuProps) {
   const firstDestructive = items.findIndex((item) => item.destructive)
 
   return (
@@ -38,6 +40,12 @@ export function DropdownMenu({ trigger, items, align = 'end', side = 'bottom' }:
           sideOffset={4}
           className="z-(--z-dropdown) min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) rounded-input border border-line bg-surface p-1 shadow-lifted data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
         >
+          {header && (
+            <>
+              <div className="px-3 pt-2 pb-2">{header}</div>
+              <RadixDropdownMenu.Separator className="mx-1 mb-1 h-px bg-line" />
+            </>
+          )}
           {items.map((item, index) => (
             <Fragment key={item.label}>
               {index === firstDestructive && index > 0 && <RadixDropdownMenu.Separator className="mx-1 my-1 h-px bg-line" />}

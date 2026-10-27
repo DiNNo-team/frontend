@@ -2,10 +2,10 @@ import { StatStrip } from '@/components/ui'
 import type { TableCounts, TableDisplayStatus } from '../table-status'
 
 const WORDS: Record<TableDisplayStatus, [singular: string, plural: string]> = {
-  available: ['disponible', 'disponibles'],
-  reserved: ['reservada', 'reservadas'],
-  occupied: ['ocupada', 'ocupadas'],
-  inactive: ['inactiva', 'inactivas'],
+  available: ['Disponible', 'Disponibles'],
+  reserved: ['Reservada', 'Reservadas'],
+  occupied: ['Ocupada', 'Ocupadas'],
+  inactive: ['Inactiva', 'Inactivas'],
 }
 
 const ORDER: TableDisplayStatus[] = ['available', 'reserved', 'occupied', 'inactive']
@@ -18,7 +18,7 @@ export interface TablesStatsProps {
   onFilterChange?: (filter: TableDisplayStatus | null) => void
 }
 
-/** Summary strip (manual 12.2 StatStrip): one cell per status that also filters the grid. */
+/** Summary cards (manual v2.1, 12.2 StatStrip): one card per status, all alike, that also filters the grid. */
 export function TablesStats({ counts, filter, onFilterChange }: TablesStatsProps) {
   return (
     <StatStrip
