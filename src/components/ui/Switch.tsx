@@ -84,7 +84,7 @@ export function Switch({
         className="group inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-3 rounded-input disabled:cursor-not-allowed disabled:opacity-45"
       >
         <span className="inline-flex h-6.5 w-11 shrink-0 items-center rounded-full bg-line-strong transition-colors duration-(--dur-fast) ease-dinno group-data-[state=checked]:bg-ok">
-          <RadixSwitch.Thumb className="block size-5 translate-x-0.75 rounded-full bg-(--white) shadow-card transition-transform duration-(--dur-fast) ease-dinno data-[state=checked]:translate-x-5.25" />
+          <RadixSwitch.Thumb className="block size-5 translate-x-0.75 rounded-full bg-(--white) shadow-card transition-transform duration-(--dur-fast) ease-dinno motion-reduce:transition-none data-[state=checked]:translate-x-5.25" />
         </span>
         {status ? (
           // Color + shape + word (manual 3.3), spaced like StatusChip. The shape is decorative: the word is what screen readers hear.

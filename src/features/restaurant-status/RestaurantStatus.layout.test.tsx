@@ -13,6 +13,12 @@ vi.mock('./api', async () => ({ restaurantStatusApi: (await import('./api.mock')
 vi.mock('@/features/tables/api', async () => ({ tablesApi: (await import('@/features/tables/api.mock')).mockTablesApi }))
 // The location notice shares the banner slot and reads GET /restaurants/me: out of these tests (Santiago).
 vi.mock('@/features/restaurant/components/LocationBanner', () => ({ LocationBanner: () => null }))
+// The topbar shows the restaurant's name from GET /restaurants/me (manual 12.2), not the session's displayName.
+vi.mock('@/features/restaurant/api', () => ({
+  restaurantApi: {
+    get: async () => ({ id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [] }),
+  },
+}))
 
 // Signed-in session as the AuthProvider exposes it (Firebase replaced by a fixed value).
 const SESSION: AuthContextValue = {
@@ -56,7 +62,7 @@ describe('RestaurantStatus inside the DashboardLayout with a session', () => {
   it('shows the switch in the topbar next to the session restaurant name', async () => {
     renderDashboard()
     const topbar = screen.getByRole('banner')
-    expect(within(topbar).getByText('Casa 72')).toBeInTheDocument()
+    expect(await within(topbar).findByText('Casa 72')).toBeInTheDocument()
     expect(await within(topbar).findByRole('switch', { name: 'Estado del restaurante Abierto' })).toBeChecked()
   })
 

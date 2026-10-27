@@ -31,23 +31,24 @@ describe('HoursEditor', () => {
     expect(within(screen.getAllByRole('listitem')[0]).queryByText('(día siguiente)')).not.toBeInTheDocument()
   })
 
-  it('shows "Cerrado todo el día" for closed days and toggles with the switch', async () => {
+  it('a closed day is one row whose switch says "Cerrado"; the switch opens it', async () => {
     const { user } = renderWithProviders(<Harness />)
-    expect(screen.getByText('Cerrado todo el día')).toBeInTheDocument()
     const sunday = screen.getByRole('switch', { name: 'Domingo' })
+    const sundayRow = sunday.closest('li') as HTMLElement
     expect(sunday).toHaveAccessibleDescription('Cerrado')
+    expect(within(sundayRow).queryByRole('combobox')).not.toBeInTheDocument()
     await user.click(sunday)
     expect(sunday).toHaveAttribute('aria-checked', 'true')
     expect(sunday).toHaveAccessibleDescription('Abierto')
-    expect(screen.queryByText('Cerrado todo el día')).not.toBeInTheDocument()
+    expect(within(sundayRow).getByRole('combobox', { name: 'Apertura del domingo' })).toBeInTheDocument()
   })
 
-  it('"Copiar a todos los días" copies Monday to every day', async () => {
+  it('"Copiar el lunes a todos" copies Monday to every day', async () => {
     const { user } = renderWithProviders(<Harness />)
-    await user.click(screen.getByRole('button', { name: 'Copiar a todos los días' }))
+    await user.click(screen.getByRole('button', { name: 'Copiar el lunes a todos' }))
     expect(screen.getAllByText('12:00 p. m.')).toHaveLength(7)
     expect(screen.getAllByText('10:00 p. m.')).toHaveLength(7)
-    expect(screen.queryByText('Cerrado todo el día')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('switch').every((day) => day.getAttribute('aria-checked') === 'true')).toBe(true)
   })
 
   it('links a row error to its hour pickers', () => {
@@ -78,7 +79,7 @@ describe('HoursEditor', () => {
     const monday = screen.getAllByRole('listitem')[0]
     await user.click(within(monday).getByRole('combobox', { name: 'Apertura del lunes' }))
     await user.click(screen.getByRole('option', { name: 'Abierto 24 horas' }))
-    await user.click(screen.getByRole('button', { name: 'Copiar a todos los días' }))
+    await user.click(screen.getByRole('button', { name: 'Copiar el lunes a todos' }))
 
     expect(screen.queryByText('(día siguiente)')).not.toBeInTheDocument()
     expect(screen.queryAllByRole('combobox', { name: /^Cierre del/ })).toHaveLength(0)

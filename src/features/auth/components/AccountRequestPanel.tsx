@@ -13,7 +13,7 @@ const STEPS = [
 export function AccountRequestPanel({ onSwitch }: { onSwitch: () => void }) {
   return (
     <section aria-labelledby="signup-title" className="flex flex-col gap-5">
-      <p className="order-last text-center text-sec text-fg/60 md:order-first">
+      <p className="order-last text-center text-sec text-fg md:order-first">
         ¿Ya tienes cuenta? <AuthLink onClick={onSwitch}>Inicia sesión</AuthLink>
       </p>
 
@@ -33,7 +33,7 @@ export function AccountRequestPanel({ onSwitch }: { onSwitch: () => void }) {
         ))}
       </ol>
 
-      <p className="text-sec text-fg/60">¿Eres comensal? Encuentra mesa desde la app DiNNo.</p>
+      <p className="text-sec text-fg">¿Eres comensal? Encuentra mesa desde la app DiNNo.</p>
     </section>
   )
 }

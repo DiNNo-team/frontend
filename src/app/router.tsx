@@ -8,6 +8,8 @@ import { AuthEventHandler, LoginRoute, RequireSession } from './AuthRouteCompone
 import { DashboardLayout, OnboardingLayout } from './layouts'
 
 const KitPage = import.meta.env.DEV ? lazy(() => import('@/dev/kit/KitPage')) : null
+// Preview of the identity manual v2.0 (docs/DiNNo_Manual_Identidad_v2_0.md), development only.
+const SystemPage = import.meta.env.DEV ? lazy(() => import('@/dev/sistema/SystemPage')) : null
 
 export const routes: RouteObject[] = [
   {
@@ -38,6 +40,18 @@ export const routes: RouteObject[] = [
               element: (
                 <Suspense fallback={null}>
                   <KitPage />
+                </Suspense>
+              ),
+            },
+          ]
+        : []),
+      ...(SystemPage
+        ? [
+            {
+              path: '/sistema',
+              element: (
+                <Suspense fallback={null}>
+                  <SystemPage />
                 </Suspense>
               ),
             },

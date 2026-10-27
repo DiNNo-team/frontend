@@ -87,7 +87,7 @@ export function SignInForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <form aria-labelledby="signin-title" className="flex flex-col gap-5" noValidate onSubmit={handleSubmit}>
-      <p className="order-last text-center text-sec text-fg/60 md:order-first">
+      <p className="order-last text-center text-sec text-fg md:order-first">
         ¿Aún no tienes cuenta? <AuthLink onClick={onSwitch}>Crear cuenta</AuthLink>
       </p>
 
@@ -143,7 +143,7 @@ export function SignInForm({ onSwitch }: { onSwitch: () => void }) {
 
       <div aria-hidden="true" className="flex items-center gap-3">
         <span className="h-px flex-1 bg-line" />
-        <span className="text-label text-fg/60">O inicia sesión con</span>
+        <span className="text-label text-fg">O inicia sesión con</span>
         <span className="h-px flex-1 bg-line" />
       </div>
       <Button

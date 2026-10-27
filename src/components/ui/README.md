@@ -2,7 +2,7 @@
 
 > **Si te falta un componente, pídeselo a Sebastián o propónlo en un PR al kit. No lo resuelvas dentro de tu pantalla.**
 
-Las pantallas se arman **solo** con estas piezas. Ninguna feature crea botones, campos, tarjetas, chips, colores, sombras ni estilos propios. Todo sale de los tokens del manual de identidad v1.1 (`docs/DiNNo_Manual_Identidad_v1_1.md`, secciones 9 a 15).
+Las pantallas se arman **solo** con estas piezas. Ninguna feature crea botones, campos, tarjetas, chips, colores, sombras ni estilos propios. Todo sale de los tokens del manual de identidad v2.0 (`docs/DiNNo_Manual_Identidad_v2_0.md`, secciones 12 a 17).
 
 - **Importa siempre desde el índice:** `import { Button, TextField } from '@/components/ui'`.
 - **Referencia visual:** `npm run dev` y abre http://localhost:5173/kit. Ahí está cada componente con todos sus estados, en claro y oscuro (solo en desarrollo).
@@ -32,7 +32,7 @@ Botón de texto. **Un solo `primary` por pantalla.** Texto = verbo + objeto ("Ag
 <Button variant="outline" onClick={close}>Cancelar</Button>
 ```
 
-Cuándo usar cada variante: `secondary` para acciones importantes pero no principales ("Abrir ahora"); `outline` para alternativas ("Cancelar", "Editar"); `ghost` para terciarias ("Copiar a todos los días"); `danger` para destructivas ("Desactivar mesa").
+Cuándo usar cada variante: `secondary` para acciones importantes pero no principales ("Abrir ahora"); `outline` para alternativas ("Cancelar", "Editar"); `ghost` para terciarias ("Copiar el lunes a todos"); `danger` para destructivas ("Desactivar mesa").
 
 ## IconButton
 
@@ -82,7 +82,7 @@ Valida al salir del campo y al enviar, **nunca en cada tecla** (manual 10).
 
 ## Card
 
-Tarjeta de contenido: radio 20, borde, sombra soft, padding 24 (16 en móvil). **Nunca pongas otra `Card` dentro de una `Card`.**
+Tarjeta de contenido (nivel 1): radio 20, borde fino y sin sombra en reposo, padding 24 (16 en móvil). **Nunca pongas otra `Card` dentro de una `Card`.**
 
 | Prop | Tipo | Por defecto |
 |---|---|---|
@@ -200,7 +200,7 @@ La forma es decorativa (el lector de pantalla oye la palabra), el pulso se detie
 
 ## HoursEditor
 
-Horario semanal: 7 filas (Lun–Dom) con switch Abierto/Cerrado y apertura – cierre. Muestra "Cerrado todo el día", "(día siguiente)" y el botón "Copiar a todos los días" (copia el lunes). Se adapta al ancho de su contenedor.
+Horario semanal: 7 filas (Lun–Dom) con switch Abierto/Cerrado y apertura – cierre. Un día cerrado ocupa una sola fila (el switch ya dice "Cerrado"). Muestra "(día siguiente)" y, debajo del lunes, "Copiar el lunes a todos". Se adapta al ancho de su contenedor.
 
 **"Abierto 24 horas"** es la primera opción del selector de apertura: al elegirla, `isOpen24h` pasa a `true` y desaparece el cierre; al elegir una hora vuelve a `false`, con las horas anteriores. En el backend corresponde a `restaurant_schedules.is_open_24h`.
 
@@ -302,7 +302,7 @@ Menú de acciones (⋯). Recibe el disparador y una lista de ítems; los `destru
 
 ## EmptyState
 
-Símbolo DiNNo en contorno + título + texto + un botón opcional. `variant="error"` para errores de carga (mismo layout, se anuncia).
+Símbolo DiNNo en contorno + título + texto + un botón opcional. En un estado vacío el botón es el único primario. `variant="error"` para errores de carga: mismo layout, un punto rojo sobre el símbolo, se anuncia y su botón es `secondary` ("Intentar de nuevo").
 
 ```tsx
 <EmptyState title="Aún no hay cambios" description="Aquí verás cada cambio de estado de tus mesas." />
@@ -317,27 +317,83 @@ const showSkeleton = useDelayedFlag(query.isPending)
 {showSkeleton && <Skeleton radius="tile" className="h-24" />}
 ```
 
-## StatTile
+## StatStrip
 
-Métrica: cifra `text-h1 tabular-nums` + etiqueta. `highlight` pone la cifra en naranja (solo "lo próximo").
+Franja de resumen (manual 12.2): un solo contenedor dividido por líneas finas, cifras como tipografía (`text-metric`). Con `onSelectedChange` cada celda es un botón que filtra (`aria-pressed`); pulsar la activa limpia el filtro. 2 × 2 en < 640.
+
+```tsx
+<StatStrip
+  aria-label="Resumen de mesas"
+  selected={filter}
+  onSelectedChange={setFilter}
+  items={[{ value: 'available', status: 'available', count: 3, label: 'disponibles' }, …]}
+/>
+```
+
+`StatTile` (cifra suelta) se conserva para casos puntuales como "próxima llegada"; para el resumen del dashboard usa `StatStrip`.
+
+## StatusLine
+
+Estado sin pastilla: forma de 10 px en su color + palabra en tinta (`size="md"` 14/20 · `sm` 12/16). Va **dentro de superficies que ya llevan el tinte del estado** (tarjeta de mesa, nodo del plano), donde un chip repetiría el color.
 
 ## TableCard
 
-Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). Props: `name` ("Mesa 04"), `capacity`, `status` (`available | reserved | occupied | inactive`), `selected`, `onSelect`, `toggleId` (id del botón de selección, para devolverle el foco), `menuItems`, `menuTriggerId` (id del botón ⋯), `onReactivate`, `reactivating`.
+Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). La superficie es el estado: tinte + borde del color (+ rayado en Ocupada). Inactiva: punteada, sin opacidad. Todas las de una grilla miden lo mismo (`grid-tables`).
+
+| Prop | Notas |
+|---|---|
+| `name`, `capacity`, `status` | `status`: `available · reserved · occupied · inactive` |
+| `selected` | Su selector está abierto: borde de selección + `aria-expanded` |
+| `onSelect` | Clic, Enter o Espacio. También en inactivas (su selector ofrece "Reactivar mesa") |
+| `onShortcut` | D · R · O con la tarjeta enfocada (no en inactivas) |
+| `toggleId`, `menuItems`, `menuTriggerId` | Ids para devolver el foco; menú ⋯ |
+| `highlight` | Un valor nuevo reproduce una vez el anillo de "cambio desde otro dispositivo" |
+
+## TableNode
+
+Mesa en el plano (manual 12.2 y 13.10; pieza visual, el plano vive en `features/tables/plan`). Es la misma superficie de estado que `TableCard`, con la forma y la palabra siempre visibles. La posición y el tamaño llegan en `style`: el nodo solo dibuja.
+
+| Prop | Notas |
+|---|---|
+| `label`, `capacity`, `status`, `shape` | `label` es el identificador corto ("04"); `shape`: `square · round · rect` |
+| `roomy` | Hay alto para la línea de capacidad (sigue en el nombre accesible aunque no se vea) |
+| `trigger` | Props del botón que cubre el nodo; `aria-label` obligatorio: "Mesa 04, 4 personas, Disponible" |
+| `selected`, `editing`, `dragging`, `invalid` | Selector abierto o mesa en edición · cursor de agarre y asa · arrastrándose · fuera de la grilla o encima de otra (borde de error) |
+| `instant`, `returning`, `highlight` | Mover sin animar (teclado) · volver a su celda con `--ease-move` · anillo de "cambio desde otro dispositivo" |
+
+## StatusPicker
+
+Selector de estado (manual 12.2): popover de vidrio junto a la mesa desde 768 px, hoja inferior en el teléfono. El estado actual va teñido y con ✓; flechas, Enter aplica, Esc cierra y el foco vuelve a la mesa. Con `inactive` muestra un mensaje y una sola acción. Opcionales: `details` (datos reales bajo el título), `actions` (acciones secundarias abajo, donde no hay menú ⋯, como en el plano) y `anchorStyle` (posición del ancla).
+
+```tsx
+<StatusPicker open={open} onOpenChange={setOpen} title="Estado de Mesa 04" options={TABLE_STATUS_OPTIONS}
+  value={table.status} onValueChange={change} returnFocusId={toggleId} anchorClassName="flex flex-1">
+  <TableCard … />
+</StatusPicker>
+```
+
+## DetailList
+
+Filas etiqueta + valor con divisor (modo lectura de `/restaurante`). Desde 768 px la etiqueta va a la izquierda.
+
+```tsx
+<DetailList items={[{ label: 'Nombre', value: 'Casa 72' }, { label: 'Categoría', value: 'Colombiana' }]} />
+```
 
 ## FloatingBar
 
-Barra flotante abajo del contenido (barra de estado de la mesa seleccionada). **Va de último en la pantalla**: se queda visible al hacer scroll, no tapa el sidebar y ocupa su propio espacio, así que nunca esconde la última fila. Mientras está visible, los toasts suben para no taparla. En móvil los controles bajan debajo del título.
+Barra flotante de vidrio (nivel 3) abajo del contenido: edición del plano y acciones masivas. **Va de último en la pantalla**: se queda visible al hacer scroll, no tapa el sidebar y ocupa su propio espacio, así que nunca esconde la última fila ni el foco. Mientras está visible, los toasts suben para no taparla.
 
 ```tsx
-<FloatingBar title="Mesa 04" description="2 personas">
-  <SegmentedControl aria-label="Estado de Mesa 04" options={options} value={status} onValueChange={change} fullWidth className="md:w-fit" />
+<FloatingBar title="Editar plano" description="3 mesas sin ubicar">
+  <Button variant="outline" size="sm">Cancelar</Button>
+  <Button size="sm">Guardar plano</Button>
 </FloatingBar>
 ```
 
 ## DataTable
 
-Tabla genérica (bitácora). En < 768 px se vuelve una lista compacta (label + valor).
+Tabla genérica (bitácora). Encabezados `text-label` con mayúscula inicial. En < 768 px se vuelve una lista: **dos líneas por fila** si las columnas indican `mobileLine` (1 = identidad y dato clave; 2 = el resto, unido con " · "), o pares label + valor si no.
 
 ```tsx
 <DataTable

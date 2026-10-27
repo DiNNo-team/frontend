@@ -3,6 +3,9 @@
 /** Operational status kept by the backend (same values as the `tables.status` column); an inactive table keeps its last one. */
 export type TableStatus = 'available' | 'reserved' | 'occupied'
 
+/** Shape on the floor plan; null = a rectangle sized by the capacity (manual 13.10). */
+export type TableShape = 'square' | 'round' | 'rect'
+
 export interface Table {
   id: string
   /** As typed by the restaurant: "04", "T1". Display it with `formatTableName`. */
@@ -11,6 +14,18 @@ export interface Table {
   capacity: number
   status: TableStatus
   isActive: boolean
+  /** Top-left cell on the floor plan; both null while the table is not placed. */
+  planX: number | null
+  planY: number | null
+  planShape: TableShape | null
+}
+
+/** One placed table in `PUT /v1/tables/plan`. Tables of the restaurant left out end up unplaced. */
+export interface TablePlanItem {
+  id: string
+  x: number
+  y: number
+  shape: TableShape | null
 }
 
 export interface CreateTableInput {

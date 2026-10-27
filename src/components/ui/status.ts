@@ -35,6 +35,17 @@ export const TONE_TEXT: Record<StatusTone, string> = {
   error: 'text-error',
 }
 
+/**
+ * Status surface of a table card or plan node (manual 3.6): the tone's tint and edge; Ocupada adds the hatch
+ * (its "cuadrado rayado" shape). Inactive tables have no surface: dashed border instead. Static strings for Tailwind.
+ */
+export const TONE_SURFACE: Record<'ok' | 'reserved' | 'busy' | 'limited', string> = {
+  ok: 'bg-tint-ok border-edge-ok',
+  reserved: 'bg-tint-reserved border-edge-reserved',
+  busy: 'bg-tint-busy border-edge-busy hatch-busy',
+  limited: 'bg-tint-limited border-edge-limited',
+}
+
 /** Chip background: the tone at 15 % (manual 3). */
 export const TONE_CHIP_BG: Record<StatusTone, string> = {
   ok: 'bg-ok/15',

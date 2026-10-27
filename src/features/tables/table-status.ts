@@ -22,10 +22,17 @@ export function toTableDisplayStatus(code: string): TableDisplayStatus | undefin
   return DISPLAY_STATUSES.includes(normalized) ? normalized : undefined
 }
 
-/** Options of the status control, in the manual order: Disponible · Reservada · Ocupada. Never Inactiva. */
-export const TABLE_STATUS_OPTIONS: { value: TableStatus; label: string; status: TableStatus }[] = (
+const SHORTCUT: Record<TableStatus, string> = { available: 'D', reserved: 'R', occupied: 'O' }
+
+/** Options of the status picker, in the manual order: Disponible · Reservada · Ocupada, with their keys. Never Inactiva. */
+export const TABLE_STATUS_OPTIONS: { value: TableStatus; label: string; status: TableStatus; shortcut: string }[] = (
   ['available', 'reserved', 'occupied'] as const
-).map((value) => ({ value, label: STATUS_META[value].label, status: value }))
+).map((value) => ({ value, label: STATUS_META[value].label, status: value, shortcut: SHORTCUT[value] }))
+
+/** Active tables first (natural order), inactive ones at the end (manual 13.10). */
+export function activeFirst(tables: Table[]): Table[] {
+  return [...tables.filter((table) => table.isActive), ...tables.filter((table) => !table.isActive)]
+}
 
 export interface TableCounts {
   available: number

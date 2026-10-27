@@ -13,6 +13,7 @@ export interface UserMenuProps {
 export function UserMenu({ restaurantName, userEmail, onSignOut }: UserMenuProps) {
   const { theme, toggleTheme } = useTheme()
   const initial = restaurantName.trim().charAt(0).toUpperCase()
+  const display = restaurantName.trim() || userEmail
 
   return (
     <DropdownMenu
@@ -36,8 +37,8 @@ export function UserMenu({ restaurantName, userEmail, onSignOut }: UserMenuProps
             {initial}
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sec font-bold text-nav-fg">{restaurantName}</span>
-            <span className="truncate text-sec text-nav-fg-2">{userEmail}</span>
+            <span className="truncate text-sec font-bold text-nav-fg">{display}</span>
+            {display !== userEmail && <span className="truncate text-sec text-nav-fg-2">{userEmail}</span>}
           </span>
           <Icon icon={ChevronDown} size={16} className="shrink-0 text-nav-fg-2" />
         </button>
