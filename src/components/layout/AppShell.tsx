@@ -1,7 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { Dialog as RadixDialog } from 'radix-ui'
-import { useReturnFocus } from '@/components/ui/use-return-focus'
-import { Sidebar } from './Sidebar'
+import type { ReactNode } from 'react'
+import { AmbientGround } from './AmbientGround'
+import { NavDock } from './NavDock'
 import { Topbar } from './Topbar'
 
 export interface AppShellProps {
@@ -9,57 +8,28 @@ export interface AppShellProps {
   restaurantName?: string
   userEmail: string
   onSignOut: () => void
-  /** Topbar right side: "Estado del restaurante" + Switch (Sergio). */
+  /** Top bar right side: "Estado del restaurante" + Switch (Sergio). */
   statusSlot?: ReactNode
   /** Above the content: the "restaurant closed" Alert (Sergio). */
   banner?: ReactNode
+  /** The restaurant is open: the room's light is warm; closed, it goes out (manual v2.1). */
+  lit?: boolean
   children: ReactNode
 }
 
-const DESKTOP_QUERY = '(min-width: 1024px)'
-
 /**
- * Dashboard frame (manual 12.1): fixed sidebar from 1024 px, drawer below; sticky topbar;
- * content up to 1200 px with 32 / 24 / 16 padding.
+ * Dashboard frame (manual v2.1, 12.2): the room's light behind everything; the top bar and the page on one glass sheet,
+ * centered; and the navigation dock floating at the bottom on every screen size. The page keeps room at the bottom so
+ * the dock never covers its last row. Toasts arrive at the top, under the bar.
  */
-export function AppShell({ restaurantName, userEmail, onSignOut, statusSlot, banner, children }: AppShellProps) {
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const userMenu = { restaurantName: restaurantName ?? '', userEmail, onSignOut }
-  const returnFocus = useReturnFocus()
-
-  useEffect(() => {
-    const media = window.matchMedia(DESKTOP_QUERY)
-    const closeOnDesktop = (event: MediaQueryListEvent) => {
-      if (event.matches) setDrawerOpen(false)
-    }
-    media.addEventListener('change', closeOnDesktop)
-    return () => media.removeEventListener('change', closeOnDesktop)
-  }, [])
-
+export function AppShell({ restaurantName, userEmail, onSignOut, statusSlot, banner, lit = true, children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-bg text-fg">
-      <aside className="fixed inset-y-0 left-0 hidden lg:block">
-        <Sidebar {...userMenu} />
-      </aside>
-
-      <RadixDialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <RadixDialog.Portal>
-          <RadixDialog.Overlay className="fixed inset-0 z-(--z-drawer) animate-fade-in bg-(--overlay) lg:hidden" />
-          <RadixDialog.Content
-            aria-describedby={undefined}
-            onOpenAutoFocus={returnFocus.onOpenAutoFocus}
-            onCloseAutoFocus={returnFocus.onCloseAutoFocus}
-            className="fixed inset-y-0 left-0 z-(--z-drawer) animate-drawer-in lg:hidden"
-          >
-            <RadixDialog.Title className="sr-only">Menú</RadixDialog.Title>
-            <Sidebar {...userMenu} onNavigate={() => setDrawerOpen(false)} />
-          </RadixDialog.Content>
-        </RadixDialog.Portal>
-      </RadixDialog.Root>
-
-      <div className="flex min-h-screen flex-col lg:pl-62">
-        <Topbar restaurantName={restaurantName} onOpenMenu={() => setDrawerOpen(true)} statusSlot={statusSlot} />
-        <main className="mx-auto flex w-full max-w-300 flex-1 flex-col gap-8 p-4 md:p-6 lg:p-8">
+    <div className="relative isolate min-h-dvh text-fg">
+      <AmbientGround lit={lit} />
+      <NavDock />
+      <div className="mx-auto flex min-h-dvh max-w-320 flex-col gap-4 p-3 pb-(--dock-clearance) md:p-4 md:pb-(--dock-clearance) lg:p-5 lg:pb-(--dock-clearance)">
+        <Topbar restaurantName={restaurantName} userEmail={userEmail} onSignOut={onSignOut} statusSlot={statusSlot} />
+        <main className="glass-sheet flex flex-1 flex-col gap-8 rounded-sheet p-4 md:p-6 lg:rounded-sheet-lg lg:p-8">
           {banner}
           {children}
         </main>

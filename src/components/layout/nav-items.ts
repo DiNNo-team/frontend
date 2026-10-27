@@ -6,7 +6,7 @@ export interface NavItem {
   icon: LucideIcon
 }
 
-/** Sidebar entries of the restaurant dashboard (manual 12.1). */
+/** Sections of the navigation dock (manual 12.2, v2.1). */
 export const NAV_ITEMS: NavItem[] = [
   { to: '/mesas', label: 'Mesas', icon: LayoutGrid },
   { to: '/restaurante', label: 'Restaurante', icon: Store },

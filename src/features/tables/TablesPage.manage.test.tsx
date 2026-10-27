@@ -18,7 +18,7 @@ async function renderPage() {
 }
 
 const cardOf = (name: string) => screen.getByRole('heading', { name }).closest('article') as HTMLElement
-const metric = (label: string) => screen.getByText(label).previousSibling
+const metric = (label: string) => within(screen.getByRole('group', { name: 'Resumen de mesas' })).getByText(label).parentElement?.nextElementSibling
 const stored = (identifier: string) => mockTablesControl.snapshot().find((t) => t.identifier === identifier)
 
 async function openMenu(user: ReturnType<typeof renderWithProviders>['user'], name: string) {
@@ -124,7 +124,7 @@ describe('TablesPage · desactivar y reactivar', () => {
 
   it('confirming: the card turns inactive, stops counting, and the toast offers Deshacer', async () => {
     const { user } = await renderPage()
-    expect(metric('disponibles')).toHaveTextContent('3')
+    expect(metric('Disponibles')).toHaveTextContent('3')
     await openMenu(user, 'Mesa 04')
     await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
     await user.click(screen.getByRole('button', { name: 'Desactivar mesa' }))
@@ -133,8 +133,8 @@ describe('TablesPage · desactivar y reactivar', () => {
     const card = cardOf('Mesa 04')
     expect(within(card).getByText('Inactiva')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mesa 04' })).toHaveAccessibleDescription('2 personas Inactiva')
-    expect(metric('disponibles')).toHaveTextContent('2')
-    expect(metric('inactivas')).toHaveTextContent('2')
+    expect(metric('Disponibles')).toHaveTextContent('2')
+    expect(metric('Inactivas')).toHaveTextContent('2')
     expect(screen.getAllByText('Mesa 04 desactivada').length).toBeGreaterThan(0)
     expect(stored('04')?.isActive).toBe(false)
     await waitFor(() => expect(within(card).getByRole('button', { name: 'Más acciones de Mesa 04' })).toHaveFocus())
@@ -170,14 +170,14 @@ describe('TablesPage · desactivar y reactivar', () => {
 
   it('"Reactivar mesa" from its picker: no confirmation, comes back Disponible, toast', async () => {
     const { user } = await renderPage()
-    expect(metric('inactiva')).toHaveTextContent('1')
+    expect(metric('Inactiva')).toHaveTextContent('1')
     await user.click(screen.getByRole('button', { name: 'Mesa 06' }))
     await user.click(await screen.findByRole('button', { name: 'Reactivar mesa' }))
     await waitFor(() => expect(stored('06')?.isActive).toBe(true))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mesa 06' })).toHaveAccessibleDescription('4 personas Disponible')
     expect(screen.getAllByText('Mesa 06 reactivada').length).toBeGreaterThan(0)
-    expect(metric('inactivas')).toHaveTextContent('0')
+    expect(metric('Inactivas')).toHaveTextContent('0')
   })
 
   it('"Reactivar" from the menu works the same', async () => {

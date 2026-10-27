@@ -6,7 +6,7 @@ export interface StatStripItem<T extends string> {
   value: T
   status: Status
   count: number
-  /** Word under the figure, already in singular or plural: "disponibles", "inactiva". */
+  /** Word next to the shape, capitalized and already in singular or plural: "Disponibles", "Inactiva". */
   label: string
 }
 
@@ -14,35 +14,37 @@ export interface StatStripProps<T extends string> {
   items: StatStripItem<T>[]
   /** Accessible name of the group: "Resumen de mesas". */
   'aria-label': string
-  /** Active filter. With `onSelectedChange` each cell is a toggle button that filters the view. */
+  /** Active filter. With `onSelectedChange` each card is a toggle button that filters the view. */
   selected?: T | null
   onSelectedChange?: (value: T | null) => void
   className?: string
 }
 
 /**
- * Summary strip (manual 12.2): one level-1 container split by hairlines, figures as type (no tiles, no icons in
- * circles). Each cell can filter the view; pressing the active one clears it. 2 × 2 below 640 px.
+ * Summary cards (manual v2.1, 12.2 `StatStrip`): one glass card per status, all alike: the shape and the word on top,
+ * the figure as type below. Each card can filter the view; pressing the active one clears it. 2 × 2 below 1024 px.
  */
-export function StatStrip<T extends string>({ items, 'aria-label': ariaLabel, selected, onSelectedChange, className }: StatStripProps<T>) {
+export function StatStrip<T extends string>({
+  items,
+  'aria-label': ariaLabel,
+  selected,
+  onSelectedChange,
+  className,
+}: StatStripProps<T>) {
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      className={cn('grid grid-cols-2 gap-px overflow-hidden rounded-tile border border-line bg-line sm:grid-cols-4', className)}
-    >
+    <div role="group" aria-label={ariaLabel} className={cn('grid grid-cols-2 gap-3 lg:grid-cols-4', className)}>
       {items.map((item) => {
         const meta = STATUS_META[item.status]
         const content = (
           <>
             <span className="flex items-center gap-2">
               <StatusShape shape={meta.shape} size={10} className={TONE_TEXT[meta.tone]} />
-              <span className="text-metric text-fg tabular-nums">{item.count}</span>
+              <span className="text-sec font-bold text-fg">{item.label}</span>
             </span>
-            <span className="text-sec text-fg-2">{item.label}</span>
+            <span className="text-display text-fg tabular-nums">{item.count}</span>
           </>
         )
-        const cell = 'flex flex-col items-start gap-1 bg-surface p-4 text-left'
+        const cell = 'glass-card flex min-h-36 flex-col items-start justify-between gap-2 rounded-card p-5 text-left'
         if (!onSelectedChange) {
           return (
             <div key={item.value} className={cell}>
@@ -56,7 +58,7 @@ export function StatStrip<T extends string>({ items, 'aria-label': ariaLabel, se
             type="button"
             aria-pressed={selected === item.value}
             onClick={() => onSelectedChange(selected === item.value ? null : item.value)}
-            className={cn(cell, 'press cursor-pointer hover:bg-surface-2 aria-pressed:bg-surface-2 aria-pressed:ring-2 aria-pressed:ring-selection aria-pressed:ring-inset')}
+            className={cn(cell, 'press lift cursor-pointer aria-pressed:ring-2 aria-pressed:ring-selection')}
           >
             {content}
           </button>

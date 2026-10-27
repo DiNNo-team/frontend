@@ -12,6 +12,7 @@ Memoria de trabajo del Manual de Identidad v2.0, de su aplicación a la web y al
 | F6 · App móvil y login móvil | Hecha el 26 oct 2026 en `refactor/sprint2-app-v2` (`dinno-mobile`), sin commit. Verificada en el emulador. **Esperando la revisión de Sebastián** |
 | F4 · Plano de mesas | Hecho el 27 oct 2026: backend en `feat/sprint2-plano-mesas` y web sobre F2–F3, sin commit. **La migración no se corrió en Neon:** falta la revisión de Elizabeth y tu confirmación. Registro y limitaciones en `02-registro.md` |
 | F7 · Validación y cierre del manual | Hecha el 27 oct 2026: validaciones, manual ajustado a lo implementado (sección 19: propuestas futuras), `CLAUDE.md` de los tres repos apuntando al v2.0. Informe en [`03-informe-final.md`](03-informe-final.md) |
+| F8 · v2.1 "Salón de vidrio" | Hecha el 27 oct 2026 en `feat/sprint2-dashboard-creativo`, sin commit. Registro en `02-registro.md`; resumen en el manual, sección 20. **Esperando la revisión de Sebastián** |
 | F5 · Tiempo real del restaurante (D5) | Pendiente |
 
 Ya apuntan al v2.0: el `CLAUDE.md` de los tres repos (secciones 2, 8 y 11), el README del frontend, el README del kit y `scripts/check-ui.mjs` (regla `text-opacity`). Los `AGENTS.md` no citaban el manual.
@@ -29,6 +30,7 @@ Ya apuntan al v2.0: el `CLAUDE.md` de los tres repos (secciones 2, 8 y 11), el R
 | `src/dev/sistema/` | Página de muestra `/sistema` (solo en desarrollo; fuera de la navegación y del build de producción). Se borra cuando el v2.0 llegue a las pantallas |
 | [`capturas-v1/`](capturas-v1/) | El "antes": web (arnés con datos de ejemplo) y móvil (emulador con `EXPO_PUBLIC_USE_MOCKS=true`) |
 | [`capturas-v2/`](capturas-v2/) | El "después" del móvil, en claro y en oscuro (mismo método) |
+| [`capturas-v2-1/`](capturas-v2-1/) | El dashboard v2.1 "Salón de vidrio" |
 
 ## Reglas de esta renovación (del prompt de Sebastián)
 

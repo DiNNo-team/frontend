@@ -22,8 +22,19 @@ import { useTableActivation } from './use-table-activation'
 import { useTableSelection } from './use-table-selection'
 import { useTableStatusChange } from './use-table-status-change'
 
-const TITLE = 'Mesas'
-const DESCRIPTION = 'Actualiza el estado de cada mesa en tiempo real'
+/** "Buenas noches": the greeting that opens /mesas (manual v2.1), by the hour of the device. */
+function greetingFor(date: Date): string {
+  const hour = date.getHours()
+  if (hour >= 5 && hour < 12) return 'Buenos días'
+  if (hour >= 12 && hour < 19) return 'Buenas tardes'
+  return 'Buenas noches'
+}
+
+/** "Lunes 27 de octubre". */
+function todayLabel(date: Date): string {
+  const label = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }).format(date)
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
 const FILTER_WORDS: Record<TableDisplayStatus, string> = {
   available: 'disponibles',
   reserved: 'reservadas',
@@ -71,6 +82,16 @@ export default function TablesPage() {
   const showSkeleton = useDelayedFlag(tablesQuery.isPending)
   const tables = useMemo(() => activeFirst(sortTables(tablesQuery.data ?? [])), [tablesQuery.data])
   const counts = useMemo(() => countTables(tables), [tables])
+  // Read once when the screen opens: the greeting and the date do not need to tick while it is open.
+  const [now] = useState(() => new Date())
+  // Just the greeting: the restaurant's name is already in the top bar.
+  const title = greetingFor(now)
+  const active = counts.available + counts.reserved + counts.occupied
+  const liveLine =
+    active > 0
+      ? ` · ${counts.available} ${counts.available === 1 ? 'mesa disponible' : 'mesas disponibles'} de ${active}`
+      : ''
+  const greeting = { variant: 'hero', title, description: `${todayLabel(now)}${liveLine}` } as const
   const [filter, setFilter] = useState<TableDisplayStatus | null>(null)
   const visibleTables = useMemo(
     () => (filter ? tables.filter((table) => getTableDisplayStatus(table) === filter) : tables),
@@ -193,7 +214,7 @@ export default function TablesPage() {
   if (tablesQuery.isPending) {
     return (
       <>
-        <PageHeader title={TITLE} description={DESCRIPTION} />
+        <PageHeader {...greeting} />
         <div aria-busy="true">
           <p role="status" className="sr-only">
             Cargando mesas
@@ -207,7 +228,7 @@ export default function TablesPage() {
   if (tablesQuery.isError) {
     return (
       <>
-        <PageHeader title={TITLE} description={DESCRIPTION} />
+        <PageHeader {...greeting} />
         <EmptyState
           variant="error"
           title="No pudimos cargar tus mesas"
@@ -226,7 +247,7 @@ export default function TablesPage() {
     // On an empty screen "Agregar mesa" is the one primary; the summary hides.
     return (
       <>
-        <PageHeader title={TITLE} description={DESCRIPTION} />
+        <PageHeader {...greeting} />
         <EmptyState
           title="Aún no tienes mesas"
           description="Agrega tus mesas para empezar a recibir comensales."
@@ -260,10 +281,9 @@ export default function TablesPage() {
         </Alert>
       )}
       <PageHeader
-        title={TITLE}
-        description={DESCRIPTION}
+        {...greeting}
         actions={
-          <div className="flex flex-wrap items-center gap-3">
+          <>
             <SegmentedControl
               aria-label="Vista de mesas"
               value={view}
@@ -275,11 +295,10 @@ export default function TablesPage() {
                 { value: 'grid', label: 'Cuadrícula' },
               ]}
             />
-            {/* Adding tables is setup, not service: outline, so the orange stays on what is happening now (manual 0, rule 2). */}
-            <Button variant="outline" icon={Plus} onClick={openCreate}>
+            <Button icon={Plus} onClick={openCreate} className="rounded-full">
               Agregar mesa
             </Button>
-          </div>
+          </>
         }
       />
       <TablesStats counts={counts} filter={view === 'grid' ? filter : null} onFilterChange={view === 'grid' ? setFilter : undefined} />

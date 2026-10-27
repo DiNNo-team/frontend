@@ -5,6 +5,39 @@
 
 ---
 
+## 27 oct 2026 (tarde) · Sebastián · Dashboard v2.1: navegación en un dock abajo (sin PR todavía)
+
+- **La navegación ahora es un dock abajo, como el de macOS** (`NavDock`), en todos los tamaños. Ya no existen `Sidebar`, `NavRail` ni `FloatingDock`.
+- **Los toasts llegan arriba al centro**, bajo la barra. Se quitó `ToastLayoutContext`.
+- **`StatStrip` ya no tiene `highlight` ni `caption`.** Las palabras van con mayúscula inicial ("Disponibles").
+- **Con `VITE_USE_MOCKS=true`, `/restaurants/me` también usa datos de ejemplo** (Casa 72), así la barra muestra el nombre.
+- **Si pruebas el resumen:** busca la palabra dentro del grupo "Resumen de mesas", porque "Disponible" e "Inactiva" también aparecen en las tarjetas de mesa.
+
+---
+
+## 27 oct 2026 · Sebastián · Dashboard v2.1 "Salón de vidrio" (sin PR todavía)
+
+**Qué cambió**
+- **El marco del dashboard:**
+  - Luz de fondo, que se apaga cuando el restaurante cierra.
+  - Riel de navegación flotante.
+  - Barra superior en píldora, con la cuenta a la derecha.
+  - Hoja de vidrio para el contenido.
+- **No tienes que cambiar tu pantalla:** sigue empezando con `PageHeader` y va dentro de la hoja.
+- **Kit:**
+  - Nuevo `FloatingDock`.
+  - `StatStrip` pasa a tarjetas (`highlight`, `caption`).
+  - `PageHeader` suma `variant="hero"` y su línea va en tinta.
+  - `Card` es de vidrio.
+  - `DropdownMenu` suma `header`.
+- **Texto secundario:** sobre la hoja se oscurece solo; dentro de una `Card` queda como siempre.
+
+**Qué tienes que hacer**
+- Nada, si tu pantalla ya usa el kit.
+- Si pruebas el resumen de `/mesas`: la cifra ya no es el hermano anterior de la palabra. Usa `getByText('disponibles').parentElement?.nextElementSibling`.
+
+---
+
 ## 27 oct 2026 · Sebastián · Plano de mesas en `/mesas` (en curso, sin PR todavía)
 
 **Qué cambió**

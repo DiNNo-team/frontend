@@ -2,6 +2,65 @@
 
 > Lo más nuevo va arriba. Cada fase lista los archivos que tocó, las decisiones nuevas y lo que quedó pendiente.
 
+## F8 · v2.1 "Salón de vidrio" (27 oct 2026)
+
+**Pedido de Sebastián:**
+- El sidebar se "desacomodaba" con un plano muy largo.
+- El dashboard seguía viéndose plano.
+- Quería degradados, un sidebar creativo y el estilo del "Glassy Dashboard V2", con permiso para pasar por encima del manual y del kit.
+
+**Rama:** `feat/sprint2-dashboard-creativo` en `frontend`, desde `develop` (que ya tiene F2–F4). Sin commit.
+
+**Verificado:**
+- Lint, tipos, `check:ui`, build y 341 pruebas en verde.
+- Detector de Impeccable en 8 pantallas × 2 anchos: 0 fallas de contraste, después de corregir las palabras del riel.
+- Responsive: 0 de 50 con desbordamiento.
+- Reducir movimiento y reducir transparencia probados en el navegador.
+- Login: 0% de píxeles cambiados frente a lo publicado.
+- Capturas en [`capturas-v2-1/`](capturas-v2-1/).
+
+### El sidebar cortado
+
+- Con el navegador desplazado, el sidebar se veía completo: era `fixed` con la altura de la ventana.
+- El corte aparecía en las capturas de página completa, que no repiten lo fijo.
+- **Ahora:** el riel es una cápsula *sticky* sin la altura de la ventana, y la luz cubre la página. Probado con 40 mesas en una captura de página completa.
+
+### Qué cambió
+
+| Archivo | Cambio |
+|---|---|
+| `styles/tokens.css` | Bloque v2.1: luz (`--amb-*`), vidrios (`--glass-sheet/card/pill/rail-bg`), brillos, sombras, `--grad-highlight`, `--text-2-sheet`, `--plan-canvas` traslúcido. Ningún color nuevo: mezclas de la paleta y paradas de `--grad-petrol` |
+| `styles/globals.css` | `app-ambient`, `amb-open`, `amb-closed`, `glass-sheet`, `glass-card`, `glass-pill`, `glass-rail`, `bg-highlight`, `lift`, `rounded-sheet-lg`, `min-h-shell`, `text-hero`; `--text-2` sobre la hoja; `grid-tables` con dos columnas en el teléfono; `plan-canvas` solo como trama |
+| `components/layout/` | Nuevos `AmbientGround` y `NavRail`. Reescritos `AppShell`, `Topbar` (píldora con la cuenta), `UserMenu` (avatar con menú), `Sidebar` (cajón petróleo) y `OnboardingShell` |
+| `components/ui/` | Nuevo `FloatingDock`. `StatStrip` (tarjetas con una destacada y `caption`), `PageHeader` (`variant="hero"`, línea en tinta), `Card` (`glass-card`), `TableCard` (`lift`), `FloatingBar` (`glass-pill`), `DropdownMenu` (`header`), `index.ts`, `README.md` |
+| `app/layouts.tsx`, `features/restaurant-status/hooks.ts` | La luz sigue al estado (`lit`); la consulta acepta `enabled` |
+| `features/tables/` | Saludo con datos reales, dock con Plano · Cuadrícula y "Agregar mesa", "disponibles" destacada; líneas de ayuda del plano en tinta, paneles en vidrio, el lienzo llena su marco. Pruebas ajustadas al resumen nuevo y al saludo |
+| `CLAUDE.md` (sección 11), manual (7, 8, 12, 13, 16, 18, 20) | La regla de diseño y las fichas siguen a v2.1 |
+
+### Segunda ronda (27 oct, sobre la revisión de Sebastián)
+
+| Pedido | Qué se hizo |
+|---|---|
+| El sidebar, abajo como el dock de macOS, con el mismo estilo | `NavDock` reemplaza al riel y al cajón en todos los tamaños: centrado abajo, con separadores, ícono + palabra y el ícono que se asoma al pasar el puntero. Se borraron `NavRail`, `Sidebar` y `FloatingDock` |
+| Decidir dónde van las notificaciones | Los toasts pasan arriba al centro, bajo la barra: en escritorio caen entre el saludo y las acciones, sin tapar "Agregar mesa"; la barra de edición del plano se acomoda encima del dock. Se quitó `ToastLayoutContext` |
+| Plano · Cuadrícula dentro del dashboard | A la derecha del saludo, con "Agregar mesa" (`primary`) |
+| El dashboard centrado | La barra y la hoja van en una columna centrada de 1280 |
+| El sidebar no cambiaba con el tema | El dock usa `--dock-*`: vidrio claro con la activa en petróleo en claro, petróleo con la activa en crema en oscuro |
+| Las tarjetas del resumen | Las cuatro iguales, sin "de 7 mesas activas", con la palabra en mayúscula ("Disponibles") |
+| El nombre del restaurante en la barra | Estaba vacío porque con `VITE_USE_MOCKS=true` las mesas usan datos de ejemplo pero `/restaurants/me` no tenía mock y fallaba. Se agregó `features/restaurant/api.mock.ts` (GET y PATCH, solo en ese modo y cargado bajo demanda). El nombre ahora se ve en todos los tamaños |
+
+**Verificado:** lint, tipos, `check:ui`, build y 341 pruebas; responsive 0 de 50; detector sin fallas de contraste (claro, oscuro, teléfono).
+
+### Decisiones nuevas
+
+Están en `decisiones.md` como V1–V8.
+
+### Limitaciones
+
+- La hoja desenfoca un área grande. Es una sola capa sobre un fondo estático, pero en equipos muy débiles el desplazamiento puede costar más que en v2.0. El respaldo de "Reducir transparencia" la deja sólida.
+- El saludo usa la hora del dispositivo y se fija al abrir la pantalla.
+- La app móvil no cambió: este pedido fue para el dashboard.
+
 ## F4 · Plano de mesas (27 oct 2026)
 
 **Ramas, sin commit:**

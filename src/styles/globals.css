@@ -65,7 +65,7 @@
 /* ===== Utilidades del manual v2.0 (16.4): valores sin token y piezas compuestas ===== */
 @utility text-btn { font-size: 15px; line-height: 20px; font-weight: 700; }      /* texto de botón 15/20 700 · manual 4 */
 @utility border-field { border-width: 1.5px; }                                      /* borde de campos · manual 6.2 */
-@utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: 1fr; } /* grilla de mesas · manual 13.10 */
+@utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(min(168px, calc(50% - 6px)), 1fr)); grid-auto-rows: 1fr; } /* dos columnas también en el teléfono */ /* grilla de mesas · manual 13.10 */
 
 /* Vidrio (manual 7) con su respaldo sólido. Encima, solo texto en tinta o crema. */
 @utility glass-panel {
@@ -97,8 +97,8 @@
 
 /* Texturas de la forma (manual 8): el "cuadrado rayado" de Ocupada y la trama del plano. No son gradientes de adorno. */
 @utility hatch-busy { background-image: repeating-linear-gradient(135deg, var(--hatch-busy) 0 2px, transparent 2px 8px); }
+/* La trama del plano. El color lo pone su marco (v2.1), así el lienzo y el borde del marco nunca dejan una costura. */
 @utility plan-canvas {
-  background-color: var(--plan-canvas);
   background-image: radial-gradient(circle, var(--plan-dot) 1px, transparent 1.5px);
   background-size: var(--plan-cell, 44px) var(--plan-cell, 44px);
 }
@@ -122,6 +122,75 @@
   &[data-valid="false"] { border-color: var(--error); }
 }
 
+/* ===== v2.1 "Salón de vidrio" (manual 7 y 8): luz de fondo, hoja, tarjetas, píldoras y riel =====
+   La luz es fija y no pesa: tres gradientes radiales enormes, sin desenfoque. Abierto = cálido (naranja + ámbar);
+   cerrado = apagado (gris). Se cruzan en --dur-highlight. Todo vidrio tiene su respaldo sólido. */
+@utility app-ambient { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-color: var(--amb-base); }
+@utility amb-open {
+  background-image:
+    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-warm), transparent 66%),
+    radial-gradient(46vmax 40vmax at 96% 6%, var(--amb-glow), transparent 66%),
+    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
+    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+}
+@utility amb-closed {
+  background-image:
+    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-off), transparent 66%),
+    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
+    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+}
+@utility glass-sheet {
+  background: var(--glass-sheet-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
+  backdrop-filter: blur(28px) saturate(1.5); -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--bg); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--bg); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+/* Sobre la hoja, el texto secundario usa --text-2-sheet; dentro de una tarjeta o superficie sólida vuelve al de siempre. */
+.glass-sheet { --text-2: var(--text-2-sheet); }
+.glass-sheet :is(.glass-card, .bg-surface, .bg-surface-2) { --text-2: var(--text-2-base); }
+@utility glass-card {
+  background: var(--glass-card-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen);
+  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@utility glass-pill {
+  background: var(--glass-pill-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-float);
+  backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+/* Dock de navegación (v2.1): vidrio que sigue al tema, con un brillo cálido que sube desde abajo. Flota centrado. */
+@utility glass-dock {
+  background: radial-gradient(70% 120% at 50% 130%, var(--dock-glow), transparent 70%), var(--dock-bg);
+  border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
+  backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@utility dock-position { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); translate: -50% 0; z-index: var(--z-sticky); }
+/* El ícono del dock se asoma al pasar el puntero, como en macOS. `translate` + `scale`, así se suma a `press`. */
+@utility dock-magnify {
+  transition-property: translate, scale; transition-duration: var(--dur-base); transition-timing-function: var(--ease-enter);
+  @media (hover: hover) and (pointer: fine) { :where(a, button):hover > & { translate: 0 -4px; scale: 1.08; } }
+  @media (prefers-reduced-motion: reduce) { :where(a, button):hover > & { translate: none; scale: none; } }
+}
+/* Degradado petróleo → verde de la marca (el avatar de la cuenta). */
+@utility bg-highlight { background-image: var(--grad-highlight); }
+/* Levantar al pasar el puntero: `translate` (no `transform`), así se suma a `press` sin pelear. */
+@utility lift {
+  transition-property: translate, box-shadow, background-color, border-color;
+  transition-duration: var(--dur-base); transition-timing-function: var(--ease-enter);
+  @media (hover: hover) and (pointer: fine) { &:hover { translate: 0 -3px; box-shadow: var(--glass-sheen), var(--shadow-lift); } }
+  @media (prefers-reduced-motion: reduce) { &:hover { translate: none; } }
+}
+@utility rounded-sheet-lg { border-radius: 32px; }  /* la hoja de contenido (v2.1) */
+@utility text-hero { font-size: 36px; line-height: 40px; letter-spacing: -0.03em; font-weight: 800; text-wrap: balance; }  /* saludo de /mesas (v2.1) */
+
 /* Presionar (manual 11.3): escala 0,97 (1 con reducir movimiento). */
 @utility press {
   transition-property: transform, color, background-color, border-color, box-shadow, filter, opacity;
@@ -134,6 +203,10 @@
 @theme { --animate-rise-in: rise-in var(--dur-slow) var(--ease-enter); }          /* diálogos */
 @theme { --animate-rise-in-fast: rise-in var(--dur-base) var(--ease-enter); }     /* toasts y barras entrando */
 @keyframes rise-in { from { opacity: 0; transform: translateY(var(--motion-rise)) scale(var(--motion-scale)); } to { opacity: 1; transform: none; } }
+@theme { --animate-drop-in: drop-in var(--dur-base) var(--ease-enter); }          /* toasts, que llegan desde arriba (v2.1) */
+@keyframes drop-in { from { opacity: 0; transform: translateY(calc(var(--motion-rise) * -1)) scale(var(--motion-scale)); } to { opacity: 1; transform: none; } }
+@theme { --animate-lift-out: lift-out var(--dur-fast) var(--ease-enter) forwards; }
+@keyframes lift-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(calc(var(--motion-rise) * -1)) scale(var(--motion-scale)); } }
 @theme { --animate-sink-out: sink-out var(--dur-fast) var(--ease-enter) forwards; } /* salida de diálogos y toasts */
 @keyframes sink-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(var(--motion-rise)) scale(var(--motion-scale)); } }
 @theme { --animate-pop-in: pop-in var(--dur-base) var(--ease-enter); }            /* menús y selector, desde su origen */

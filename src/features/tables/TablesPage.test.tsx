@@ -40,10 +40,10 @@ describe('TablesPage', () => {
 
   it('counts only active tables in disponibles/reservadas/ocupadas, with singular for one', async () => {
     await renderLoaded()
-    expect(screen.getByText('disponibles').previousSibling).toHaveTextContent('3')
-    expect(screen.getByText('reservadas').previousSibling).toHaveTextContent('2')
-    expect(screen.getByText('ocupadas').previousSibling).toHaveTextContent('2')
-    expect(screen.getByText('inactiva').previousSibling).toHaveTextContent('1')
+    expect(within(screen.getByRole('group', { name: 'Resumen de mesas' })).getByText('Disponibles').parentElement?.nextElementSibling).toHaveTextContent('3')
+    expect(within(screen.getByRole('group', { name: 'Resumen de mesas' })).getByText('Reservadas').parentElement?.nextElementSibling).toHaveTextContent('2')
+    expect(within(screen.getByRole('group', { name: 'Resumen de mesas' })).getByText('Ocupadas').parentElement?.nextElementSibling).toHaveTextContent('2')
+    expect(within(screen.getByRole('group', { name: 'Resumen de mesas' })).getByText('Inactiva').parentElement?.nextElementSibling).toHaveTextContent('1')
   })
 
   it('sorts identifiers naturally ("2" before "10")', async () => {
@@ -58,11 +58,13 @@ describe('TablesPage', () => {
     expect(names).toEqual(['Mesa 02', 'Mesa 10', 'Mesa T1'])
   })
 
-  it('has a single "Agregar mesa" in the header, outline during service', async () => {
+  it('opens with the greeting; the view switch and a single primary "Agregar mesa" sit in the header (manual v2.1)', async () => {
     await renderLoaded()
+    const header = screen.getByRole('heading', { level: 1, name: /^Buen(os días|as tardes|as noches)/ }).closest('header') as HTMLElement
+    expect(within(header).getByText(/3 mesas disponibles de 7/)).toBeInTheDocument()
+    expect(within(header).getByRole('radiogroup', { name: 'Vista de mesas' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Agregar mesa' })).toHaveLength(1)
-    expect(screen.getByRole('button', { name: 'Agregar mesa' })).toHaveClass('border-line-strong')
-    expect(screen.getByRole('heading', { level: 1, name: 'Mesas' })).toBeInTheDocument()
+    expect(within(header).getByRole('button', { name: 'Agregar mesa' })).toHaveClass('bg-accent')
   })
 
   it('empty: shows the empty state as the only primary and hides the metrics', async () => {
@@ -88,7 +90,7 @@ describe('TablesPage', () => {
 
   it('the summary filters the grid; pressing the active cell or "Ver todas" clears it', async () => {
     const { user } = await renderLoaded()
-    const reserved = screen.getByRole('button', { name: /reservadas/ })
+    const reserved = screen.getByRole('button', { name: /reservadas/i })
     await user.click(reserved)
     expect(reserved).toHaveAttribute('aria-pressed', 'true')
     let names = within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('heading').map((heading) => heading.textContent)
@@ -96,7 +98,7 @@ describe('TablesPage', () => {
     await user.click(reserved)
     expect(within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('listitem')).toHaveLength(8)
 
-    await user.click(screen.getByRole('button', { name: /inactiva/ }))
+    await user.click(screen.getByRole('button', { name: /inactiva/i }))
     names = within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('heading').map((heading) => heading.textContent)
     expect(names).toEqual(['Mesa 06'])
   })

@@ -20,7 +20,7 @@ export interface RestaurantApi {
   geocode: (address: string) => Promise<GeocodeResult>
 }
 
-export const restaurantApi: RestaurantApi = {
+const httpRestaurantApi: RestaurantApi = {
   get: () => apiRequest<RestaurantProfile>('/restaurants/me'),
   geocode: (address) => apiRequest<GeocodeResult>(`/geocode?${new URLSearchParams({ address: address.trim() })}`),
   register: (input) => apiRequest<RestaurantProfile>('/restaurants', { method: 'POST', body: input }),
@@ -29,3 +29,16 @@ export const restaurantApi: RestaurantApi = {
     return apiRequest<RestaurantProfile>('/restaurants/me', { method: 'PATCH', body: input })
   },
 }
+
+// With VITE_USE_MOCKS=true, GET and PATCH /restaurants/me answer from a sample restaurant (loaded on demand, so
+// production builds never ship it); registration and geocoding keep calling the backend.
+const loadMock = () => import('./api.mock').then((module) => module.mockRestaurantApi)
+
+export const restaurantApi: RestaurantApi =
+  import.meta.env.VITE_USE_MOCKS === 'true'
+    ? {
+        ...httpRestaurantApi,
+        get: async () => (await loadMock()).get(),
+        update: async (input) => (await loadMock()).update(input),
+      }
+    : httpRestaurantApi
