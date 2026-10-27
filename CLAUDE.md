@@ -259,7 +259,7 @@ npm run preview   # sirve el build
 - Íconos solo de `lucide-react` a través de `Icon` (`@/lib/icon`): trazo 1.75, tamaños 16 / 20 / 24, siempre con texto en navegación y botones. **Prohibidos:** `Utensils`, `ChefHat`, `Pizza`, `Coffee`, `Hamburger`, `MapPin` y cualquier pin genérico. Sin emojis.
 - Naranja = acción o "ahora": texto naranja sobre claro es `text-accent-text`; nunca texto blanco sobre naranja; **los estados nunca son naranja**. Una tarjeta nunca va dentro de otra.
 - Un solo botón principal naranja por pantalla, con texto oscuro.
-- Estados con **color + forma + palabra**. Vidrio solo en la capa flotante (manual 7: selector de estado, barra flotante, topbar al hacer scroll, login), con texto en tinta encima; gradientes solo en el login (manual 8). **Ningún texto con opacidad** (`check:ui`, regla `text-opacity`).
+- Estados con **color + forma + palabra**. Desde v2.1 (manual, sección 20) el dashboard va sobre la luz del salón y una hoja de vidrio: las tarjetas de contenido son `glass-card` y las de mesa siguen sólidas con su tinte. Gradientes solo donde los nombra el manual 8 (login, luz del salón, tarjeta destacada, riel). Sobre la hoja el texto secundario se oscurece solo (`--text-2-sheet`). **Ningún texto con opacidad** (`check:ui`, regla `text-opacity`).
 - Toda pantalla con estados de **carga, vacío y error**, y funcionando en **modo claro y oscuro**.
 - Antes del PR, pasa el **checklist del manual (sección 17.4)**.
 
@@ -278,7 +278,7 @@ src/
 ├── app/              providers y router
 ├── components/
 │   ├── ui/           kit de componentes base + README (Sebastián)
-│   └── layout/       AppShell: sidebar y topbar (Sebastián)
+│   └── layout/       AppShell: luz de fondo, barra superior, hoja y dock de navegación (Sebastián)
 ├── dev/kit/          página /kit, solo en desarrollo (Sebastián)
 ├── features/
 │   ├── auth/             login y sesión (Jacobo)

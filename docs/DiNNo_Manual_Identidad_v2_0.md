@@ -3,6 +3,7 @@
 > **Fuente única de diseño para el equipo.** Reemplaza al [v1.1](DiNNo_Manual_Identidad_v1_1.md), que queda como histórico. Si una decisión visual no está aquí, se pregunta a Sebastián antes de inventarla.
 > **Marca:** DiNNo · **Promesa:** "Dile no a la espera." · **Función:** "Encuentra una mesa disponible ahora y asegúrala mientras llegas."
 > **Revisión del 26 oct 2026 (Sebastián):** vidrio de panel al 50%; tintes de estado más fuertes (18% / 22%) con borde en el color del estado; `expo-haptics` y `expo-blur` aprobados.
+> **v2.1 "Salón de vidrio" (27 oct 2026, Sebastián):** el dashboard deja el fondo plano y pasa a vivir sobre la luz del login: fondo de luz difusa que se apaga al cerrar, la hoja de vidrio centrada con tarjetas encima, barra superior en píldora, saludo grande y la navegación en un **dock abajo, como el de macOS**. Cambian 7, 8, 12, 13.5, 13.8, 13.10 y 16; el resumen está en la sección 20.
 > **Cierre del 27 oct 2026:** el manual describe lo implementado en la web, la app y el plano de mesas. Lo que todavía no existe está marcado como *propuesta futura* y reunido en la sección 19.
 > Aplica a la web del restaurante (React + Tailwind v4) y a la app del comensal (Expo + NativeWind). La coherencia entre los dos productos es **de marca** (color, tipografía, forma, movimiento), no de pantallas: cada uno responde a un usuario distinto.
 
@@ -19,7 +20,7 @@ Antes de generar cualquier pantalla o componente, respeta este documento complet
 
 ## Índice
 
-0. Principios y siete reglas · 1. Logo · 2. Color · 3. Estados · 4. Tipografía · 5. Espaciado, tamaños y breakpoints · 6. Forma y elevación · 7. Superficies, transparencias y vidrio · 8. Gradientes · 9. Iconografía · 10. Modo oscuro · 11. Motion · 12. Componentes · 13. Patrones · 14. Contenido y tono · 15. Accesibilidad · 16. Tokens · 17. Reglas para el equipo y checklist · 18. Cambios desde v1.1 · 19. Propuestas futuras
+0. Principios y siete reglas · 1. Logo · 2. Color · 3. Estados · 4. Tipografía · 5. Espaciado, tamaños y breakpoints · 6. Forma y elevación · 7. Superficies, transparencias y vidrio · 8. Gradientes · 9. Iconografía · 10. Modo oscuro · 11. Motion · 12. Componentes · 13. Patrones · 14. Contenido y tono · 15. Accesibilidad · 16. Tokens · 17. Reglas para el equipo y checklist · 18. Cambios desde v1.1 · 19. Propuestas futuras · 20. v2.1 "Salón de vidrio"
 
 ---
 
@@ -340,12 +341,16 @@ Iguales al v1.1:
 
 El vidrio es el material de la **capa flotante**. Se usa donde hay contenido detrás que conviene seguir viendo, y nunca donde hay que leer datos densos.
 
-### 7.1 Los cuatro vidrios
+### 7.1 Los vidrios
 
 | Vidrio | Fondo | Desenfoque | Dónde | Token / utilidad |
 |---|---|---|---|---|
 | **Panel** | `--surface` al 50% (claro y oscuro) | 20 px · saturación 1,4 | Selector de estado (≥ 768) y barra flotante de edición del plano (`FloatingBar`) | `--glass-panel-bg` · `glass-panel` |
-| **Barra** | `--bg` al 85% | 16 px | Topbar web al hacer scroll | `--glass-bar-bg` · `glass-bar` |
+| **Hoja** (v2.1) | `--surface` al 30% (claro) / 40% (oscuro) | 28 px · saturación 1,5 | La hoja de contenido del dashboard y del registro: todo lo de la página va encima | `--glass-sheet-bg` · `glass-sheet` |
+| **Tarjeta** (v2.1) | `--surface` al 72% | 16 px · saturación 1,3 | Tarjetas sobre la hoja: `Card`, las del resumen, los paneles del plano | `--glass-card-bg` · `glass-card` |
+| **Píldora** (v2.1) | `--surface` al 64% (claro) / 70% (oscuro) | 20 px | La barra superior y la barra de edición del plano | `--glass-pill-bg` · `glass-pill` |
+| **Dock** (v2.1) | Claro: el vidrio de píldora · oscuro: petróleo noche al 76%; con un brillo naranja que sube desde abajo | 24 px | El dock de navegación. **Sigue al tema** | `--dock-bg` · `glass-dock` |
+| **Barra** | `--bg` al 85% | 16 px | Sin uso desde v2.1 (la barra superior es una píldora); se conserva para otras barras | `--glass-bar-bg` · `glass-bar` |
 | **Mapa** | `--surface` al 70% (claro) / 62% (oscuro) | 16 px (web) · intensidad 40 (móvil) | Lo que flota sobre el mapa del comensal (solo móvil) | `--glass-bg` · móvil: `glassBg` en `GlassSurface level="map"` |
 | **Login** | Web: `--surface` al 55% · móvil: velo `glassPanel` al 50% | Web: 44 px · móvil: intensidad 70 | Solo la tarjeta del login web y su equivalente en el móvil | `glass-login` · móvil: `GlassSurface level="login"` |
 
@@ -353,15 +358,16 @@ El vidrio es el material de la **capa flotante**. Se usa donde hay contenido det
 
 | ✓ Sí | ✗ No |
 |---|---|
-| El selector de estado junto a una mesa y la barra flotante de edición del plano | Detrás de tablas, listas largas, formularios o métricas |
-| Una barra de herramientas flotando sobre el lienzo del plano *(propuesta futura, sección 19)*. Hoy va sólida, encima del marco | En el sidebar, en botones o en chips de estado |
-| El topbar cuando el contenido pasa por debajo | En un diálogo modal: tiene su propio overlay y va sólido |
+| v2.1: la hoja de contenido y sus tarjetas (con el texto en las reglas de 7.3) | Detrás de las tarjetas de mesa: van sólidas, con su tinte, para que el estado se lea igual sobre cualquier luz |
+| El selector de estado junto a una mesa y la barra de edición del plano | En botones o en chips de estado |
+| El dock de navegación y la barra superior en píldora | En un diálogo modal: tiene su propio overlay y va sólido |
 | Los controles sobre el mapa del comensal | En toasts y errores (sólidos, para que se lean al instante) |
 | La tarjeta del login, sobre las formas de marca | Para "dar estilo" a una pantalla floja |
 
 ### 7.3 Reglas del texto sobre vidrio
 
 - **Todo el texto va en tinta (claro) o crema (oscuro).** El texto secundario se diferencia por tamaño o peso, no por color: `--text-2` sobre vidrio falla el AA (sección 2.3).
+- **v2.1, sobre la hoja:** `--text-2` pasa solo a `--text-2-sheet` (tinta al 85%, 5,4:1 con la luz más fuerte detrás) y vuelve a su valor dentro de una tarjeta (`glass-card`, `bg-surface`). Sobre una tarjeta al 72%, `--text-2` da 4,7:1 o más.
 - **Enlaces naranja sobre vidrio, solo donde el fondo es crema.** Si una forma de marca queda detrás de un enlace, el enlace va en tinta subrayado.
 - Si lo que pasa por detrás es muy cargado (el mapa con mucho detalle), el velo es más denso que el del panel: 70% en claro y 62% en oscuro. En Android, sobre el mapa, va sólido (7.4).
 
@@ -375,7 +381,7 @@ El mismo elemento pasa a `--surface` con borde fino y `--shadow-float` cuando:
 - Es Android sobre el mapa: el desenfoque no puede leer la superficie del mapa, así que va sólido, como hoy.
 - Es Android sin `BlurTargetView` (fuera del login, sección 13.9): se usa el respaldo sólido al 92%.
 
-**Rendimiento:** el desenfoque solo cubre áreas pequeñas (paneles y barras), nunca la pantalla completa, y no se anima.
+**Rendimiento:** el desenfoque nunca se anima. Desde v2.1 la hoja desenfoca un área grande, pero es una sola capa sobre un fondo estático (la luz son gradientes, sin `filter`); las tarjetas de mesa y los nodos del plano son sólidos, así que 40 mesas no suman 40 desenfoques.
 
 ---
 
@@ -394,7 +400,13 @@ Siguen siendo **solo dos**, construidos con colores de la paleta:
 | Estados vacíos grandes de la app del comensal | Para rescatar un diseño flojo |
 | Barra del temporizador · resplandor del Active Dot | — |
 
-**Uso actual:** solo el panel de marca del login web usa un gradiente (`--grad-petrol`). Las demás filas de "✓ Sí" son usos permitidos que todavía no existen *(propuesta futura, sección 19)*. El arranque del móvil va sobre un color sólido (13.6).
+**Uso actual:**
+- El panel de marca del login web (`--grad-petrol`).
+- **v2.1 · La luz del salón** (`AmbientGround`): las dos formas del login convertidas en luz. Son gradientes radiales enormes de naranja, ámbar y petróleo, sin borde que se lea como círculo, fijos detrás de todo el dashboard. Con el restaurante cerrado se apagan a gris en `--dur-highlight`.
+- **v2.1 · El avatar de la cuenta** (`--grad-highlight`): petróleo → verde de la marca, con la inicial en crema.
+- **v2.1 · El brillo del dock:** un resplandor naranja que sube desde abajo.
+
+Las demás filas de "✓ Sí" son usos permitidos que todavía no existen *(propuesta futura, sección 19)*. El arranque del móvil va sobre un color sólido (13.6).
 
 **Patrones (no son gradientes):** el rayado de "Ocupada" (`hatch-busy`) y la trama de puntos del lienzo del plano (`plan-canvas`) usan funciones de gradiente de CSS, pero son **texturas de la forma**, no adornos. El rayado es el "cuadrado rayado" del vocabulario de estados (3.1) llevado a toda la tarjeta. No cuentan como gradiente ni se usan fuera de su caso. El detector de Impeccable los marca como adorno (`repeating-stripes-gradient`); es un aviso aceptado.
 
@@ -544,7 +556,7 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 | `SegmentedControl` | ✓ | ✓ | — |
 | `StatusShape` / `StatusChip` / `STATUS_META` | ✓ | ✓ | Mismos nombres, colores y formas; un test lo vigila en cada repo |
 | `Card` | ✓ | ✓ | — |
-| `Alert` · `Toast` · `Dialog` · `EmptyState` · `Skeleton` · `Spinner` | ✓ | ✓ | Toast: abajo a la derecha en escritorio; abajo al centro en el móvil |
+| `Alert` · `Toast` · `Dialog` · `EmptyState` · `Skeleton` · `Spinner` | ✓ | ✓ | Toast: arriba al centro, bajo la barra (v2.1: abajo vive el dock de navegación) |
 | `Logo` / `Brand` | ✓ (SVG) | ✓ (paths) | El formato del archivo |
 | `BottomSheet` | Hoja interna de `StatusPicker` en < 768 (no es un componente aparte) | ✓ | En la web reemplaza al popover en el teléfono |
 | `Glass` (niveles de la sección 7) | utilidades CSS | `GlassSurface` | Android 12+: `BlurView` (`expo-blur`) solo en el login; sobre el mapa y en Android 11 o anterior, respaldo sólido. iOS: `BlurView` de `expo-blur` (sin verificar en un iPhone: no hay Xcode en el equipo) |
@@ -602,8 +614,8 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 
 #### `Card`
 
-- Radio 20, `--surface` y borde fino, **sin sombra en reposo**, padding 16 / 24. Título en Título 3.
-- **✗** Card dentro de card · borde y sombra a la vez en reposo.
+- Radio 20, **vidrio de tarjeta** (`glass-card`, v2.1) con borde de vidrio, sin sombra en reposo, padding 16 / 24. Título en Título 3.
+- **✗** Card dentro de card (la hoja no cuenta: es el plano de trabajo, no una tarjeta) · borde y sombra a la vez en reposo.
 
 #### `TableCard` (mesa en la cuadrícula)
 
@@ -680,11 +692,11 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 
 #### `StatStrip` (franja de métricas)
 
-- Un solo contenedor de nivel 1 (radio 16), dividido por líneas finas en cuatro celdas.
-- **Cada celda:** la forma del estado, la cifra (`text-metric`, tabular) y la palabra ("disponibles", "reservadas", "ocupadas", "inactivas"; `text-sec`, `--text-2`).
-- Cada celda es un botón que **filtra la cuadrícula** (`aria-pressed`). La celda activa lleva `surface-2` y un anillo interior de 2 px `--selection`. En el plano, la franja solo informa.
-- **< 640:** 2 × 2.
-- **✗** Cuatro tarjetas con sombra · íconos en círculos de color · la palabra "libres" (no está en el glosario).
+- **v2.1:** cuatro tarjetas de vidrio separadas e iguales (radio 20, gap 12, alto mínimo 144). Ninguna se destaca: el estado lo dicen la forma y la palabra.
+- **Cada tarjeta:** arriba, la forma del estado y la palabra con mayúscula inicial ("Disponibles", "Reservadas", "Ocupadas", "Inactivas"; `text-sec` 700); abajo, la cifra en `text-display` (48, tabular).
+- Cada tarjeta es un botón que **filtra la cuadrícula** (`aria-pressed`, anillo de 2 px `--selection`), con `press` y `lift`. En el plano solo informa.
+- **< 1024:** 2 × 2.
+- **✗** Íconos en círculos de color · la palabra "libres" (no está en el glosario) · una tarjeta de un color distinto a las demás.
 
 #### `LiveIndicator` *(propuesta futura, sección 19)*
 
@@ -705,8 +717,8 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 #### `Toast`
 
 - Fondo `--inverse-bg`, texto `--inverse-text`, ícono en el color del estado y acción en `--inverse-accent`. Radio 14 y sombra flotante. **Uno a la vez.**
-- Se muestra 4 s, o 6 s si trae acción. Se pausa con hover o foco. Entra y **sale** por el mismo borde.
-- Se anuncia con `aria-live="polite"` (los errores, `assertive`). Sube para no tapar las barras flotantes.
+- Se muestra 4 s, o 6 s si trae acción. Se pausa con hover o foco. **v2.1:** llega arriba al centro, bajo la barra superior, y sale por arriba (el dock de navegación es dueño de la parte de abajo).
+- Se anuncia con `aria-live="polite"` (los errores, `assertive`).
 
 #### `Dialog` · `ConfirmDialog`
 
@@ -742,7 +754,8 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 
 #### `PageHeader`
 
-- Título 1 (28/32), una línea secundaria debajo y las acciones a la derecha. En el móvil, las acciones bajan.
+- Título 1 (28/32), una línea debajo **en tinta** (va sobre la hoja) y las acciones a la derecha. En el móvil, las acciones bajan.
+- **`variant="hero"`** (v2.1, solo `/mesas`): el saludo según la hora del dispositivo, solo "Buenas noches" (`text-hero` 36/40 800; el nombre del restaurante ya está en la barra superior), y la línea "Martes, 27 de octubre · 3 mesas disponibles de 7" con datos reales.
 
 #### `DetailList`
 
@@ -752,16 +765,16 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 
 #### `AppShell` · `Sidebar` · `Topbar`
 
-- **Sidebar** (≥ 1024): 248, `--nav-bg` (petróleo) y el logo oscuro arriba. Ítems de 44, radio 12, ícono 20 + texto 15/700.
-  - Activo: `--nav-active` + texto `--nav-text` + barra naranja de 3 px a la izquierda.
-  - Abajo, el bloque del usuario: **nombre real del restaurante** + correo, y el menú con el tema y "Cerrar sesión".
-- **Topbar:** 64 de alto. A la izquierda, el nombre real del restaurante (Título 3; skeleton mientras carga, nunca "Restaurante"). A la derecha, el switch Abierto/Cerrado (el `LiveIndicator` irá a su izquierda, *(propuesta futura, sección 19)*). **Al hacer scroll** pasa a `glass-bar`.
-- **< 1024:** el sidebar se vuelve un drawer que entra con `--ease-sheet`.
+- **Fondo (v2.1):** `AmbientGround`, la luz del salón (sección 8), fija detrás de todo. `lit` sigue al estado del restaurante: abierto, cálido; cerrado, apagado.
+- **Dock de navegación** `NavDock` (v2.1, en todos los tamaños), como el de macOS: una cápsula de vidrio centrada a 16 del borde inferior (más el área segura del teléfono). De izquierda a derecha: el símbolo de DiNNo (desde 640; el pin visible mide unos 44), un separador, cada sección como ícono 20 con su palabra debajo (12/16 700, nunca ícono solo), en ítems de 96 de ancho y unos 52 de alto, otro separador y el cambio de tema. El activo es una píldora: petróleo con texto crema en claro, crema con texto petróleo en oscuro. Al pasar el puntero, el ícono se asoma (sube 4 px y crece al 108%, sin movimiento con reducir movimiento). **El vidrio sigue al tema.** La página reserva abajo `--dock-clearance` (112) para que el dock nunca tape la última fila.
+- **Barra superior** `Topbar` (v2.1): una píldora de vidrio de 64 de alto, *sticky* a 16 del borde. A la izquierda, **el nombre real del restaurante en todos los tamaños** (Título 3, recortado si no cabe; skeleton mientras carga, nunca "Restaurante"). A la derecha, el switch Abierto/Cerrado y la cuenta (`UserMenu`): la inicial del restaurante sobre `--grad-highlight`, y un menú con el restaurante y el correo arriba, el tema y "Cerrar sesión". El `LiveIndicator` irá a la izquierda del switch *(propuesta futura, sección 19)*.
+- **Hoja de contenido** (v2.1): `glass-sheet`, radio 28 (32 desde 1024), padding 16 / 24 / 32. Todo lo de la página va encima.
+- **Centrado:** la barra y la hoja van en una columna centrada de 1280 como máximo. Ya no hay menú lateral ni cajón: el dock es la navegación en todos los tamaños.
 
 #### `FloatingBar`
 
-- Barra flotante de nivel 3 al final del contenido (vidrio de panel). Es sticky y reserva su propio espacio, así que nunca tapa la última fila ni el foco (WCAG 2.4.11).
-- Hoy se usa solo en la edición del plano.
+- Barra flotante de nivel 3 al final del contenido (vidrio de píldora desde v2.1). Es sticky y reserva su propio espacio, así que nunca tapa la última fila ni el foco (WCAG 2.4.11).
+- Hoy se usa solo en la edición del plano. Se queda justo encima del dock de navegación (`bottom: --dock-clearance`).
 
 ---
 
@@ -809,8 +822,8 @@ Sin cambios de fondo respecto al v1.1:
 - **Una pregunta por pantalla:** en `/mesas` es "¿qué mesas tengo ahora?". Lo más grande de la pantalla responde esa pregunta (las mesas), no las métricas ni un botón.
 - **Orden de lectura:**
   1. El aviso si hay uno (cerrado, ubicación, error).
-  2. El encabezado con el selector Plano · Cuadrícula.
-  3. La franja de métricas.
+  2. El saludo (`PageHeader variant="hero"`), con la fecha y cuántas mesas hay disponibles, y a su derecha Plano · Cuadrícula y "Agregar mesa".
+  3. Las tarjetas del resumen.
   4. Las mesas.
 - **El trabajo más frecuente, a un toque:** tocar una mesa abre su selector; con teclado, D, R y O.
 - **Datos honestos:** los ceros como "0" y sin cifras inventadas. La marca "Actualizado 7:42 p. m." llega con el `LiveIndicator` *(propuesta futura, sección 19)*.
@@ -850,13 +863,13 @@ Sin cambios de fondo respecto al v1.1:
 
 | Pieza | ≥ 1024 | 768–1023 | < 768 |
 |---|---|---|---|
-| Navegación | Sidebar fijo | Drawer | Drawer |
-| Métricas | 4 columnas | 4 columnas | 2 × 2 |
-| Grilla de mesas | `minmax(168px, 1fr)` | igual | 2 columnas |
+| Navegación | Dock abajo (v2.1) | Dock abajo | Dock abajo, sin el símbolo |
+| Métricas | 4 tarjetas | 2 × 2 | 2 × 2 |
+| Grilla de mesas | `minmax(168px, 1fr)` | igual | 2 columnas (`min(168px, 50% − 6px)`) |
 | Selector de estado | Popover | Popover | Hoja inferior |
 | Plano | Editable | Editable | Solo servicio; abre en Cuadrícula y el plano se desplaza dentro de su marco (celda mínima de 36) |
 | Tablas | `DataTable` | `DataTable` | Filas de dos líneas |
-| Toasts | Abajo a la derecha (24) | Abajo a la derecha | Abajo al centro |
+| Toasts | Arriba al centro, bajo la barra (v2.1) | igual | igual |
 
 Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en claro y en oscuro.
 
@@ -895,8 +908,9 @@ Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en clar
 
 | Bloque | Contenido |
 |---|---|
-| Encabezado | "Mesas" + "Actualiza el estado de cada mesa en tiempo real" + `SegmentedControl` **Plano · Cuadrícula** + "Agregar mesa" (`outline`) |
-| Resumen | `StatStrip` |
+| Encabezado (v2.1) | El saludo "Buenas noches" (sin el nombre, que va en la barra) + "Martes, 27 de octubre · 3 mesas disponibles de 7" (`PageHeader variant="hero"`) |
+| Acciones (v2.1) | A la derecha del saludo: `SegmentedControl` **Plano · Cuadrícula** (deshabilitado mientras se edita el plano) + "Agregar mesa" (`primary`, redondo) |
+| Resumen | `StatStrip`, cuatro tarjetas iguales |
 | Contenido | La vista elegida, recordada en ese dispositivo. Abre en Plano si el restaurante ya tiene plano; si no, en Cuadrícula, con un `Alert` info "Arma el plano de tu restaurante" y el botón "Ubicar mesas" |
 
 **Cuadrícula:**
@@ -1047,6 +1061,7 @@ mobile/src/
 ### 16.3 `tokens.css` (web, copiar tal cual)
 
 ```css
+/* No editar: copia exacta del Manual de identidad v2.0, sección 16.3 */
 /* ===== DiNNo design tokens v2.0 ===== */
 :root{
   /* marca: no cambian con el tema (idénticos a v1.1) */
@@ -1066,6 +1081,8 @@ mobile/src/
   --ease-enter:cubic-bezier(.23,1,.32,1); --ease-move:cubic-bezier(.77,0,.175,1); --ease-sheet:cubic-bezier(.32,.72,0,1);
   --dur-press:120ms; --dur-fast:150ms; --dur-base:200ms; --dur-slow:300ms; --dur-highlight:700ms;
   --motion-rise:8px; --motion-scale:.97;
+  /* Espacio que el dock de navegación reserva abajo (v2.1): su alto + su margen + aire. */
+  --dock-clearance:112px;
   /* vidrio */
   --glass-blur-panel:20px; --glass-blur-bar:16px; --glass-blur-map:16px; --glass-saturate:1.4;
   /* capas */
@@ -1130,6 +1147,50 @@ mobile/src/
   --glass-panel-bg:color-mix(in srgb,var(--surface) 50%,transparent);
   --glass-bar-bg:color-mix(in srgb,var(--bg) 85%,transparent);
   --plan-canvas:var(--surface-2); --plan-dot:color-mix(in srgb,var(--border-strong) 45%,transparent);
+}
+
+/* ===== v2.1 "Salón de vidrio" (27 oct 2026): el dashboard vive sobre la luz del login =====
+   Fondo: las dos formas de marca del login, convertidas en luz difusa (sin bordes). Abierto = cálido; cerrado = apagado.
+   Vidrio: hoja de contenido + tarjetas encima; riel de navegación en petróleo. Solo mezclas de la paleta. */
+:root, .t-light, [data-theme="light"]{
+  --amb-base:var(--cream);
+  --amb-warm:color-mix(in srgb,var(--orange) 55%,transparent);
+  --amb-glow:color-mix(in srgb,var(--amber) 36%,transparent);
+  --amb-cool:color-mix(in srgb,var(--petrol) 42%,transparent);
+  --amb-off:color-mix(in srgb,var(--inactive) 34%,transparent);
+  --glass-sheet-bg:color-mix(in srgb,var(--surface) 30%,transparent);
+  /* Texto secundario sobre la hoja: casi tinta (AA con la luz más fuerte detrás); en tarjetas vuelve a --text-2-base. */
+  --text-2-sheet:color-mix(in srgb,var(--ink) 85%,var(--white)); --text-2-base:#5E6B70;
+  --glass-card-bg:color-mix(in srgb,var(--surface) 72%,transparent);
+  --glass-pill-bg:color-mix(in srgb,var(--surface) 64%,transparent);
+  /* Dock de navegación (v2.1): sigue al tema. Claro: vidrio claro con la activa en petróleo. */
+  --dock-bg:var(--glass-pill-bg); --dock-fg:var(--text); --dock-active-bg:var(--petrol); --dock-active-fg:var(--cream);
+  --dock-hover:color-mix(in srgb,var(--petrol) 8%,transparent); --dock-glow:color-mix(in srgb,var(--orange) 14%,transparent);
+  --glass-edge:rgba(255,255,255,.62);
+  --glass-sheen:inset 0 1px 0 rgba(255,255,255,.7);
+  --shadow-sheet:0 2px 8px -4px rgba(16,37,43,.10),0 48px 96px -56px rgba(16,37,43,.45);
+  --shadow-lift:0 2px 6px -2px rgba(16,37,43,.08),0 22px 40px -22px rgba(16,37,43,.38);
+  --grad-highlight:linear-gradient(140deg,var(--petrol-deep) 0%,var(--petrol) 42%,#1C6A6E 72%,var(--ok) 100%);
+  --plan-canvas:color-mix(in srgb,var(--surface) 56%,transparent);
+}
+.t-dark, [data-theme="dark"]{
+  --amb-base:var(--petrol-deep);
+  --amb-warm:color-mix(in srgb,var(--orange) 34%,transparent);
+  --amb-glow:color-mix(in srgb,var(--amber) 14%,transparent);
+  --amb-cool:color-mix(in srgb,#1C6A6E 55%,transparent);
+  --amb-off:color-mix(in srgb,var(--inactive) 18%,transparent);
+  --glass-sheet-bg:color-mix(in srgb,var(--surface) 40%,transparent);
+  --text-2-sheet:#A9BDC0; --text-2-base:#A9BDC0;
+  --glass-card-bg:color-mix(in srgb,var(--surface) 72%,transparent);
+  --glass-pill-bg:color-mix(in srgb,var(--surface) 70%,transparent);
+  --dock-bg:color-mix(in srgb,var(--petrol-deep) 76%,transparent); --dock-fg:var(--cream); --dock-active-bg:var(--cream); --dock-active-fg:var(--petrol);
+  --dock-hover:rgba(255,255,255,.08); --dock-glow:color-mix(in srgb,var(--orange) 20%,transparent);
+  --glass-edge:rgba(255,255,255,.10);
+  --glass-sheen:inset 0 1px 0 rgba(255,255,255,.08);
+  --shadow-sheet:0 2px 8px -4px rgba(0,0,0,.3),0 48px 96px -56px rgba(0,0,0,.7);
+  --shadow-lift:0 2px 6px -2px rgba(0,0,0,.3),0 22px 40px -22px rgba(0,0,0,.7);
+  --grad-highlight:linear-gradient(140deg,#12505A 0%,#1C6A6E 48%,#2B8F62 78%,var(--ok) 100%);
+  --plan-canvas:color-mix(in srgb,var(--surface) 62%,transparent);
 }
 ```
 
@@ -1207,7 +1268,7 @@ Copia del archivo implementado (`frontend/src/styles/globals.css`, 27 oct 2026).
 /* ===== Utilidades del manual v2.0 (16.4): valores sin token y piezas compuestas ===== */
 @utility text-btn { font-size: 15px; line-height: 20px; font-weight: 700; }      /* texto de botón 15/20 700 · manual 4 */
 @utility border-field { border-width: 1.5px; }                                      /* borde de campos · manual 6.2 */
-@utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: 1fr; } /* grilla de mesas · manual 13.10 */
+@utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(min(168px, calc(50% - 6px)), 1fr)); grid-auto-rows: 1fr; } /* dos columnas también en el teléfono */ /* grilla de mesas · manual 13.10 */
 
 /* Vidrio (manual 7) con su respaldo sólido. Encima, solo texto en tinta o crema. */
 @utility glass-panel {
@@ -1239,8 +1300,8 @@ Copia del archivo implementado (`frontend/src/styles/globals.css`, 27 oct 2026).
 
 /* Texturas de la forma (manual 8): el "cuadrado rayado" de Ocupada y la trama del plano. No son gradientes de adorno. */
 @utility hatch-busy { background-image: repeating-linear-gradient(135deg, var(--hatch-busy) 0 2px, transparent 2px 8px); }
+/* La trama del plano. El color lo pone su marco (v2.1), así el lienzo y el borde del marco nunca dejan una costura. */
 @utility plan-canvas {
-  background-color: var(--plan-canvas);
   background-image: radial-gradient(circle, var(--plan-dot) 1px, transparent 1.5px);
   background-size: var(--plan-cell, 44px) var(--plan-cell, 44px);
 }
@@ -1264,6 +1325,75 @@ Copia del archivo implementado (`frontend/src/styles/globals.css`, 27 oct 2026).
   &[data-valid="false"] { border-color: var(--error); }
 }
 
+/* ===== v2.1 "Salón de vidrio" (manual 7 y 8): luz de fondo, hoja, tarjetas, píldoras y riel =====
+   La luz es fija y no pesa: tres gradientes radiales enormes, sin desenfoque. Abierto = cálido (naranja + ámbar);
+   cerrado = apagado (gris). Se cruzan en --dur-highlight. Todo vidrio tiene su respaldo sólido. */
+@utility app-ambient { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-color: var(--amb-base); }
+@utility amb-open {
+  background-image:
+    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-warm), transparent 66%),
+    radial-gradient(46vmax 40vmax at 96% 6%, var(--amb-glow), transparent 66%),
+    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
+    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+}
+@utility amb-closed {
+  background-image:
+    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-off), transparent 66%),
+    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
+    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+}
+@utility glass-sheet {
+  background: var(--glass-sheet-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
+  backdrop-filter: blur(28px) saturate(1.5); -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--bg); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--bg); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+/* Sobre la hoja, el texto secundario usa --text-2-sheet; dentro de una tarjeta o superficie sólida vuelve al de siempre. */
+.glass-sheet { --text-2: var(--text-2-sheet); }
+.glass-sheet :is(.glass-card, .bg-surface, .bg-surface-2) { --text-2: var(--text-2-base); }
+@utility glass-card {
+  background: var(--glass-card-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen);
+  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@utility glass-pill {
+  background: var(--glass-pill-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-float);
+  backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+/* Dock de navegación (v2.1): vidrio que sigue al tema, con un brillo cálido que sube desde abajo. Flota centrado. */
+@utility glass-dock {
+  background: radial-gradient(70% 120% at 50% 130%, var(--dock-glow), transparent 70%), var(--dock-bg);
+  border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
+  backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@utility dock-position { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); translate: -50% 0; z-index: var(--z-sticky); }
+/* El ícono del dock se asoma al pasar el puntero, como en macOS. `translate` + `scale`, así se suma a `press`. */
+@utility dock-magnify {
+  transition-property: translate, scale; transition-duration: var(--dur-base); transition-timing-function: var(--ease-enter);
+  @media (hover: hover) and (pointer: fine) { :where(a, button):hover > & { translate: 0 -4px; scale: 1.08; } }
+  @media (prefers-reduced-motion: reduce) { :where(a, button):hover > & { translate: none; scale: none; } }
+}
+/* Degradado petróleo → verde de la marca (el avatar de la cuenta). */
+@utility bg-highlight { background-image: var(--grad-highlight); }
+/* Levantar al pasar el puntero: `translate` (no `transform`), así se suma a `press` sin pelear. */
+@utility lift {
+  transition-property: translate, box-shadow, background-color, border-color;
+  transition-duration: var(--dur-base); transition-timing-function: var(--ease-enter);
+  @media (hover: hover) and (pointer: fine) { &:hover { translate: 0 -3px; box-shadow: var(--glass-sheen), var(--shadow-lift); } }
+  @media (prefers-reduced-motion: reduce) { &:hover { translate: none; } }
+}
+@utility rounded-sheet-lg { border-radius: 32px; }  /* la hoja de contenido (v2.1) */
+@utility text-hero { font-size: 36px; line-height: 40px; letter-spacing: -0.03em; font-weight: 800; text-wrap: balance; }  /* saludo de /mesas (v2.1) */
+
 /* Presionar (manual 11.3): escala 0,97 (1 con reducir movimiento). */
 @utility press {
   transition-property: transform, color, background-color, border-color, box-shadow, filter, opacity;
@@ -1276,6 +1406,10 @@ Copia del archivo implementado (`frontend/src/styles/globals.css`, 27 oct 2026).
 @theme { --animate-rise-in: rise-in var(--dur-slow) var(--ease-enter); }          /* diálogos */
 @theme { --animate-rise-in-fast: rise-in var(--dur-base) var(--ease-enter); }     /* toasts y barras entrando */
 @keyframes rise-in { from { opacity: 0; transform: translateY(var(--motion-rise)) scale(var(--motion-scale)); } to { opacity: 1; transform: none; } }
+@theme { --animate-drop-in: drop-in var(--dur-base) var(--ease-enter); }          /* toasts, que llegan desde arriba (v2.1) */
+@keyframes drop-in { from { opacity: 0; transform: translateY(calc(var(--motion-rise) * -1)) scale(var(--motion-scale)); } to { opacity: 1; transform: none; } }
+@theme { --animate-lift-out: lift-out var(--dur-fast) var(--ease-enter) forwards; }
+@keyframes lift-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(calc(var(--motion-rise) * -1)) scale(var(--motion-scale)); } }
 @theme { --animate-sink-out: sink-out var(--dur-fast) var(--ease-enter) forwards; } /* salida de diálogos y toasts */
 @keyframes sink-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(var(--motion-rise)) scale(var(--motion-scale)); } }
 @theme { --animate-pop-in: pop-in var(--dur-base) var(--ease-enter); }            /* menús y selector, desde su origen */
@@ -1463,6 +1597,7 @@ Los tokens (`tokens.css`, `tokens.ts`) **son copia exacta de la sección 16 y no
 | 12.4 · `/restaurante` con botón de borde "Editar" | **Se conserva** (el código usaba primario, se corrige); se agrega `DetailList` | Desviación del código |
 | 13 · Motion | **Se modifica:** filtro de cuándo animar, curvas `--ease-enter` / `--ease-move` / `--ease-sheet`, presionar, salidas, origen, arrastre y aviso remoto (View Transitions entre vistas, *(propuesta futura, 19)*) | Faltaban salidas y respuesta al toque |
 | 13 · Reducir movimiento: "todo aparece en su estado final" | **Se modifica:** se quitan desplazamientos y escalas, pero se conservan los fundidos de 150 ms o menos | Quitarlo todo también borraba los fundidos que explican un cambio de estado |
+| v2.0 · Fondo plano y vidrio solo en la capa flotante | **Se modifica en v2.1 ("Salón de vidrio"):** luz del salón detrás de todo, hoja de vidrio centrada con tarjetas, barra en píldora, saludo y navegación en un dock abajo | Pedido de Sebastián (27 oct): un dashboard más creativo y moderno, sobre la misma luz del login |
 | 14 · Glosario | **Se conserva** y se corrige: "libres" → "disponibles"; se agregan Plano, Cuadrícula, En vivo y Actualizado | La etiqueta de la métrica contradecía el glosario |
 | 15 · Accesibilidad | **Se amplía:** WCAG 2.5.7 (alternativa al arrastre), 2.4.11 (foco no tapado), `prefers-reduced-transparency` y `prefers-contrast`; atajos; anuncios de cambios remotos | Plano y tiempo real |
 | 16 · Tokens: copia exacta, no se edita | **Se conserva la regla** con los tokens v2.0; ningún color existente cambia de valor; los nombres nuevos no chocan con Tailwind | Compatibilidad con todo lo construido |
@@ -1490,4 +1625,35 @@ Lo que este manual describe y todavía no existe en el código. Cada punto se im
 | Zonas, varios salones y paredes en el plano | 13.10 | Otro modelo de datos (opción B de D4) | Un solo salón de 20 × 30 celdas |
 | Zoom del plano con pellizco o rueda | 12.2 `FloorPlan` | — | Botones Alejar · Ajustar · Acercar |
 | Vidrio verificado en iOS | 7, 13.9 | Un Mac con Xcode o un iPhone | Implementado con `expo-blur`, sin probar en iOS |
+
+---
+
+## 20. v2.1 · "Salón de vidrio" (27 oct 2026)
+
+Sebastián pidió un dashboard menos plano, con degradados, un sidebar creativo y el estilo del "Glassy Dashboard V2", con permiso para pasar por encima del manual y del kit. Esta sección resume lo que cambió; los detalles están en cada sección.
+
+**La idea:** el restaurante es un salón con luz. El fondo es la luz del login (naranja arriba, petróleo abajo), tan difusa que no se ve ninguna forma, y **dice el estado**: con el restaurante abierto es cálida; al cerrarlo, se apaga a gris. El trabajo flota encima, en vidrio.
+
+| Pieza | Qué es | Dónde |
+|---|---|---|
+| Luz del salón | `AmbientGround` con `amb-open` / `amb-closed`: gradientes radiales de la paleta, fijos | 8, 12.2 `AppShell` |
+| Dock de navegación | `NavDock`, abajo y centrado como el de macOS, con ícono + palabra; su vidrio sigue al tema | 12.2 `AppShell` |
+| Barra superior | `Topbar` en píldora de vidrio, con la cuenta (`UserMenu`) a la derecha | 12.2 `AppShell` |
+| Hoja de contenido | `glass-sheet`: todo lo de la página va encima | 7.1, 12.2 |
+| Tarjetas | `Card`, el resumen y los paneles del plano en `glass-card`; las mesas siguen sólidas, con su tinte | 7.1, 12.2 |
+| Saludo | `PageHeader variant="hero"` con datos reales | 12.2, 13.10 |
+| Resumen | `StatStrip` en cuatro tarjetas iguales, con la palabra en mayúscula inicial | 12.2 |
+| Notificaciones | Los toasts llegan arriba al centro, bajo la barra: abajo vive el dock | 12.2 `Toast` |
+| Movimiento | `lift`: la tarjeta sube 3 px al pasar el puntero (con `translate`, así se suma a `press`); la luz se cruza en `--dur-highlight` | 11.3 |
+
+**Lo que no cambia:**
+- La paleta: ningún color nuevo; todo son mezclas de los de 2.1.
+- El logo, Plus Jakarta Sans y "estado = color + forma + palabra".
+- El login web.
+- Las reglas de AA (7.3, con `--text-2-sheet` sobre la hoja) y los respaldos sólidos (7.4).
+
+**Decisiones de v2.1:**
+- **"Agregar mesa" vuelve a ser `primary`**, a la derecha del saludo junto a Plano · Cuadrícula. Revierte la decisión D7 (outline).
+- **Las tarjetas sobre la hoja no cuentan como "tarjeta dentro de tarjeta".** La hoja es el plano de trabajo; el detector de Impeccable las marca (`nested-cards`) y es un aviso aceptado.
+- **La navegación no tiene la altura de la ventana.** Primero fue un riel flotante y después un dock abajo; con eso se corrigió el sidebar cortado de las capturas de página completa con un plano muy largo.
 

@@ -2,6 +2,19 @@
 
 > Lo más nuevo va arriba. Cada línea dice qué se decidió, quién y por qué. Orden de prioridad cuando dos skills chocan: **usabilidad real > identidad de DiNNo > consistencia > estética**.
 
+## v2.1 "Salón de vidrio" (27 oct 2026, F8, pedido de Sebastián)
+
+| # | Tema | Decisión | Por qué |
+|---|---|---|---|
+| V1 | El fondo | La luz del login (naranja arriba, petróleo abajo) en gradientes radiales enormes, sin `filter` y fijos. **Gesto propio:** con el restaurante cerrado la luz se apaga a gris | Lo pidió Sebastián ("el fondo del login muy difuminado"); además, el fondo informa el estado en lugar de solo decorar |
+| V2 | Navegación | Riel flotante de vidrio petróleo, con ícono + palabra (no ícono solo) y la activa como píldora crema | "Sidebar creativo" sin perder el petróleo de la marca ni la regla de 9 (ícono siempre con texto) |
+| V3 | Texto sobre la hoja | `--text-2` pasa a `--text-2-sheet` (tinta al 85%) sobre la hoja y vuelve dentro de las tarjetas | Medido: con la luz fuerte, `--text-2` sobre la hoja daba 3,0–3,5:1; ahora 5,4:1 o más |
+| V4 | "Agregar mesa" | Vuelve a `primary`, a la derecha del saludo (primero estuvo en un dock de la página). Revierte D7 | Es la única acción naranja de la pantalla |
+| V5 | Tarjetas sobre la hoja | Se aceptan (el detector las marca como `nested-cards`) | La hoja es el plano de trabajo, no una tarjeta; es la composición de la referencia |
+| V6 | Tarjetas de mesa y nodos del plano | Siguen sólidos con su tinte, sin desenfoque | El estado se lee igual sobre cualquier luz, y 40 mesas no suman 40 desenfoques |
+| V7 | Navegación (segunda ronda) | Un dock abajo, como el de macOS, en todos los tamaños; su vidrio sigue al tema. Reemplaza al riel lateral y al cajón | Pedido de Sebastián; además, una sola navegación en todos los tamaños |
+| V8 | Dónde van los toasts | Arriba al centro, bajo la barra | Abajo vive el dock. Arriba a la derecha tapaban "Agregar mesa"; al centro caen en el espacio libre entre el saludo y las acciones |
+
 ## Decididas al implementar el plano (27 oct 2026, F4)
 
 | # | Tema | Decisión | Por qué |
