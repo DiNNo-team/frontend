@@ -362,7 +362,7 @@ El vidrio es el material de la **capa flotante**. Se usa donde hay contenido det
 | El selector de estado junto a una mesa y la barra de edición del plano | En botones o en chips de estado |
 | El dock de navegación y la barra superior en píldora | En un diálogo modal: tiene su propio overlay y va sólido |
 | Los controles sobre el mapa del comensal | En toasts y errores (sólidos, para que se lean al instante) |
-| La tarjeta del login, sobre las formas de marca | Para "dar estilo" a una pantalla floja |
+| La tarjeta del login, sobre la luz del salón | Para "dar estilo" a una pantalla floja |
 
 ### 7.3 Reglas del texto sobre vidrio
 
@@ -402,7 +402,7 @@ Siguen siendo **solo dos**, construidos con colores de la paleta:
 
 **Uso actual:**
 - El panel de marca del login web (`--grad-petrol`).
-- **v2.1 · La luz del salón** (`AmbientGround`): las dos formas del login convertidas en luz. Son gradientes radiales enormes de naranja, ámbar y petróleo, sin borde que se lea como círculo, fijos detrás de todo el dashboard. Con el restaurante cerrado se apagan a gris en `--dur-highlight`.
+- **v2.1 · La luz del salón** (`AmbientGround`): las dos formas del login convertidas en luz. Son gradientes radiales enormes de naranja, ámbar y petróleo, sin borde que se lea como círculo, fijos detrás de todo el dashboard, del registro y del login. Con el restaurante cerrado se apagan a gris en `--dur-highlight`.
 - **v2.1 · El avatar de la cuenta** (`--grad-highlight`): petróleo → verde de la marca, con la inicial en crema.
 - **v2.1 · El brillo del dock:** un resplandor naranja que sube desde abajo.
 
@@ -877,12 +877,12 @@ Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en clar
 
 **Web** (referencia visual del v2.0; **no se rediseña**):
 
-- Tarjeta `glass-login` sobre dos formas de marca: naranja arriba a la izquierda y petróleo abajo a la derecha.
+- Tarjeta `glass-login` sobre la luz del salón (`AmbientGround`, sección 8), la misma del dashboard y del registro: los colores de las dos formas de marca, difuminados y sin borde. Va siempre encendida (antes de iniciar sesión no hay estado del restaurante).
 - Pestañas verticales Iniciar sesión / Crear cuenta, con la barra naranja que se desliza, y el panel de gradiente petróleo que sobresale de la tarjeta (≥ 1024).
 - Los paneles se deslizan en `--dur-slow`.
 - **Reglas de contraste** (7.3):
   - Texto en tinta plena.
-  - Enlaces en `--accent-text` al 100%, solo donde detrás hay crema; donde pasa una forma de marca, el enlace va en tinta subrayado.
+  - Enlaces en `--accent-text` al 100%: detrás ya no pasa ninguna forma con borde, solo luz difusa.
   - Ningún texto con opacidad.
 - "Crear cuenta" explica cómo pedir una cuenta de restaurante: no hay registro público.
 - **Compatibilidad:** el login conserva la escala tipográfica del v1.1 (`text-h1` 32, `text-h2` 24, etiqueta de 11) y su movimiento reducido (sin deslizamientos) con una regla acotada a `.glass-login` en `globals.css`. Así los tokens v2.0 no lo cambian sin tocar sus archivos. Hereda solo lo que es del kit (el presionar de los botones).
@@ -1286,9 +1286,7 @@ Copia del archivo implementado (`frontend/src/styles/globals.css`, 27 oct 2026).
   @supports not (backdrop-filter: blur(1px)) { background: var(--bg); }
   @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
-/* Login: formas de marca en dos esquinas y tarjeta de vidrio encima (manual 7.1 y 13.9, sin cambios). */
-@utility login-blob-start { position: fixed; top: -55vmin; left: -55vmin; width: 110vmin; height: 110vmin; border-radius: 47% 53% 61% 39% / 45% 51% 49% 55%; pointer-events: none; }
-@utility login-blob-end { position: fixed; right: -55vmin; bottom: -55vmin; width: 110vmin; height: 110vmin; border-radius: 47% 53% 61% 39% / 45% 51% 49% 55%; pointer-events: none; }
+/* Login: tarjeta de vidrio sobre la luz del salón (AmbientGround), la misma del dashboard (manual 7.1 y 13.9). */
 @utility glass-login {
   background: color-mix(in srgb, var(--surface) 55%, transparent);
   border: 1px solid var(--glass-border);

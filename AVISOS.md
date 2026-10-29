@@ -5,6 +5,22 @@
 
 ---
 
+## 29 oct 2026 · Sebastián · El login usa la luz del salón
+
+**Qué cambió**
+- `/login` ya no dibuja las dos formas de marca con borde: usa `AmbientGround`, la misma luz difusa del dashboard y del registro. Va siempre encendida (antes de iniciar sesión no hay estado del restaurante).
+- La tarjeta de vidrio, las pestañas, la animación, el panel de marca y el formulario no cambian.
+- Se borró `AuthBackdrop` y se quitaron las utilidades `login-blob-start` y `login-blob-end` de `globals.css`. Nadie más las usaba.
+- Manual v2.0 al día (7.1, 8 y 13.9). Como ya no pasa ninguna forma detrás del formulario, los enlaces del login van en `--accent-text` al 100% en toda la tarjeta.
+
+**Para quién**
+- **Jacobo:** la lógica del login no cambió.
+
+**Rama / PR**
+- `refactor/sprint2-login-luz-salon` → `develop`.
+
+---
+
 ## 27 oct 2026 (tarde) · Sebastián · Dashboard v2.1: navegación en un dock abajo (sin PR todavía)
 
 - **La navegación ahora es un dock abajo, como el de macOS** (`NavDock`), en todos los tamaños. Ya no existen `Sidebar`, `NavRail` ni `FloatingDock`.
