@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
+import { AmbientGround } from '@/components/layout'
 import { authPanelId, authTabId, SLIDE_CLASSES, type AuthView } from './auth-view'
 import { AccountRequestPanel } from './components/AccountRequestPanel'
-import { AuthBackdrop } from './components/AuthBackdrop'
 import { AuthHero } from './components/AuthHero'
 import { AuthNav } from './components/AuthNav'
 import { SignInForm } from './components/SignInForm'
 
 /**
- * `/login`: glass card over two brand shapes, with "Iniciar sesión" and "Crear cuenta" tabs in the same card.
+ * `/login`: glass card over the room light of the dashboard (`AmbientGround`), with "Iniciar sesión" and
+ * "Crear cuenta" tabs in the same card.
  * Restaurant access is invitation-only, so "Crear cuenta" explains how to get an account. Switching slides the
  * panels and the brand panel; the hidden panel is `inert`.
  */
@@ -31,8 +32,8 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-bg px-4 py-12">
-      <AuthBackdrop />
+    <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      <AmbientGround />
 
       <div
         data-view={view}
