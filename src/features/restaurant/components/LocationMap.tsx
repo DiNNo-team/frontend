@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { Component, useEffect, type ReactNode } from 'react'
 import {
   AdvancedMarker,
   APILoadingStatus,
@@ -27,6 +27,17 @@ const BOGOTA_LAT_LNG_BOUNDS = {
 /** Close enough to see the block and the street names. */
 const PIN_ZOOM = 17
 
+declare global {
+  interface Window {
+    /** Google calls it when it rejects the key, e.g. `RefererNotAllowedMapError` on a domain the key does not allow. */
+    gm_authFailure?: () => void
+  }
+}
+
+// @vis.gl never reports a rejected key (its AUTH_FAILURE status is never set): only `gm_authFailure` tells.
+// After it, Google cannot even create the pin (TypeError on `keys`), so the map is not shown again in this page load.
+let keyRejected = false
+
 export interface LocationMapProps {
   /** Point of the pin; `null` shows the whole city without a pin. */
   position: Coordinates | null
@@ -44,18 +55,47 @@ export interface LocationMapProps {
  */
 export function LocationMap(props: LocationMapProps) {
   const { onUnavailable } = props
-  const configured = API_KEY !== '' && MAP_ID !== ''
+  const available = API_KEY !== '' && MAP_ID !== '' && !keyRejected
 
   useEffect(() => {
-    if (!configured) onUnavailable()
-  }, [configured, onUnavailable])
+    if (!available) {
+      onUnavailable()
+      return
+    }
+    window.gm_authFailure = () => {
+      keyRejected = true
+      onUnavailable()
+    }
+    return () => {
+      window.gm_authFailure = undefined
+    }
+  }, [available, onUnavailable])
 
-  if (!configured) return null
+  if (!available) return null
   return (
-    <APIProvider apiKey={API_KEY} language="es" region="CO" onError={onUnavailable}>
-      <PinMap {...props} />
-    </APIProvider>
+    <MapErrorBoundary onError={onUnavailable}>
+      <APIProvider apiKey={API_KEY} language="es" region="CO" onError={onUnavailable}>
+        <PinMap {...props} />
+      </APIProvider>
+    </MapErrorBoundary>
   )
+}
+
+/** An error from Google inside the map hides the map (the form shows its notice) instead of breaking the whole page. */
+class MapErrorBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch() {
+    this.props.onError()
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children
+  }
 }
 
 function PinMap({ position, framing = 'pin', onPositionChange, onUnavailable }: LocationMapProps) {
@@ -64,7 +104,7 @@ function PinMap({ position, framing = 'pin', onPositionChange, onUnavailable }: 
   const map = useMap()
 
   useEffect(() => {
-    if (status === APILoadingStatus.FAILED || status === APILoadingStatus.AUTH_FAILURE) onUnavailable()
+    if (status === APILoadingStatus.FAILED) onUnavailable()
   }, [status, onUnavailable])
 
   // Follow the pin when it comes from the address; without a pin, show the whole city.
