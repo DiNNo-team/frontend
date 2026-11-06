@@ -305,13 +305,13 @@ src/
 - Se conecta en `src/app/layouts.tsx`: `statusSlot={<RestaurantStatusControl />}` (switch del topbar + diálogo de confirmación) y `banner={<RestaurantStatusBanner />}` (aviso de cerrado con "Abrir ahora" y errores de carga o guardado). Los dos se coordinan por la caché de React Query, sin contexto.
 - El switch del topbar usa la variante de estado del kit: `<Switch … onStatus="open" offStatus="closed" />` (punto que pulsa en `ok` / raya en `inactive`, de `STATUS_META`). Para un switch de estado en otra pantalla, usa esas dos props; no dibujes la forma a mano.
 - Para leer el estado en otra pantalla, usa `useRestaurantStatusQuery()` (query key `restaurantStatusQueryKey`). No llames al endpoint por tu cuenta.
-- Para contar las mesas reservadas antes de cerrar, usa `useTablesQuery` y `countTables` de `features/tables`, sin modificarlos.
+- Para avisar al cerrar con reservas en curso, usa `activeReservationsCount` de `GET /v1/restaurants/me` (§12.2 y §12.8), no el conteo de mesas `reserved`: una mesa Reservada a mano no es una reserva de DiNNo. Hoy el código cuenta mesas con `useTablesQuery` y `countTables` de `features/tables` (sin modificarlos); eso se reemplaza al integrar el Sprint 3.
 - Mock (con `VITE_USE_MOCKS=true`, en cualquier pantalla del dashboard): `?mockClosed` (empieza cerrado), `?mockError=restaurant-status-load` o `restaurant-status-save`, y `?mockLatency=`, que es compartido con mesas. Con `?mockEmpty` no hay mesas, así que el restaurante cierra sin pedir confirmación.
 
 
 ### Bitácora de mesas (Sergio, PBI 9)
 - Vive en `src/features/activity-log/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). La pantalla es `/bitacora` (`ActivityLogPage.tsx`).
-- **Consume `GET /v1/table-logs`** (contrato en el `CLAUDE.md` del backend, "Bitácora de mesas"): `[{ id, tableId, tableIdentifier, previousStatus, newStatus, changedAt, userEmail }]`, más reciente primero, máximo 200 filas, sin paginación. El filtro por mesa manda `?tableId=<id>`; sin filtro no manda nada. El restaurante sale de la sesión.
+- **Consume `GET /v1/table-logs`** (contrato en el `CLAUDE.md` del backend, "Bitácora de mesas"): `[{ id, tableId, tableIdentifier, previousStatus, newStatus, changedAt, userEmail, source }]` (desde el Sprint 3 `userEmail` puede ser `null` y `source` es `manual`, `reservation` o `system`; el texto del autor se decide por `source`, ver §12.3), más reciente primero, máximo 200 filas, sin paginación. El filtro por mesa manda `?tableId=<id>`; sin filtro no manda nada. El restaurante sale de la sesión.
 - `useTableLogsQuery(tableId?)` (query key `['table-logs', tableId ?? 'all']`) lleva **`refetchOnMount: 'always'`**: cada vez que se abre la pantalla vuelve a pedir la bitácora, así un cambio hecho en `/mesas` aparece aunque el `staleTime` global (30 s) no haya vencido. No toca `features/tables`.
 - Reutiliza de mesas, sin modificarlos: `useTablesQuery` + `sortTables` para el filtro (todas las mesas, inactivas incluidas; si fallan, el filtro queda deshabilitado con "Todas las mesas") y `toTableDisplayStatus` para los chips (incluido `inactive`).
 - El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
@@ -387,7 +387,7 @@ Una microreserva dura como máximo 15 minutos y siempre termina sola (check-in, 
 - **Bitácora (`table_logs`):**
   - `user_id` pasa a ser nullable.
   - Se agrega la columna `source` (`'manual'` | `'reservation'` | `'system'`). Los registros existentes quedan con `source = 'manual'`.
-  - `GET /v1/table-logs` empieza a devolver `source` y puede traer el usuario en `null`. La web lo muestra como "Automático".
+  - `GET /v1/table-logs` empieza a devolver `source` y puede traer el usuario en `null` en dos casos: los cambios automáticos (`system`, sin usuario) y los de un comensal (`reservation`), cuyo correo nunca se le muestra al restaurante. La web muestra el texto según `source`: `manual` → el correo del admin · `reservation` con usuario en `null` → "Comensal" · `reservation` con correo (el check-in) → el correo del admin · `system` → "Automático".
 - La mesa vuelve a `available` solo si sigue en `reserved` por esa reserva. Nunca se pisa un estado que el restaurante cambió después.
 
 ### 12.4 Concurrencia (dos personas, una mesa)

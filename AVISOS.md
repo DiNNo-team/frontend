@@ -5,7 +5,44 @@
 
 ---
 
+## 6 nov 2026 · Elizabeth · Backend del Sprint 3: estado real y qué necesita cada cliente
+
+**Esta entrada prevalece sobre la del 3 nov** en lo que dice del estado y las fechas del backend.
+
+- **Hecho en la rama `feat/sprint3-backend`, AÚN NO en `develop` ni en Render:** crear reserva, reserva activa y por id, cancelar, expiración automática (cada 15 s y al arrancar), mesas con reserva activa protegidas, `activeReservationsCount`, check-in, lista de reservas del restaurante y bitácora con `source`.
+- **Pendiente:**
+  - Tarea 8: WebSocket con salas y eventos de reserva. Hasta entonces, consultar cada 30 s.
+  - Tarea 9: exportación anónima de datos para IA (CSV) y script `demo:reset` (planeadas, aún sin escribir).
+  - Tarea 10: cierre técnico y despliegue en Render + Neon.
+- **Mientras no esté en `develop`:** trabajar con datos de ejemplo con la forma exacta de §12, o probar contra el backend local de Elizabeth si lo coordinan con ella.
+- **§12 volvió a quedar idéntica en los tres repos** (cambió el párrafo de `GET /v1/table-logs` en §12.3). Ante cualquier duda manda §12, y se le pregunta a Elizabeth antes de inventar.
+
+### Por persona
+
+**Sebastián (web):**
+- **Prioridad ALTA, antes de que `feat/sprint3-backend` llegue a `develop`** (Elizabeth avisa el día): el manejo de los 409 de mesas por `errorCode`, ya anotado el 3 nov. Render despliega `develop` solo y, hoy, la web trata cualquier 409 al desactivar como «ya estaba inactiva». **Fusiona el PR de la web con este manejo el mismo día que el backend suba a `develop`, o antes.**
+- **Cambio que no estaba en el contrato inicial:** pedir para una mesa el estado que ya tiene (el «Deshacer» sin cambio) con reserva DiNNo activa **también** responde `409 TABLE_HAS_ACTIVE_RESERVATION`.
+- **Desactivar:** solo mesas `available`. Si la mesa tiene reserva activa, gana `TABLE_HAS_ACTIVE_RESERVATION` sobre `TABLE_NOT_AVAILABLE_TO_DEACTIVATE`.
+- **Check-in** (`POST /v1/restaurants/me/check-ins`):
+  - El campo normaliza en el cliente (mayúsculas, sin espacios) y el backend vuelve a normalizar.
+  - Un formato inválido o un código vacío responde `404 RESERVATION_CODE_NOT_FOUND` (no 400). Un body sin `code`, o con `code` que no es texto, responde `400`.
+  - `RESERVATION_EXPIRED` y `RESERVATION_ALREADY_USED` se muestran con el `message` tal cual.
+  - El restaurante cerrado **no** bloquea el check-in.
+- **Lista** (`GET /v1/restaurants/me/reservations`):
+  - Nunca trae el código.
+  - `dinerName` puede ser `null`: se muestra «Comensal» (también cuando el comensal no tiene nombre propio).
+  - Orden: la más próxima a vencer primero. `status` por defecto: `active`.
+  - El historial (`completed`, `expired`, `cancelled`) viene sin paginar y con lo más antiguo primero; está anotado en la «Deuda conocida» del `AVISOS.md` del backend como mejora del Sprint 4.
+- **Bitácora:** el texto se decide por `source`: `manual` → el correo del admin; `reservation` con `userEmail` en `null` → «Comensal»; `reservation` con correo (el check-in) → el correo del admin; `system` → «Automático». El correo del comensal nunca llega al restaurante.
+- **Refresco:** una mesa reservada por DiNNo se libera sola en máximo ~15 s al vencer la reserva. Hasta que llegue el WebSocket, conviene refrescar la lista de reservas y el tablero de mesas cada 30 s.
+- **`activeReservationsCount`** sale igual en `POST`, `GET` y `PATCH` de `/v1/restaurants/me` (en el `POST`, `/v1/restaurants`, vale 0).
+- **Para la app:** Sebastián también tiene su lista en el `AVISOS.md` de mobile.
+
+---
+
 ## 3 nov 2026 · Elizabeth · Contratos del Sprint 3 publicados
+
+> Reemplazada por la entrada del 6 nov (el backend aún no está en `develop` ni en Render; la bitácora se muestra según `source`).
 
 - **Contratos del Sprint 3 publicados en CLAUDE.md §12. Leer antes de empezar cualquier tarea del sprint.** Es la fuente de verdad para backend, web y app (microreserva, mesas con reserva activa, check-in, tiempo real y `errorCode` nuevos), y la sección es idéntica en los tres repos. Si algo no está ahí, se pregunta antes de inventarlo.
 - **Fechas del backend** (en `develop` y desplegado en Render, tabla §12.11): Día 2, reservas y reglas de mesas con reserva activa; Día 3, cancelación, expiración, `GET /v1/restaurants/me/reservations` y check-in; Día 4, WebSocket con salas y eventos de reserva. Mientras tanto, datos de ejemplo con exactamente las formas de §12.8, y consulta cada 30 s hasta el Día 4.
