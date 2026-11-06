@@ -5,22 +5,41 @@
 
 ---
 
+## 6 nov 2026 · Elizabeth · Sprint 3 backend: cierre y plan de merge
+
+**Esta entrada reemplaza la lista de «Pendiente» de la entrada de abajo («Backend del Sprint 3: estado real…», también del 6 nov), que queda tachada ahí:** el WebSocket (tarea 8), la exportación anónima de datos y `demo:reset` (tarea 9) ya están hechos en la rama.
+
+- **Estado:** tareas 1 a 10 del backend hechas en `feat/sprint3-backend`; el PR a `develop` está en proceso. **NO está desplegado aún:** ni `develop` ni Render lo tienen.
+- **Orden de merge (decidido; reemplaza cualquier orden anterior):**
+  1. PR del backend a `develop` (Render despliega solo). Hasta que Sebastián termine la web, nadie usa ni prueba la web.
+  2. PR de la web de Sebastián a `develop`: 409 de mesas por `errorCode`, bitácora por `source`, panel de reservas, check-in y cliente Socket.IO.
+  3. PR de la app a `develop`.
+  4. En la web, PR `develop` → `main` (Vercel despliega `main`; hasta entonces el trabajo no llega a la web real).
+  No hay pruebas ni demo hasta que (2) y (3) estén fusionados. Elizabeth avisa en el grupo cuando fusione el backend.
+- **Render:** variables `RESERVATION_TTL_MINUTES` (15; 3 solo durante la demo de expiración, y volver a 15 después) y `RESERVATION_EXPIRY_ENABLED` (`true`, que es el valor por defecto). `GET /v1/health` devuelve el `commit` desplegado. Una sola instancia: Socket.IO vive en la memoria del proceso; el adaptador de Redis pasa al Sprint 4.
+- **Pendientes:** (solo después de fusionar (2) y (3)) QA según §9 del plan del sprint: Jacobo (M1, M2, M3, M8, M9, T1; concurrencia M2 y M3 por HTTP en Render con 2 o más comensales), Sergio (M5, M6) y Santiago (M4, M7, M10, M11, M12, T2, y su matriz); prueba con Firebase real en web y app; prueba completa de la demo (sección 10 del plan del sprint), con `demo:reset` antes del ensayo (lo corre Elizabeth).
+- **Para Sebastián, lo que debe estar antes de la demo:**
+  - **Web:** panel de reservas (§12.8; además del socket, consulta cada 30 s), check-in (§12.6), mesas protegidas con los 409 por `errorCode` (§12.2 y §12.9), bitácora por `source` (§12.3) y cliente Socket.IO con el token del restaurante (§12.7; las salas se fijan al conectar, así que se reconecta después de registrar el restaurante).
+  - **App:** reservar (§12.1 y §12.9), reserva activa con temporizador calculado con `serverTime` y consulta cada 30 s (§12.1 y §12.7), cancelar, estados finales con `GET /v1/reservations/:id` (§12.8) y tiempo real por `diner:{userId}` (§12.7).
+- **Deuda para el Sprint 4:** paginar y ordenar el historial de reservas por más reciente; adaptador de Redis para Socket.IO; límite de peticiones y de conexiones WebSocket; mover `reservation.created` a un listener asíncrono si se nota la latencia; y el resto de la «Deuda conocida» de este archivo.
+
+---
 ## 6 nov 2026 · Elizabeth · Backend del Sprint 3: estado real y qué necesita cada cliente
 
 **Esta entrada prevalece sobre la del 3 nov** en lo que dice del estado y las fechas del backend.
 
 - **Hecho en la rama `feat/sprint3-backend`, AÚN NO en `develop` ni en Render:** crear reserva, reserva activa y por id, cancelar, expiración automática (cada 15 s y al arrancar), mesas con reserva activa protegidas, `activeReservationsCount`, check-in, lista de reservas del restaurante y bitácora con `source`.
-- **Pendiente:**
-  - Tarea 8: WebSocket con salas y eventos de reserva. Hasta entonces, consultar cada 30 s.
-  - Tarea 9: exportación anónima de datos para IA (CSV) y script `demo:reset` (planeadas, aún sin escribir).
-  - Tarea 10: cierre técnico y despliegue en Render + Neon.
+- **Pendiente (reemplazado por la entrada de cierre de arriba):**
+  - ~~Tarea 8: WebSocket con salas y eventos de reserva. Hasta entonces, consultar cada 30 s.~~ **Hecha** en la rama; la consulta cada 30 s queda como respaldo.
+  - ~~Tarea 9: exportación anónima de datos para IA (CSV) y script `demo:reset` (planeadas, aún sin escribir).~~ **Hecha** en la rama.
+  - ~~Tarea 10: cierre técnico y despliegue en Render + Neon.~~ El cierre documental está hecho; el despliegue ocurre cuando se fusione el backend a `develop`.
 - **Mientras no esté en `develop`:** trabajar con datos de ejemplo con la forma exacta de §12, o probar contra el backend local de Elizabeth si lo coordinan con ella.
 - **§12 volvió a quedar idéntica en los tres repos** (cambió el párrafo de `GET /v1/table-logs` en §12.3). Ante cualquier duda manda §12, y se le pregunta a Elizabeth antes de inventar.
 
 ### Por persona
 
 **Sebastián (web):**
-- **Prioridad ALTA, antes de que `feat/sprint3-backend` llegue a `develop`** (Elizabeth avisa el día): el manejo de los 409 de mesas por `errorCode`, ya anotado el 3 nov. Render despliega `develop` solo y, hoy, la web trata cualquier 409 al desactivar como «ya estaba inactiva». **Fusiona el PR de la web con este manejo el mismo día que el backend suba a `develop`, o antes.**
+- **Prioridad ALTA (paso 2 del orden de merge de la entrada de cierre del 6 nov):** el manejo de los 409 de mesas por `errorCode`, ya anotado el 3 nov. Render despliega `develop` solo y, hoy, la web trata cualquier 409 al desactivar como «ya estaba inactiva». **El backend se fusiona primero; tu PR de la web va después, y hasta que esté fusionado no se usa ni se prueba la web contra el backend nuevo.** La web llega a `main` (Vercel) con un PR `develop` → `main` al final.
 - **Cambio que no estaba en el contrato inicial:** pedir para una mesa el estado que ya tiene (el «Deshacer» sin cambio) con reserva DiNNo activa **también** responde `409 TABLE_HAS_ACTIVE_RESERVATION`.
 - **Desactivar:** solo mesas `available`. Si la mesa tiene reserva activa, gana `TABLE_HAS_ACTIVE_RESERVATION` sobre `TABLE_NOT_AVAILABLE_TO_DEACTIVATE`.
 - **Check-in** (`POST /v1/restaurants/me/check-ins`):
@@ -34,7 +53,7 @@
   - Orden: la más próxima a vencer primero. `status` por defecto: `active`.
   - El historial (`completed`, `expired`, `cancelled`) viene sin paginar y con lo más antiguo primero; está anotado en la «Deuda conocida» del `AVISOS.md` del backend como mejora del Sprint 4.
 - **Bitácora:** el texto se decide por `source`: `manual` → el correo del admin; `reservation` con `userEmail` en `null` → «Comensal»; `reservation` con correo (el check-in) → el correo del admin; `system` → «Automático». El correo del comensal nunca llega al restaurante.
-- **Refresco:** una mesa reservada por DiNNo se libera sola en máximo ~15 s al vencer la reserva. Hasta que llegue el WebSocket, conviene refrescar la lista de reservas y el tablero de mesas cada 30 s.
+- **Refresco:** una mesa reservada por DiNNo se libera sola en máximo ~15 s al vencer la reserva. El WebSocket ya está hecho en el backend (entrada de cierre del 6 nov); refresca además la lista de reservas y el tablero de mesas cada 30 s como respaldo.
 - **`activeReservationsCount`** sale igual en `POST`, `GET` y `PATCH` de `/v1/restaurants/me` (en el `POST`, `/v1/restaurants`, vale 0).
 - **Para la app:** Sebastián también tiene su lista en el `AVISOS.md` de mobile.
 
@@ -71,7 +90,7 @@
    - `src/features/tables/use-table-status-change.ts:59-63`: con `TABLE_HAS_ACTIVE_RESERVATION` debe mostrar el mensaje de §12.2, no «Reactívala…». Sin `errorCode`, sigue como hoy (mesa inactiva).
    - `src/features/tables/table-form.ts:56-58`: con `TABLE_HAS_ACTIVE_RESERVATION` al bajar la capacidad, debe mostrar el mensaje de §12.2 como error general, no en el campo Identificador. Sin `errorCode`, sigue como hoy (identificador repetido).
    - Actualizar la regla de `src/features/tables/types.ts:38-41` («un solo motivo por código HTTP»): ahora manda el `errorCode` cuando viene.
-   - **Coordinar con Elizabeth el momento del merge:** el PR de la web con este manejo se fusiona a `main` el mismo día que el backend sube §12.2, o antes.
+   - ~~**Coordinar con Elizabeth el momento del merge:** el PR de la web con este manejo se fusiona a `main` el mismo día que el backend sube §12.2, o antes.~~ **Reemplazado por el orden de merge de la entrada de cierre del 6 nov:** primero el backend, luego la web a `develop`, luego la app y al final `develop` → `main` en la web.
 2. **Menú de mesa** (`src/features/tables/table-menu.ts:14-15` y `src/features/tables/plan/FloorPlan.tsx:301-303`): «Desactivar» solo se ofrece para mesas `available`. En las demás aparece deshabilitado, con el motivo al pasar el cursor (§12.2).
 3. **Bitácora** (`src/features/activity-log/types.ts:17` y `src/features/activity-log/ActivityLogPage.tsx:29`):
    - `userEmail` pasa a `string | null` y se agrega `source`.
@@ -360,7 +379,7 @@
 **Sergio (QA):**
 - **Nombres exactos para la matriz:**
   - `errorCode` de HTTP: `EMAIL_NOT_VERIFIED`, `ACCOUNT_NOT_ENABLED`, `PROFILE_REQUIRED`, `DINER_ACCOUNT`, `RESTAURANT_ACCOUNT`, `RESTAURANT_REQUIRED`, `RESTAURANT_NOT_FOUND`, `ADDRESS_NOT_FOUND` y `GEOCODING_UNAVAILABLE`.
-  - Códigos del `connect_error` del WebSocket (app): `UNAUTHORIZED`, `EMAIL_NOT_VERIFIED`, `PROFILE_REQUIRED`, `RESTAURANT_ACCOUNT` y `SERVER_ERROR`.
+  - Códigos del `connect_error` del WebSocket (app): `UNAUTHORIZED`, `EMAIL_NOT_VERIFIED`, `PROFILE_REQUIRED`, `RESTAURANT_REQUIRED` y `SERVER_ERROR` (el socket ya no envía `RESTAURANT_ACCOUNT`; sigue existiendo en HTTP).
   - `availability`: `available`, `few`, `none` y `closed`.
 - **`GET /v1/me`** responde con los dos roles: `{ id, email, displayName, role, restaurantId }`. En una cuenta de restaurante `displayName` es `null`.
 - **QA de tiempo real:** el script `scripts/listen-availability.mjs` vive en el repo del backend. Crear una mesa, cambiar su estado, desactivarla o reactivarla, abrir o cerrar el restaurante, o editar su horario o ubicación desde la web debe imprimir un `availability.changed`; editar el identificador o la capacidad de una mesa, o repetir el mismo estado, no imprime nada. Uso en el `AVISOS.md` del backend (sección de Sergio) y en su README, sección 6.
