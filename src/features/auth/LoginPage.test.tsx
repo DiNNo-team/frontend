@@ -72,6 +72,18 @@ describe('LoginPage', () => {
     expect(signInForm().getByLabelText('Correo')).toHaveFocus()
   })
 
+  it('offers «¿Quieres tu restaurante en DiNNo? Escríbenos» as an email to the team (pending 2.2, option A)', async () => {
+    const { user } = renderLoginPage()
+    const link = signInForm().getByRole('link', { name: 'Escríbenos' })
+    expect(link.closest('p')).toHaveTextContent('¿Quieres tu restaurante en DiNNo? Escríbenos')
+    expect(link.getAttribute('href')).toMatch(/^mailto:dinnoteam2026@gmail\.com\?subject=Quiero%20mi%20restaurante%20en%20DiNNo&body=/)
+
+    await user.click(signInForm().getByRole('button', { name: 'Crear cuenta' }))
+    const panel = within(screen.getByRole('tabpanel', { name: 'Crear cuenta' }))
+    expect(panel.getByRole('link', { name: 'Escríbenos' })).toHaveAttribute('href', link.getAttribute('href'))
+    expect(panel.getByText('dinnoteam2026@gmail.com')).toBeInTheDocument()
+  })
+
   it('validates email format and requires a password without calling signIn', async () => {
     const { user } = renderLoginPage()
     await user.type(signInForm().getByLabelText('Correo'), 'correo-invalido')

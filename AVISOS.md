@@ -5,6 +5,81 @@
 
 ---
 
+## 8 nov 2026 · Sebastián · Qué le falta a cada uno para cerrar el Sprint 3
+
+**El código del Sprint 3 está completo:** el backend (Elizabeth), la web y la app (Sebastián) están en `develop`, y probamos todo de punta a punta contra Render. Ninguna tarea de código del flujo principal está pendiente. Lo que queda es probar, ensayar la demo y cerrar las tareas del reparto que no son del flujo principal.
+
+### Elizabeth
+- **Ensayo de la demo (Día 6, con Sebastián)**, siguiendo la sección 10 del reparto:
+  - Correr `demo:reset` antes de empezar.
+  - Poner `RESERVATION_TTL_MINUTES=3` en Render solo para el paso de expiración y **volver a 15 al terminar**.
+  - Despertar Render con `/v1/health`.
+- **Paso 11 de la demo:** mostrar en Swagger o en Neon la fila de `check_ins` del check-in.
+- **Vencimiento con 3 min contra Render:** el front solo lo probó con datos de ejemplo. Hay que verlo en el ensayo (la app pasa a «Vencida» y la fila sale del panel de la web).
+- **Para el Sprint 4 (no bloquea):** cuando ninguna mesa alcanza para el número de personas, el backend responde `NO_TABLE_AVAILABLE` y la app dice «Alguien acaba de tomar la última mesa…», que no describe ese caso. Propuesta: un `errorCode` distinto o un texto más general.
+- **CSV para la IA:** correr `export:data` y pasarle la carpeta a Santiago y Sergio cuando la pidan.
+
+### Jacobo
+- **QA:** M1, M2, M3, M8, M9 y T1, en la matriz de Santiago, con evidencia.
+- **Segunda cuenta de comensal:** hoy hay **una sola** (`dinnoteam2026+comensal@gmail.com`). Para M2 y M3 (dos comensales a la vez) crea otra con un alias `dinnoteam2026+algo@gmail.com` desde la app («Crear cuenta») y publica las credenciales en Discord (#usuarios-comensal), nunca en el repo.
+- **Script de concurrencia** (M2): varias peticiones `POST /v1/reservations` a la vez contra la última mesa de un restaurante → exactamente una 201 y las demás `409 NO_TABLE_AVAILABLE`. Sin credenciales en el script.
+- **Azure (PBI 7.1), según el reparto:** grupo de recursos `rg-dinno`, Container App de prueba con escala a cero, revisión de PostgreSQL y Redis (sin crearlos) y `docs/azure-migracion.md` en el backend.
+
+### Santiago
+- **QA:** M4, M7, M10, M11, M12 y T2, y consolidar la matriz.
+  - **M4:** cambiar la hora del teléfono **a mano desde Ajustes** (en el emulador no se puede por comando) y comprobar que el temporizador no cambia. Cerrar y abrir la app también debe conservar el tiempo.
+  - **M7:** probarlo cuando Render tenga `RESERVATION_TTL_MINUTES=3`, o esperar los 15 min.
+  - **M10:** web y app abiertas a la vez. Reservar, cancelar, vencer y hacer check-in deben cambiar las dos sin recargar.
+- **IA (PBI 6.1, con Sergio):** documento `docs/ia-diseno.md` y prototipo en `ai-prototype/`, en el backend.
+
+### Sergio
+- **QA:** M5 y M6 (cancelar: activa, ya cancelada, ya vencida y de otro comensal; la mesa vuelve a Disponible y la disponibilidad pública sube).
+- **IA (PBI 6.1, con Santiago).**
+- **Ajustes de dirección en la web** (prioridad baja, solo si el QA está completo). Sebastián revisa el PR.
+
+### Sebastián
+- Fusionar el PR `develop` → `main` de la web (Vercel publica `main`).
+- Mover en Azure las tareas de front, y pasar los PBIs 2.1 y 4.1 a Done cuando QA marque sus casos.
+- Ensayo con Elizabeth.
+- Ajustes visuales de la demo del Sprint 2 (después del Sprint 3).
+
+### Para todos los que prueben
+- **App:** usen el development build (`npx expo run:android`); un APK de release no lee de Metro. Corran Metro contra Render con `EXPO_PUBLIC_USE_MOCKS=false EXPO_PUBLIC_API_URL=https://dinno-backend.onrender.com npx expo start`.
+- **Render dormido:** la app muestra «Conectando con DiNNo…» y luego «Intentar de nuevo»; la web muestra skeletons. Esperen y reintenten.
+- **Después de `demo:reset`:** recarguen la web y reabran la app, porque el reset no emite eventos.
+- **Cada hallazgo** va a la matriz y a Azure (Bug), con pasos, resultado esperado, resultado obtenido, captura y a quién le corresponde.
+
+---
+
+## 8 nov 2026 · Elizabeth · `reservationTtlMinutes` en el detalle público
+
+- **Qué es:** `GET /v1/restaurants/:id/public` incluye ahora `reservationTtlMinutes`: un entero entre 2 y 15 con la vigencia, en minutos, que tiene una microreserva en este momento. Es el mismo valor de `RESERVATION_TTL_MINUTES` con el que el backend crea las reservas (15 por defecto).
+- **Es aditivo:** ningún campo existente cambia ni se quita, y no hay rutas, variables ni tablas nuevas. El campo viene siempre, también si el restaurante está cerrado o sin mesas: la app decide cuándo mostrarlo.
+- **App:** puede mostrar la vigencia **antes** de reservar (el texto lo define la app). No la guardes fija en 15: en la demo de expiración el backend corre con `RESERVATION_TTL_MINUTES=3` y el valor cambia a 3.
+- **El temporizador no cambia:** la cuenta regresiva de la reserva sigue calculándose con `expiresAt` y `serverTime` de la respuesta de la reserva; `reservationTtlMinutes` es solo informativo.
+- **Web:** el detalle público es de comensal, así que la web no lo usa. No hay acción para el frontend.
+- **Despliegue:** el backend del Sprint 3 **sí** está desplegado en Render (commit `15be6cf`, PR #49); eso reemplaza el «NO está desplegado aún» de las entradas de cierre del 6 nov. El campo nuevo llega a Render cuando se fusione su PR (`feat/public-reservation-ttl`).
+
+---
+
+## 8 nov 2026 · Sebastián · Front del Sprint 3 completo: ya se puede hacer QA
+
+- **Web y app terminadas:** web #70 a #72 (en `main`) y app #30, #32, #33 y #34 (en `develop`). Así se cumplen los pasos 2 y 3 del orden de merge de Elizabeth, y **el QA del Sprint 3 puede empezar** (Jacobo: M1, M2, M3, M8, M9 y T1; Sergio: M5 y M6; Santiago: M4, M7, M10, M11, M12 y T2).
+- **Probado de punta a punta contra Render**: reservar en la app → aparece en la web sin recargar → «Validar código» en la web → la app pasa sola a «Cumplida». También cancelar, el vencimiento y la mesa protegida.
+- **Pendiente 2.2, opción A (equipo):**
+  - El login web muestra «¿Quieres tu restaurante en DiNNo? **Escríbenos**», debajo de «Continuar con Google».
+  - También aparece en la pestaña «Crear cuenta», junto con la dirección.
+  - El enlace abre un correo a `dinnoteam2026@gmail.com` con el asunto «Quiero mi restaurante en DiNNo» y los datos que necesitamos para habilitar la cuenta.
+  - Sigue sin haber registro público.
+- **Para Jacobo** (tu área de auth):
+  - `AuthLink.tsx` suma `AuthAnchor`, el mismo estilo de enlace para un `<a>`.
+  - El texto y el `mailto:` viven en `src/features/auth/restaurant-request.ts`.
+  - No cambió nada del inicio de sesión.
+- **Para la demo:** el recorrido y la preparación están en la sección 10 del reparto. Después de `demo:reset`, recarguen la web y reabran la app, porque el reset no emite eventos.
+- **Sin dependencias, variables ni cambios del kit.**
+
+---
+
 ## 8 nov 2026 · Sebastián · Dashboard en tiempo real (Socket.IO) y «En vivo»
 
 - **Dependencia nueva: `socket.io-client` ^4.8.4** (la misma que usa la app). **Corre `npm ci` después de hacer pull.**
@@ -60,7 +135,7 @@
 
 **Esta entrada reemplaza la lista de «Pendiente» de la entrada de abajo («Backend del Sprint 3: estado real…», también del 6 nov), que queda tachada ahí:** el WebSocket (tarea 8), la exportación anónima de datos y `demo:reset` (tarea 9) ya están hechos en la rama.
 
-- **Estado:** tareas 1 a 10 del backend hechas en `feat/sprint3-backend`; el PR a `develop` está en proceso. **NO está desplegado aún:** ni `develop` ni Render lo tienen.
+- **Estado:** tareas 1 a 10 del backend hechas en `feat/sprint3-backend`; el PR a `develop` está en proceso. ~~**NO está desplegado aún:** ni `develop` ni Render lo tienen.~~ **Ya está desplegado en Render** (commit `15be6cf`, PR #49); ver la entrada del 8 nov («`reservationTtlMinutes` en el detalle público»).
 - **Orden de merge (decidido; reemplaza cualquier orden anterior):**
   1. PR del backend a `develop` (Render despliega solo). Hasta que Sebastián termine la web, nadie usa ni prueba la web.
   2. PR de la web de Sebastián a `develop`: 409 de mesas por `errorCode`, bitácora por `source`, panel de reservas, check-in y cliente Socket.IO.

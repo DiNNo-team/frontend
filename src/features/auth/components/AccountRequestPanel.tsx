@@ -1,4 +1,5 @@
-import { AuthLink } from './AuthLink'
+import { RESTAURANT_REQUEST_MAILTO, RESTAURANT_REQUEST_TEXT, TEAM_EMAIL } from '../restaurant-request'
+import { AuthAnchor, AuthLink } from './AuthLink'
 
 const STEPS = [
   'Escríbele al equipo de DiNNo con el nombre de tu restaurante y el correo con el que vas a entrar.',
@@ -32,6 +33,11 @@ export function AccountRequestPanel({ onSwitch }: { onSwitch: () => void }) {
           <li key={step}>{step}</li>
         ))}
       </ol>
+
+      <p className="text-sec text-fg">
+        {RESTAURANT_REQUEST_TEXT.question} <AuthAnchor href={RESTAURANT_REQUEST_MAILTO}>{RESTAURANT_REQUEST_TEXT.action}</AuthAnchor>{' '}
+        a <span className="font-bold break-all">{TEAM_EMAIL}</span>.
+      </p>
 
       <p className="text-sec text-fg">¿Eres comensal? Encuentra mesa desde la app DiNNo.</p>
     </section>

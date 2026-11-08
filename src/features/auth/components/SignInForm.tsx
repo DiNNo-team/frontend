@@ -7,7 +7,8 @@ import { getFirebaseAuthErrorMessage, getFirebaseGoogleAuthErrorMessage } from '
 import { getSafeReturnTo } from '../auth-navigation'
 import { useAuth } from '../auth-context'
 import { validateEmail } from '../auth-view'
-import { AuthLink } from './AuthLink'
+import { RESTAURANT_REQUEST_MAILTO, RESTAURANT_REQUEST_TEXT } from '../restaurant-request'
+import { AuthAnchor, AuthLink } from './AuthLink'
 
 const RESET_SENT_MESSAGE =
   'Si hay una cuenta con ese correo, te enviamos un enlace para cambiar tu contraseña. Revisa tu bandeja de entrada.'
@@ -159,6 +160,11 @@ export function SignInForm({ onSwitch }: { onSwitch: () => void }) {
         <img src={googleLogo} alt="" aria-hidden="true" width={20} height={20} className="size-5" />
         Continuar con Google
       </Button>
+
+      {/* Pending 2.2, option A: restaurant accounts are enabled by the team; this is how to ask for one. */}
+      <p className="text-center text-sec text-fg">
+        {RESTAURANT_REQUEST_TEXT.question} <AuthAnchor href={RESTAURANT_REQUEST_MAILTO}>{RESTAURANT_REQUEST_TEXT.action}</AuthAnchor>
+      </p>
     </form>
   )
 }
