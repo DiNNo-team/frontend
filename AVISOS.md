@@ -5,6 +5,23 @@
 
 ---
 
+## 8 nov 2026 · Sebastián · Check-in, panel «Reservas DiNNo» y mesas protegidas en `/mesas`
+
+- **`/mesas`:**
+  - «Validar código» pasa a ser el botón principal (en servicio es la acción más usada) y «Agregar mesa» pasa a botón de borde.
+  - Debajo del resumen aparece el panel «Reservas DiNNo»: nombre o «Comensal», mesa, personas y tiempo restante. **Nunca el código.**
+  - Una mesa con reserva de DiNNo en curso se ve como «Reserva DiNNo» (cuadrado + candado), en la cuadrícula y en el plano. No ofrece cambiar el estado, los atajos D/R/O ni «Desactivar», y al pasar el puntero (o con el foco) explica por qué. Editar sigue igual.
+- **Kit (`components/ui`, cambios aditivos):**
+  - `STATUS_META` tiene `dinno` (Reserva DiNNo) y los cuatro estados de reserva (`reservation-active` · `-completed` · `-expired` · `-cancelled`: Activa · Cumplida · Vencida · Cancelada), los mismos de la app. Forma nueva `square-lock`. `RESERVATION_STATUS` pasa del estado de la API al del kit.
+  - `TableCard` y `TableNode` aceptan `status="dinno"`. `TableCard` tiene `lockedReason` (tooltip accesible).
+  - `StatusPicker` tiene `locked` (solo mensaje). `StatusLine` tiene `wrap`.
+  - Ejemplos en `/kit`.
+- **Código nuevo:** `src/features/reservations/` (detalle en CLAUDE.md §11). El tiempo real (socket) llega en el siguiente PR; mientras tanto, el panel consulta cada 30 s y al volver a la pestaña.
+- **Para quien pruebe con mock:** `/mesas?mockDinno=01,07`. Códigos `K7M4QX` y `P3R8TW` válidos; `VENC9D`, `USAD4S` y `CANC3X` fuerzan vencida, ya usado y cancelada.
+- **Sin dependencias nuevas ni variables de entorno nuevas.**
+
+---
+
 ## 8 nov 2026 · Sebastián · Web compatible con el backend del Sprint 3 (mesas, bitácora y cierre)
 
 **Contexto:** el backend del Sprint 3 ya está en `develop` y en Render (`/v1/health` → `15be6cf`), así que la entrada del 6 nov de abajo («NO está desplegado») quedó vieja. La web de producción todavía trataba los 409 nuevos como si fueran los del Sprint 1. Este PR lo corrige (rama `fix/sprint3-mesas-409-bitacora`).

@@ -10,7 +10,7 @@ import { TABLE_LIMITS, type Table, type TableShape, type TableStatus } from './t
 // Tables start unplaced, like every real table after the AddTablePlan migration; with a plan already drawn: /mesas?mockPlan
 // A big room (40 tables, placed by "Ubicar automáticamente"): /mesas?mockPlan&mockMany
 // Sprint 3 rules (CLAUDE.md §12.2): only an available table is deactivated; a table held by a DiNNo reservation
-// (`mockTablesControl.setDinnoReservations`, or /mesas?mockDinno=03 — the 03 and 08 of the seed are Reservada) answers
+// (`mockTablesControl.setDinnoReservations`, or /mesas?mockDinno=01,07, which also turns them Reservada) answers
 // 409 TABLE_HAS_ACTIVE_RESERVATION on status change, deactivate and lowering the capacity under the party size.
 
 export type MockOperation = 'list' | 'create' | 'status' | 'update' | 'deactivate' | 'reactivate' | 'plan'
@@ -90,7 +90,10 @@ function initialTables(): Table[] {
   const params = urlParams()
   if (params.has('mockEmpty')) return []
   if (params.has('mockMany')) return manyPlacedTables()
-  return params.has('mockPlan') ? seedPlacedTables() : seedTables()
+  const seed = params.has('mockPlan') ? seedPlacedTables() : seedTables()
+  // A DiNNo reservation always leaves its table Reservada (§12.3), whatever the seed said.
+  const dinno = params.get('mockDinno')?.split(',') ?? []
+  return seed.map((table) => (dinno.includes(table.identifier) ? { ...table, status: 'reserved' } : table))
 }
 
 let tables: Table[] = initialTables()
@@ -117,6 +120,12 @@ export const mockTablesControl = {
   /** Tables held by an active DiNNo reservation: table id → party size. */
   setDinnoReservations(next: Record<string, number>) {
     dinnoReservations = new Map(Object.entries(next))
+  },
+  /** A valid check-in in the reservations mock: the table goes Reservada → Ocupada and is free to change again. */
+  markCheckedIn(tableId: string) {
+    dinnoReservations.delete(tableId)
+    const table = tables.find((item) => item.id === tableId)
+    if (table) table.status = 'occupied'
   },
   setLatency(ms: number) {
     latencyMs = ms

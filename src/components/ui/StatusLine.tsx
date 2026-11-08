@@ -8,6 +8,8 @@ export interface StatusLineProps {
   label?: string
   /** `md` 14/20 (cards, rows) · `sm` 12/16 (plan nodes). */
   size?: 'md' | 'sm'
+  /** Lets a long word ("Reserva DiNNo") go to a second line instead of being cut, where the height allows it. */
+  wrap?: boolean
   className?: string
 }
 
@@ -15,12 +17,12 @@ export interface StatusLineProps {
  * Status without the pill (manual 3.6): 10 px shape in its color + the word in ink. For surfaces that already carry
  * the status tint (table cards, plan nodes), where a chip would repeat the color.
  */
-export function StatusLine({ status, label, size = 'md', className }: StatusLineProps) {
+export function StatusLine({ status, label, size = 'md', wrap = false, className }: StatusLineProps) {
   const meta = STATUS_META[status]
   return (
     <span className={cn('inline-flex min-w-0 items-center gap-1.5 font-bold text-fg', size === 'sm' ? 'text-label' : 'text-sec', className)}>
       <StatusShape shape={meta.shape} size={10} className={TONE_TEXT[meta.tone]} />
-      <span className="min-w-0 truncate">{label ?? meta.label}</span>
+      <span className={cn('min-w-0', wrap ? 'break-words' : 'truncate')}>{label ?? meta.label}</span>
     </span>
   )
 }

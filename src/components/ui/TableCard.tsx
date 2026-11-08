@@ -1,5 +1,6 @@
-import { useId, type KeyboardEvent } from 'react'
+import { useId, type KeyboardEvent, type ReactNode } from 'react'
 import { Ellipsis, Users } from 'lucide-react'
+import { Tooltip } from 'radix-ui'
 import { cn } from '@/lib/cn'
 import { formatCapacity } from '@/lib/format'
 import { Icon } from '@/lib/icon'
@@ -8,14 +9,16 @@ import { IconButton } from './IconButton'
 import { STATUS_META, TONE_SURFACE, TONE_TEXT } from './status'
 import { StatusLine } from './StatusLine'
 
-export type TableCardStatus = 'available' | 'reserved' | 'occupied' | 'inactive'
-export type TableCardShortcutStatus = Exclude<TableCardStatus, 'inactive'>
+/** `dinno` = held by a DiNNo reservation (CLAUDE.md §12.2): Reservada's surface, the lock shape, no status shortcuts. */
+export type TableCardStatus = 'available' | 'reserved' | 'occupied' | 'inactive' | 'dinno'
+export type TableCardShortcutStatus = Exclude<TableCardStatus, 'inactive' | 'dinno'>
 
 const SURFACE: Record<TableCardStatus, string> = {
   available: TONE_SURFACE.ok,
   reserved: TONE_SURFACE.reserved,
   occupied: TONE_SURFACE.busy,
   inactive: 'border-dashed border-field border-line-strong text-fg-2',
+  dinno: TONE_SURFACE.reserved,
 }
 
 /** Status shortcuts on a focused card (manual 12.2): D · R · O. */
@@ -30,7 +33,7 @@ export interface TableCardProps {
   selected?: boolean
   /** Click, Enter or Space on the card: opens its picker (inactive tables too, to offer "Reactivar mesa"). */
   onSelect?: () => void
-  /** D, R or O on the focused card. Not called for inactive tables. */
+  /** D, R or O on the focused card. Not called for inactive tables nor for `dinno` ones. */
   onShortcut?: (status: TableCardShortcutStatus) => void
   /** `id` of the card's button, to move focus back to it. */
   toggleId?: string
@@ -40,6 +43,11 @@ export interface TableCardProps {
   menuTriggerId?: string
   /** A new value plays the "changed from another device" ring once (manual 11.3). */
   highlight?: number
+  /**
+   * Why the status cannot be changed by hand (status `dinno`): a tooltip on hover and keyboard focus, and part of the
+   * card's accessible description.
+   */
+  lockedReason?: string
   /** Heading level of the name, so the page outline never skips one (`h2` right under the page's `h1`). */
   headingAs?: 'h2' | 'h3'
   className?: string
@@ -61,18 +69,21 @@ export function TableCard({
   menuItems,
   menuTriggerId,
   highlight,
+  lockedReason,
   headingAs: Heading = 'h3',
   className,
 }: TableCardProps) {
   const baseId = useId()
   const capacityId = `${baseId}-capacity`
   const statusId = `${baseId}-status`
+  const reasonId = `${baseId}-reason`
   const inactive = status === 'inactive'
+  const locked = status === 'dinno'
   const tone = STATUS_META[status].tone
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     const next = SHORTCUTS[event.key.toLowerCase()]
-    if (!next || inactive || !onShortcut || event.metaKey || event.ctrlKey || event.altKey) return
+    if (!next || inactive || locked || !onShortcut || event.metaKey || event.ctrlKey || event.altKey) return
     event.preventDefault()
     onShortcut(next)
   }
@@ -97,18 +108,20 @@ export function TableCard({
       <div className="flex items-start justify-between gap-2">
         <Heading className="line-clamp-2 min-w-0 text-h3 break-words">
           {onSelect ? (
-            <button
-              id={toggleId}
-              type="button"
-              aria-haspopup="dialog"
-              aria-expanded={selected}
-              aria-describedby={`${capacityId} ${statusId}`}
-              onClick={onSelect}
-              onKeyDown={handleKeyDown}
-              className="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-tile focus-visible:shadow-none focus-visible:after:shadow-(--focus-ring)"
-            >
-              {name}
-            </button>
+            <WithReason reason={lockedReason}>
+              <button
+                id={toggleId}
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={selected}
+                aria-describedby={[capacityId, statusId, lockedReason ? reasonId : ''].filter(Boolean).join(' ')}
+                onClick={onSelect}
+                onKeyDown={handleKeyDown}
+                className="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-tile focus-visible:shadow-none focus-visible:after:shadow-(--focus-ring)"
+              >
+                {name}
+              </button>
+            </WithReason>
           ) : (
             name
           )}
@@ -127,8 +140,32 @@ export function TableCard({
         {formatCapacity(capacity)}
       </p>
       <span id={statusId} className="flex">
-        <StatusLine status={status} className={cn(inactive && 'text-fg-2')} />
+        <StatusLine status={status} wrap className={cn(inactive && 'text-fg-2')} />
       </span>
+      {lockedReason && (
+        <span id={reasonId} className="sr-only">
+          {lockedReason}
+        </span>
+      )}
     </article>
+  )
+}
+
+/** Tooltip with the reason on hover and on keyboard focus (manual 12.2: same look as IconButton's). */
+function WithReason({ reason, children }: { reason?: string; children: ReactNode }) {
+  if (!reason) return children
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          side="top"
+          sideOffset={8}
+          className="z-(--z-toast) max-w-72 rounded-input bg-inverse px-2 py-1 text-sec text-on-inverse shadow-lifted"
+        >
+          {reason}
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
   )
 }

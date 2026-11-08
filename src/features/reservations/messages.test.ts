@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '@/lib/api-client'
-import { closeWithReservationsText, dinerNameOf, tableProtectionMessage } from './messages'
+import { checkInErrorText, checkInSuccessText, closeWithReservationsText, dinerNameOf, tableProtectionMessage } from './messages'
 
 describe('tableProtectionMessage (CLAUDE.md §12.2)', () => {
   it('maps the two new 409s to their exact texts', () => {
@@ -32,5 +32,33 @@ describe('dinerNameOf', () => {
     expect(dinerNameOf(null)).toBe('Comensal')
     expect(dinerNameOf('  ')).toBe('Comensal')
     expect(dinerNameOf('Laura')).toBe('Laura')
+  })
+})
+
+describe('check-in texts (CLAUDE.md §12.6)', () => {
+  it('success: table, people (singular) and «Comensal» without a name', () => {
+    expect(checkInSuccessText({ tableIdentifier: '04', partySize: 2, dinerName: 'Laura' })).toBe('Check-in confirmado · Mesa 04 · 2 personas · Laura')
+    expect(checkInSuccessText({ tableIdentifier: 'Mesa 4', partySize: 1, dinerName: null })).toBe('Check-in confirmado · Mesa 04 · 1 persona · Comensal')
+  })
+
+  it('maps each errorCode; expired and already used show the backend message (with the time)', () => {
+    const error = (status: number, code: string, message?: string) => new ApiError({ status, code, message })
+    expect(checkInErrorText(error(404, 'RESERVATION_CODE_NOT_FOUND', 'x'))).toBe('No encontramos una reserva con ese código en tu restaurante.')
+    expect(checkInErrorText(error(409, 'RESERVATION_EXPIRED', 'Esta reserva se venció a las 12:41. La mesa ya se liberó.'))).toBe(
+      'Esta reserva se venció a las 12:41. La mesa ya se liberó.',
+    )
+    expect(checkInErrorText(error(409, 'RESERVATION_ALREADY_USED', 'Este código ya se usó a las 12:35.'))).toBe('Este código ya se usó a las 12:35.')
+    expect(checkInErrorText(error(409, 'RESERVATION_CANCELLED', 'texto del backend'))).toBe('El comensal canceló esta reserva.')
+  })
+
+  it('falls back without the time when the backend message is missing', () => {
+    expect(checkInErrorText(new ApiError({ status: 409, code: 'RESERVATION_EXPIRED' }))).toBe('Esta reserva se venció. La mesa ya se liberó.')
+    expect(checkInErrorText(new ApiError({ status: 409, code: 'RESERVATION_ALREADY_USED' }))).toBe('Este código ya se usó.')
+  })
+
+  it('network, session and unknown errors use the generic texts', () => {
+    expect(checkInErrorText(new ApiError({ status: 0, isNetworkError: true }))).toBe('No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.')
+    expect(checkInErrorText(new ApiError({ status: 401 }))).toBe('Tu sesión terminó. Inicia sesión de nuevo.')
+    expect(checkInErrorText(new ApiError({ status: 500, message: 'boom' }))).toBe('No pudimos validar el código. Revisa tu conexión e intenta de nuevo.')
   })
 })

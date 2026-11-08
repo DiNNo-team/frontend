@@ -7,6 +7,7 @@ import { tablesQueryKey } from './hooks'
 import TablesPage from './TablesPage'
 
 vi.mock('./api', () => ({ tablesApi: mockTablesApi }))
+vi.mock('@/features/reservations/api', async () => ({ reservationsApi: (await import('@/features/reservations/api.mock')).mockReservationsApi }))
 
 // Cell of 44 px: ResizeObserver is a stub in jsdom, so the plan keeps its default size.
 const CELL = 44
