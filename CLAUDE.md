@@ -323,6 +323,17 @@ src/
 - En `/mesas`: el panel «Reservas DiNNo» (`ReservationsPanel`, consulta cada 30 s) y «Validar código» (`CheckInDialog`), el botón principal de la pantalla. Una mesa con reserva activa se ve como «Reserva DiNNo» (`useDinnoTableIds` cruza la lista con las mesas por `tableId`): sin selector de estado, sin atajos D/R/O y sin «Desactivar».
 - Mock (con `VITE_USE_MOCKS=true`): `?mockDinno=01,07` crea reservas en esas mesas (los dos mocks lo leen). Códigos: `K7M4QX` y `P3R8TW` son válidos; `VENC9D` (vencida), `USAD4S` (ya usado) y `CANC3X` (cancelada) fuerzan cada resultado. `?mockError=reservations-list` o `check-in`.
 
+### Tiempo real del dashboard (Sebastián, Sprint 3)
+- **Un solo socket por sesión:** `useRestaurantRealtime` (`src/features/realtime/`), montado en `DashboardLayout`. Usa `socket.io-client`, se conecta a `API_ORIGIN` (`src/lib/api.ts`, sin `/v1`) por WebSocket, con `auth` como función que pide un token nuevo con `getAuthToken()` en cada conexión. **No abras otro socket**; para escuchar algo nuevo, agrégalo en ese hook.
+- Solo conecta con el restaurante ya registrado (`useRestaurantQuery` con datos) y nunca con `VITE_USE_MOCKS=true`. Se desconecta al cerrar sesión, y reconecta si cambia el restaurante (las salas se fijan al conectar).
+- **Eventos (§12.8):**
+  - `reservation.created` agrega la fila del panel (sin duplicar).
+  - `reservation.cancelled`, `.expired` y `.checked_in` la quitan, con un toast corto (no para el check-in hecho en este mismo dispositivo).
+  - `table.status_changed` vuelve a pedir las mesas, lo que también hace sonar el anillo de cambio remoto.
+- **Fallas:** al reconectar se vuelve a pedir todo. `connect_error` `SERVER_ERROR` se reintenta a los 5, 15 y 30 s; los demás códigos no se reintentan. El panel sigue consultando cada 30 s.
+- El estado de la conexión vive en `connection.ts` (`useLiveConnection`) y lo muestra el `LiveIndicator` del kit en el topbar (`RestaurantLiveIndicator`).
+- **Pruebas:** `socket.io-client` está simulado en todas (`src/test/fake-socket.ts`, desde `setup.ts`), así que ninguna abre una conexión real. Usa `lastSocket()` para emitir eventos del servidor.
+
 ### Registro del restaurante (Santiago, PBI 3)
 - Vive en `src/features/restaurant/` (carpeta compartida con la pantalla `/restaurante` de Jacobo): `types.ts`, `api.ts`, `hooks.ts`, `restaurant-form.ts`, `components/RestaurantForm.tsx` y `OnboardingPage.tsx` (`/onboarding`). Sin mock: el endpoint ya existe.
 - **Contrato:** `POST /v1/restaurants` con `{ name, category, address, schedules: [{ dayOfWeek 1–7 (1 = lunes), isOpen24h, opensAt "HH:MM", closesAt "HH:MM" }] }`: un elemento por día abierto, sin horas si abre 24 horas. Responde `201` con la misma forma que `GET /v1/restaurants/me`.
