@@ -317,6 +317,12 @@ src/
 - El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
 - Mock (con `VITE_USE_MOCKS=true`, datos fijos con las mesas del mock de mesas): `?mockError=table-logs-load`, `?mockTableLogsFull` (200 filas) y `?mockEmpty` / `?mockLatency=` (compartidos con mesas). No refleja los cambios hechos en `/mesas`: para eso, el backend real.
 
+### Reservas DiNNo y check-in (Sebastián, Sprint 3)
+- Viven en `src/features/reservations/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). Contrato en §12.8: `GET /v1/restaurants/me/reservations` y `POST /v1/restaurants/me/check-ins`. **La web nunca recibe ni muestra el código de una reserva**: los tipos no lo tienen y no se agrega.
+- `messages.ts` es el único mapa `errorCode → texto` del sprint (mesas protegidas, check-in, cierre con reservas). `code.ts` normaliza el código (mayúsculas, sin espacios, 6 del alfabeto). `countdown.ts` calcula el tiempo restante con `expiresAt − serverTime` y un reloj monotónico, nunca solo con el reloj del equipo.
+- En `/mesas`: el panel «Reservas DiNNo» (`ReservationsPanel`, consulta cada 30 s) y «Validar código» (`CheckInDialog`), el botón principal de la pantalla. Una mesa con reserva activa se ve como «Reserva DiNNo» (`useDinnoTableIds` cruza la lista con las mesas por `tableId`): sin selector de estado, sin atajos D/R/O y sin «Desactivar».
+- Mock (con `VITE_USE_MOCKS=true`): `?mockDinno=01,07` crea reservas en esas mesas (los dos mocks lo leen). Códigos: `K7M4QX` y `P3R8TW` son válidos; `VENC9D` (vencida), `USAD4S` (ya usado) y `CANC3X` (cancelada) fuerzan cada resultado. `?mockError=reservations-list` o `check-in`.
+
 ### Registro del restaurante (Santiago, PBI 3)
 - Vive en `src/features/restaurant/` (carpeta compartida con la pantalla `/restaurante` de Jacobo): `types.ts`, `api.ts`, `hooks.ts`, `restaurant-form.ts`, `components/RestaurantForm.tsx` y `OnboardingPage.tsx` (`/onboarding`). Sin mock: el endpoint ya existe.
 - **Contrato:** `POST /v1/restaurants` con `{ name, category, address, schedules: [{ dayOfWeek 1–7 (1 = lunes), isOpen24h, opensAt "HH:MM", closesAt "HH:MM" }] }`: un elemento por día abierto, sin horas si abre 24 horas. Responde `201` con la misma forma que `GET /v1/restaurants/me`.
