@@ -381,6 +381,14 @@ Selector de estado (manual 12.2): popover de vidrio junto a la mesa desde 768 px
 </StatusPicker>
 ```
 
+## LiveIndicator
+
+Conexión en vivo del dashboard (manual 12.2 y 13.7), en el topbar a la izquierda del switch. `state`: `live` («En vivo» con el Active Dot que pulsa) · `reconnecting` (raya + «Reconectando…» + «Actualizado 7:42 p. m.» con `updatedAt`) · `offline` (punto de alerta + «Sin conexión» + «Intentar de nuevo» con `onRetry`). En el teléfono solo se ve la forma (la palabra queda para el lector de pantalla). En el dashboard lo alimenta `features/realtime` (`RestaurantLiveIndicator`); no lo conectes a mano.
+
+```tsx
+<LiveIndicator state="reconnecting" updatedAt={lastUpdate} onRetry={retry} />
+```
+
 ## DetailList
 
 Filas etiqueta + valor con divisor (modo lectura de `/restaurante`). Desde 768 px la etiqueta va a la izquierda.
