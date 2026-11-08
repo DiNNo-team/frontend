@@ -249,6 +249,15 @@ function TableCardsDemo() {
       <TableCard name="Mesa 03" capacity={4} status="reserved" selected={selected === '03'} onSelect={() => toggle('03')} menuItems={menu} />
       <TableCard name="Mesa 04" capacity={2} status="available" selected={selected === '04'} onSelect={() => toggle('04')} menuItems={menu} />
       <TableCard
+        name="Mesa 05"
+        capacity={4}
+        status="dinno"
+        lockedReason="Reserva de DiNNo en curso: se libera sola cuando el comensal llegue, cancele o se venza la reserva."
+        selected={selected === '05'}
+        onSelect={() => toggle('05')}
+        menuItems={menu}
+      />
+      <TableCard
         name="Mesa 06"
         capacity={1}
         status="inactive"

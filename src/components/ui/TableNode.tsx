@@ -14,6 +14,7 @@ const SURFACE: Record<TableCardStatus, string> = {
   reserved: TONE_SURFACE.reserved,
   occupied: TONE_SURFACE.busy,
   inactive: 'border-dashed border-field border-line-strong bg-surface text-fg-2',
+  dinno: TONE_SURFACE.reserved,
 }
 
 export interface TableNodeProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {

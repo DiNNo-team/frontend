@@ -1,12 +1,29 @@
 // Single source of status names, colors and shapes in the front (manual 3).
 // SegmentedControl, TableCard and the activity log read from here; never redefine them in a feature.
 
-export type Status = 'available' | 'reserved' | 'occupied' | 'inactive' | 'limited' | 'open' | 'closed' | 'error'
+export type Status =
+  | 'available'
+  | 'reserved'
+  | 'occupied'
+  | 'inactive'
+  | 'limited'
+  | 'open'
+  | 'closed'
+  | 'error'
+  // Sprint 3: a table held by a DiNNo reservation (CLAUDE.md §12.2) and the four reservation states (§12.1).
+  | 'dinno'
+  | 'reservation-active'
+  | 'reservation-completed'
+  | 'reservation-expired'
+  | 'reservation-cancelled'
 
 export type StatusTone = 'ok' | 'reserved' | 'busy' | 'inactive' | 'limited' | 'error'
 
-/** `live-dot` is the dot with the pulsing Active Dot halo; `dot-alert` is the dot plus the alert icon. */
-export type StatusShapeName = 'dot' | 'square' | 'striped-square' | 'diamond' | 'dash' | 'dot-alert' | 'live-dot'
+/**
+ * `live-dot` is the dot with the pulsing Active Dot halo; `dot-alert` is the dot plus the alert icon; `square-lock` is the
+ * Reservada square plus a lock: a table reserved through DiNNo, which the restaurant cannot change by hand (§12.2).
+ */
+export type StatusShapeName = 'dot' | 'square' | 'striped-square' | 'diamond' | 'dash' | 'dot-alert' | 'live-dot' | 'square-lock'
 
 export interface StatusMeta {
   tone: StatusTone
@@ -23,6 +40,22 @@ export const STATUS_META: Record<Status, StatusMeta> = {
   open: { tone: 'ok', shape: 'live-dot', label: 'Abierto' },
   closed: { tone: 'inactive', shape: 'dash', label: 'Cerrado' },
   error: { tone: 'error', shape: 'dot-alert', label: 'Error' },
+  // Same family as Reservada (it is reserved), told apart by the lock and the word. Never orange (manual 3).
+  dinno: { tone: 'reserved', shape: 'square-lock', label: 'Reserva DiNNo' },
+  // Reservation states: the same words and shapes in the diner app (manual 12.1).
+  'reservation-active': { tone: 'ok', shape: 'live-dot', label: 'Activa' },
+  // The table ends up Ocupada: same tone and shape.
+  'reservation-completed': { tone: 'busy', shape: 'striped-square', label: 'Cumplida' },
+  'reservation-expired': { tone: 'inactive', shape: 'dash', label: 'Vencida' },
+  'reservation-cancelled': { tone: 'inactive', shape: 'dash', label: 'Cancelada' },
+}
+
+/** Kit status of each reservation status of the API (`active` · `completed` · `expired` · `cancelled`). */
+export const RESERVATION_STATUS: Record<'active' | 'completed' | 'expired' | 'cancelled', Status> = {
+  active: 'reservation-active',
+  completed: 'reservation-completed',
+  expired: 'reservation-expired',
+  cancelled: 'reservation-cancelled',
 }
 
 /** Text color of each tone, for the shape (`currentColor`). Static strings so Tailwind generates them. */
