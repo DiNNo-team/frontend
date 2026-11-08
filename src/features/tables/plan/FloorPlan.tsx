@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, ty
 import { Ban, Pencil } from 'lucide-react'
 import { Button, STATUS_META, StatusPicker, TableNode, type TableCardShortcutStatus } from '@/components/ui'
 import { formatCapacity, formatTableName } from '@/lib/format'
+import { RESERVATION_TEXT } from '@/features/reservations/messages'
 import type { TableMenuActions } from '../table-menu'
-import { getTableDisplayStatus, TABLE_STATUS_OPTIONS } from '../table-status'
+import { getTableBoardStatus, TABLE_STATUS_OPTIONS, type TableBoardStatus } from '../table-status'
 import type { Table, TableStatus } from '../types'
 import { fitsAt, footprint, PLAN_COLUMNS, type Placement } from './plan-geometry'
 import { SHAPE_LABELS } from './plan-labels'
@@ -46,14 +47,18 @@ export interface FloorPlanProps extends TableMenuActions {
   reactivatingId: string | null
   /** "Changed from another device" ring, by table id. */
   highlights: Record<string, number>
+  /** Tables held by a DiNNo reservation: «Reserva DiNNo», no status change, no Desactivar (CLAUDE.md §12.2). */
+  dinnoTableIds?: ReadonlySet<string>
   /** Edit mode: the table shown in the inspector. */
   selectedId: string | null
   onSelect: (id: string) => void
   announce: (message: string) => void
 }
 
-function describeTable(table: Table) {
-  return `${formatTableName(table.identifier)}, ${formatCapacity(table.capacity)}, ${STATUS_META[getTableDisplayStatus(table)].label}`
+const NO_TABLES: ReadonlySet<string> = new Set()
+
+function describeTable(table: Table, status: TableBoardStatus) {
+  return `${formatTableName(table.identifier)}, ${formatCapacity(table.capacity)}, ${STATUS_META[status].label}`
 }
 
 /**
@@ -73,6 +78,7 @@ export function FloorPlan({
   toggleIdFor,
   reactivatingId,
   highlights,
+  dinnoTableIds = NO_TABLES,
   selectedId,
   onSelect,
   announce,
@@ -164,7 +170,7 @@ export function FloorPlan({
     if (event.metaKey || event.ctrlKey || event.altKey) return
     if (!editing) {
       const status = SHORTCUTS[event.key.toLowerCase()]
-      if (status && table.isActive) {
+      if (status && table.isActive && !dinnoTableIds.has(table.id)) {
         event.preventDefault()
         onChangeStatus(table, status)
       }
@@ -228,11 +234,13 @@ export function FloorPlan({
         const height = size.h * cell - GAP * 2
         const position: CSSProperties = { width, height, transform: `translate(${x}px, ${y}px)${isDragging ? ' scale(1.02)' : ''}` }
         const open = !editing && openId === table.id
+        const status = getTableBoardStatus(table, dinnoTableIds)
+        const locked = status === 'dinno'
         const common = {
           role: 'listitem',
           label: table.identifier,
           capacity: table.capacity,
-          status: getTableDisplayStatus(table),
+          status,
           shape: placement.shape ?? 'rect',
           roomy: height >= NODE_ROOMY,
           highlight: highlights[table.id],
@@ -250,7 +258,7 @@ export function FloorPlan({
               {...common}
               trigger={{
                 ...trigger,
-                'aria-label': `${describeTable(table)}, fila ${placement.y + 1}, columna ${placement.x + 1}. Muévela con las flechas.`,
+                'aria-label': `${describeTable(table, status)}, fila ${placement.y + 1}, columna ${placement.x + 1}. Muévela con las flechas.`,
                 'aria-pressed': selectedId === table.id,
               }}
               style={position}
@@ -281,6 +289,7 @@ export function FloorPlan({
             returnFocusId={toggleIdFor(table.id)}
             anchorClassName="absolute top-0 left-0"
             anchorStyle={position}
+            locked={locked ? { message: RESERVATION_TEXT.tableHasActiveReservation } : undefined}
             inactive={
               table.isActive
                 ? undefined
@@ -298,7 +307,7 @@ export function FloorPlan({
                 <Button variant="outline" size="sm" icon={Pencil} onClick={() => actions.onEdit(table)}>
                   Editar mesa
                 </Button>
-                {table.isActive && (
+                {table.isActive && !locked && (
                   <Button variant="outline" size="sm" icon={Ban} onClick={() => actions.onDeactivate(table)}>
                     Desactivar mesa
                   </Button>
@@ -308,7 +317,7 @@ export function FloorPlan({
           >
             <TableNode
               {...common}
-              trigger={{ ...trigger, 'aria-label': describeTable(table), 'aria-haspopup': 'dialog', 'aria-expanded': open }}
+              trigger={{ ...trigger, 'aria-label': describeTable(table, status), 'aria-haspopup': 'dialog', 'aria-expanded': open }}
               className="size-full"
               selected={open}
             />

@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import { renderWithProviders } from '@/test/render'
+import { mockReservationsControl } from '@/features/reservations/api.mock'
 import { mockTablesApi, mockTablesControl } from './api.mock'
 import TablesPage from './TablesPage'
 
 vi.mock('./api', () => ({ tablesApi: mockTablesApi }))
+vi.mock('@/features/reservations/api', async () => ({ reservationsApi: (await import('@/features/reservations/api.mock')).mockReservationsApi }))
 
 beforeEach(() => {
   mockTablesControl.reset()
   mockTablesControl.setLatency(0)
+  mockReservationsControl.reset()
+  mockReservationsControl.setLatency(0)
 })
 
 async function renderPage() {
