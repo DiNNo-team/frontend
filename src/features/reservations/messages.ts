@@ -122,3 +122,17 @@ export function codeProblemText(problem: CodeProblem): string {
 export function reservationDetailsText(reservation: { tableIdentifier: string; partySize: number }): string {
   return `${formatTableName(reservation.tableIdentifier)} · ${formatCapacity(reservation.partySize)}`
 }
+
+// Short notices of the live panel (Sprint 3, socket). Own texts following manual 14: what happened, no blame.
+/** «Nueva reserva · Mesa 04 · 2 personas». */
+export function reservationCreatedText(reservation: { tableIdentifier: string; partySize: number }): string {
+  return `Nueva reserva · ${reservationDetailsText(reservation)}`
+}
+
+/** A reservation left the panel without this device doing it. `tableName` is "Mesa 04", or null if unknown. */
+export function reservationClosedText(status: 'cancelled' | 'expired' | 'completed', tableName: string | null): string {
+  const of = tableName ? ` de ${tableName}` : ''
+  if (status === 'cancelled') return `El comensal canceló la reserva${of}.`
+  if (status === 'expired') return `Se venció la reserva${of}. La mesa ya se liberó.`
+  return `Check-in confirmado${tableName ? ` en ${tableName}` : ''}.`
+}
