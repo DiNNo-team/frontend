@@ -5,6 +5,22 @@
 
 ---
 
+## 8 nov 2026 · Sebastián · Dashboard en tiempo real (Socket.IO) y «En vivo»
+
+- **Dependencia nueva: `socket.io-client` ^4.8.4** (la misma que usa la app). **Corre `npm ci` después de hacer pull.**
+- **El dashboard se actualiza solo:**
+  - Una reserva nueva aparece en el panel con el aviso «Nueva reserva · Mesa 04 · 2 personas».
+  - Al cancelarse, vencerse o hacerse check-in, la reserva sale del panel con su aviso.
+  - Los cambios de mesa hechos desde otro dispositivo llegan con su anillo.
+  - Probado contra Render: la reserva apareció en 44 ms y salió al instante al cancelarla.
+- **Topbar:** a la izquierda del switch aparece «En vivo», que cambia a «Reconectando…» (con la hora de la última actualización) y, si el corte sigue 30 s, a «Sin conexión» con «Intentar de nuevo». Es el `LiveIndicator` del manual, que ya no es propuesta futura (manual 12.2, 13.7 y 19 actualizados).
+- **Para quien toque el layout o escuche eventos:** hay un solo socket por sesión, en `src/features/realtime/use-restaurant-realtime.ts`. No abras otro: agrega ahí el evento que necesites (CLAUDE.md §11, «Tiempo real del dashboard»).
+- **Pruebas:** `socket.io-client` está simulado en todas las pruebas (`src/test/fake-socket.ts`): ninguna se conecta de verdad.
+- **Sin variables de entorno nuevas:** el socket usa `VITE_API_URL`.
+- **Dato de Casa 72:** su dirección volvió a la del seed, «Av. Calle 72 con Cra. 9, Chapinero, Bogotá» (4.655671, -74.057006). Se había movido a la Calle 92 en una prueba del pin, y así no aparecía buscando la zona Calle 72 a 2 km.
+
+---
+
 ## 8 nov 2026 · Sebastián · Check-in, panel «Reservas DiNNo» y mesas protegidas en `/mesas`
 
 - **`/mesas`:**
