@@ -54,6 +54,14 @@ describe('describeTableSaveError', () => {
     })
   })
 
+  it('409 TABLE_HAS_ACTIVE_RESERVATION (capacity under the party size) shows the §12.2 text in the dialog', () => {
+    expect(describeTableSaveError(new ApiError({ status: 409, code: 'TABLE_HAS_ACTIVE_RESERVATION' }), values)).toEqual({
+      fieldErrors: {},
+      formError:
+        'Esta mesa tiene una reserva de DiNNo en curso. Se libera sola cuando el comensal llegue, cancele o se venza la reserva.',
+    })
+  })
+
   it('maps 400 field errors without showing backend text', () => {
     const failure = describeTableSaveError(new ApiError({ status: 400, fieldErrors: { capacity: 'max 20' } }), values)
     expect(failure.fieldErrors.capacity).toBe('La capacidad va de 1 a 20 personas')

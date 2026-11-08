@@ -147,12 +147,36 @@ describe('TablesPage · desactivar y reactivar', () => {
 
   it('a deactivated table moves to the end of the grid', async () => {
     const { user } = await renderPage()
+    // Mesa 07 is Disponible: since Sprint 3 only an available table is deactivated (§12.2).
+    await openMenu(user, 'Mesa 07')
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+    await user.click(screen.getByRole('button', { name: 'Desactivar mesa' }))
+    await waitFor(() => expect(within(cardOf('Mesa 07')).getByText('Inactiva')).toBeInTheDocument())
+    const names = within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('heading').map((heading) => heading.textContent)
+    expect(names.slice(-2)).toEqual(['Mesa 06', 'Mesa 07'])
+  })
+
+  it('409 TABLE_NOT_AVAILABLE_TO_DEACTIVATE: an Ocupada table is not deactivated and the dialog says why', async () => {
+    const { user } = await renderPage()
     await openMenu(user, 'Mesa 02')
     await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
     await user.click(screen.getByRole('button', { name: 'Desactivar mesa' }))
-    await waitFor(() => expect(within(cardOf('Mesa 02')).getByText('Inactiva')).toBeInTheDocument())
-    const names = within(screen.getByRole('list', { name: 'Mesas' })).getAllByRole('heading').map((heading) => heading.textContent)
-    expect(names.slice(-2)).toEqual(['Mesa 02', 'Mesa 06'])
+    const dialog = screen.getByRole('dialog', { name: '¿Desactivar Mesa 02?' })
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Para desactivar esta mesa, primero márcala como Disponible.')
+    expect(stored('02')?.isActive).toBe(true)
+  })
+
+  it('409 TABLE_HAS_ACTIVE_RESERVATION: a table held by DiNNo is not deactivated and the dialog says why', async () => {
+    mockTablesControl.setDinnoReservations({ 'mock-1': 2 })
+    const { user } = await renderPage()
+    await openMenu(user, 'Mesa 01')
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+    await user.click(screen.getByRole('button', { name: 'Desactivar mesa' }))
+    const dialog = screen.getByRole('dialog', { name: '¿Desactivar Mesa 01?' })
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'Esta mesa tiene una reserva de DiNNo en curso. Se libera sola cuando el comensal llegue, cancele o se venza la reserva.',
+    )
+    expect(stored('01')?.isActive).toBe(true)
   })
 
   it('deactivation error: Alert inside the dialog, which stays open', async () => {

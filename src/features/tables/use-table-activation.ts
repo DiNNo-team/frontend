@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/components/ui'
 import { ApiError, getApiErrorMessage } from '@/lib/api-client'
 import { formatTableName } from '@/lib/format'
+import { tableProtectionMessage } from '@/features/reservations/messages'
 import { tablesQueryKey, useDeactivateTable, useReactivateTable } from './hooks'
 import type { PageAlert } from './page-alert'
 import type { Table } from './types'
@@ -66,8 +67,15 @@ export function useTableActivation({ reportError, clearErrorFor, onDeactivated }
           action: { label: 'Deshacer', onClick: () => void reactivate(updated) },
         })
       } catch (caught) {
+        // Sprint 3 (§12.2): a 409 with errorCode means the table was NOT deactivated (DiNNo reservation in course, or
+        // not Disponible). The text goes inside the dialog and the list is refreshed: its status may have changed.
+        const protection = tableProtectionMessage(caught)
+        if (protection) {
+          void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
+          throw new Error(protection)
+        }
         if (caught instanceof ApiError && (caught.status === 409 || caught.status === 404)) {
-          // Someone else already deactivated it: just show the current list.
+          // 409 without errorCode: someone else already deactivated it. Just show the current list.
           void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
           onDeactivated({ ...table, isActive: false })
           return

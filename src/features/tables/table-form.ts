@@ -1,5 +1,6 @@
 import { ApiError, getApiErrorMessage } from '@/lib/api-client'
 import { formatTableName, normalizeTableIdentifier } from '@/lib/format'
+import { tableProtectionMessage } from '@/features/reservations/messages'
 import { TABLE_LIMITS, type Table } from './types'
 
 export interface TableFormValues {
@@ -53,7 +54,10 @@ export interface TableSaveFailure {
 /** Translates a backend error into field errors or a dialog message. Never shows the raw backend text. */
 export function describeTableSaveError(error: unknown, values: TableFormValues): TableSaveFailure {
   if (error instanceof ApiError) {
-    // The only 409 of create and edit is a repeated identifier (the backend sends no errorCode for it).
+    // Sprint 3 (§12.2): lowering the capacity under a DiNNo reservation's party size → 409 with errorCode.
+    const protection = tableProtectionMessage(error)
+    if (protection) return { fieldErrors: {}, formError: protection }
+    // The other 409 of create and edit is a repeated identifier (the backend sends no errorCode for it).
     if (error.status === 409) {
       return { fieldErrors: { identifier: TABLE_FORM_MESSAGES.identifierTaken(values.identifier.trim()) } }
     }

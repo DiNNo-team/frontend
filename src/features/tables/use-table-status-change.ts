@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { STATUS_META, useToast } from '@/components/ui'
 import { ApiError, getApiErrorMessage } from '@/lib/api-client'
 import { formatTableName } from '@/lib/format'
+import { tableProtectionMessage } from '@/features/reservations/messages'
 import { setCachedTableStatus, tablesQueryKey, useUpdateTableStatus } from './hooks'
 import type { PageAlert } from './page-alert'
 import type { Table, TableStatus } from './types'
@@ -49,7 +50,15 @@ export function useTableStatusChange({
             : { label: 'Deshacer', onClick: () => void change(updated, previousStatus, { isUndo: true }) },
         })
       } catch (caught) {
-        // 409 = the table is inactive (someone deactivated it); 404 = it no longer exists for this restaurant.
+        // Sprint 3 (§12.2): 409 TABLE_HAS_ACTIVE_RESERVATION = a DiNNo reservation holds the table (the optimistic value
+        // was already undone by the mutation). It frees itself, so there is no "Intentar de nuevo".
+        const protection = tableProtectionMessage(caught)
+        if (protection) {
+          void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
+          reportError({ tableId: table.id, message: protection })
+          return
+        }
+        // 409 without errorCode = the table is inactive (someone deactivated it); 404 = it no longer exists here.
         if (caught instanceof ApiError && caught.status === 404) {
           onTableInactive(table.id)
           void queryClient.invalidateQueries({ queryKey: tablesQueryKey })
