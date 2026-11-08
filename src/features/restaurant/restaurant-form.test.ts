@@ -178,6 +178,7 @@ describe('restaurant form: edition (GET /restaurants/me → form)', () => {
       { dayOfWeek: 5, isOpen24h: false, opensAt: '18:00', closesAt: '02:00' },
       { dayOfWeek: 6, isOpen24h: true, opensAt: null, closesAt: null },
     ],
+    activeReservationsCount: 0,
   }
 
   it('opens the days with schedule, closes the rest and keeps the suggestion where there are no hours', () => {

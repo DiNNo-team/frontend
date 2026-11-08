@@ -55,6 +55,11 @@ export interface RestaurantProfile {
   longitude: number | null
   /** Only the days it opens, Monday to Sunday. */
   schedules: RestaurantSchedule[]
+  /**
+   * Sprint 3 (CLAUDE.md §12.2 and §12.8): active DiNNo reservations not expired yet (0 in the 201 of POST). The
+   * warning before closing uses this, never the count of `reserved` tables (a table Reservada by hand is not one).
+   */
+  activeReservationsCount: number
 }
 
 /** 200 of GET /geocode: always inside Bogotá, 6 decimals. */

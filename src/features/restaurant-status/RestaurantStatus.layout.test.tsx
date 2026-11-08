@@ -16,7 +16,7 @@ vi.mock('@/features/restaurant/components/LocationBanner', () => ({ LocationBann
 // The topbar shows the restaurant's name from GET /restaurants/me (manual 12.2), not the session's displayName.
 vi.mock('@/features/restaurant/api', () => ({
   restaurantApi: {
-    get: async () => ({ id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [] }),
+    get: async () => ({ id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [], activeReservationsCount: 0 }),
   },
 }))
 
