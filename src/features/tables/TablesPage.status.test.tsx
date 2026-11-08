@@ -119,6 +119,22 @@ describe('TablesPage · cambiar estado', () => {
     await waitFor(() => expect(metric('Inactivas')).toHaveTextContent('2'))
   })
 
+  it('409 TABLE_HAS_ACTIVE_RESERVATION: the change is undone and the reason shows, with no retry', async () => {
+    mockTablesControl.setDinnoReservations({ 'mock-4': 2 })
+    const { user } = await renderPage()
+    await user.click(card('Mesa 04'))
+    await user.click(within(picker('Mesa 04')).getByRole('radio', { name: 'Ocupada' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(
+      'Esta mesa tiene una reserva de DiNNo en curso. Se libera sola cuando el comensal llegue, cancele o se venza la reserva.',
+    )
+    expect(within(alert).queryByRole('button')).not.toBeInTheDocument()
+    await waitFor(() => expect(card('Mesa 04')).toHaveAccessibleDescription('2 personas Disponible'))
+    expect(storedStatus('04')).toBe('available')
+    expect(metric('Inactiva')).toHaveTextContent('1')
+  })
+
   it('keyboard: Enter opens on the current status, arrows move, Enter applies and focus returns; Esc closes', async () => {
     const { user } = await renderPage()
     card('Mesa 01').focus()

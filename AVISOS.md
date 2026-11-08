@@ -5,6 +5,24 @@
 
 ---
 
+## 8 nov 2026 · Sebastián · Web compatible con el backend del Sprint 3 (mesas, bitácora y cierre)
+
+**Contexto:** el backend del Sprint 3 ya está en `develop` y en Render (`/v1/health` → `15be6cf`), así que la entrada del 6 nov de abajo («NO está desplegado») quedó vieja. La web de producción todavía trataba los 409 nuevos como si fueran los del Sprint 1. Este PR lo corrige (rama `fix/sprint3-mesas-409-bitacora`).
+
+- **Mesas (`features/tables/`):** los 409 con `errorCode` se revisan primero, con los textos de §12.2:
+  - `TABLE_HAS_ACTIVE_RESERVATION` al cambiar el estado, al desactivar y al bajar la capacidad.
+  - `TABLE_NOT_AVAILABLE_TO_DEACTIVATE` al desactivar.
+  
+  El 409 **sin** `errorCode` sigue significando lo de antes (inactiva, ya inactiva o identificador repetido). Los textos viven en `src/features/reservations/messages.ts` (el mapa único `errorCode → texto` del sprint).
+- **Mock de mesas:** sigue las reglas nuevas. Solo se desactiva una mesa Disponible, y `?mockDinno=03,08` (o `mockTablesControl.setDinnoReservations`) simula mesas con reserva de DiNNo.
+- **Para Sergio:** toqué tus dos carpetas, sin cambiar nada de lo que ya funcionaba.
+  - **Bitácora (`features/activity-log/`):** `TableLog` ahora trae `source`, y `userEmail` puede ser `null`. El autor sale de `logAuthor` (`messages.ts`): `manual` → correo · `reservation` sin correo → «Comensal» · `reservation` con correo (check-in) → correo · `system` → «Automático».
+  - **Abierto/Cerrado (`features/restaurant-status/`):** antes de cerrar se cuenta `activeReservationsCount` de `GET /v1/restaurants/me` (`use-active-reservations.ts`, que reemplaza a `use-reserved-tables.ts`), y no las mesas Reservadas. El texto nuevo es «Tienes N reservas en curso; se mantendrán hasta que lleguen o se venzan.», en singular con 1. Sin reservas de DiNNo, cierra de una vez aunque haya mesas Reservadas a mano.
+- **Para Santiago y Jacobo:** `RestaurantProfile` tiene `activeReservationsCount: number`. Agregué `activeReservationsCount: 0` a los datos de prueba de `features/restaurant/` (6 archivos `*.test.ts(x)`), sin cambiar ninguna prueba. El mock del restaurante acepta `?mockActiveReservations=2`.
+- **Sin dependencias nuevas, sin variables de entorno nuevas y sin cambios en el kit.**
+
+---
+
 ## 6 nov 2026 · Elizabeth · Sprint 3 backend: cierre y plan de merge
 
 **Esta entrada reemplaza la lista de «Pendiente» de la entrada de abajo («Backend del Sprint 3: estado real…», también del 6 nov), que queda tachada ahí:** el WebSocket (tarea 8), la exportación anónima de datos y `demo:reset` (tarea 9) ya están hechos en la rama.

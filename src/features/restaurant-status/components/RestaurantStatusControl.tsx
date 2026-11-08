@@ -2,26 +2,27 @@ import { useEffect, useRef, useState } from 'react'
 import { ConfirmDialog, Skeleton, STATUS_META, Switch } from '@/components/ui'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { useRestaurantStatusQuery } from '../hooks'
-import { closeWithReservationsText, RESTAURANT_STATUS_TEXT } from '../messages'
-import { useCountReservedTables } from '../use-reserved-tables'
+import { closeWithReservationsText } from '@/features/reservations/messages'
+import { RESTAURANT_STATUS_TEXT } from '../messages'
+import { useCountActiveReservations } from '../use-active-reservations'
 import { useRestaurantStatusChange } from '../use-restaurant-status-change'
 
 const SWITCH_ID = 'restaurant-status-switch'
 
 interface CloseConfirmation {
-  /** `null` when the reserved tables could not be counted. */
-  reserved: number | null
+  /** DiNNo reservations in course; `null` when they could not be counted. */
+  reservations: number | null
 }
 
 /**
  * Topbar control (manual 3.3): "Estado del restaurante" + Switch Abierto / Cerrado.
- * Closing with reserved tables asks first; the banner shows the load and save errors.
+ * Closing with DiNNo reservations in course asks first (§12.2: they are kept); the banner shows the load and save errors.
  */
 export function RestaurantStatusControl() {
   const statusQuery = useRestaurantStatusQuery()
   const showSkeleton = useDelayedFlag(statusQuery.isPending)
   const { open, closeNow, confirmClose, saving } = useRestaurantStatusChange()
-  const countReservedTables = useCountReservedTables()
+  const countActiveReservations = useCountActiveReservations()
   const [checking, setChecking] = useState(false)
   const [confirmation, setConfirmation] = useState<CloseConfirmation | null>(null)
   const [confirmError, setConfirmError] = useState<string>()
@@ -57,15 +58,15 @@ export function RestaurantStatusControl() {
     if (checking) return
     setChecking(true)
     try {
-      const reserved = await countReservedTables()
-      if (reserved === 0) {
+      const reservations = await countActiveReservations()
+      if (reservations === 0) {
         closeNow()
         return
       }
       // The dialog takes focus and gives it back to the switch when it closes.
       refocusAfterSave.current = false
       setConfirmError(undefined)
-      setConfirmation({ reserved })
+      setConfirmation({ reservations })
     } finally {
       setChecking(false)
     }
@@ -102,9 +103,9 @@ export function RestaurantStatusControl() {
         }}
         title={RESTAURANT_STATUS_TEXT.confirmTitle}
         description={
-          confirmation?.reserved == null
+          confirmation?.reservations == null
             ? RESTAURANT_STATUS_TEXT.confirmUnknownReservations
-            : closeWithReservationsText(confirmation.reserved)
+            : closeWithReservationsText(confirmation.reservations)
         }
         confirmLabel={RESTAURANT_STATUS_TEXT.confirmLabel}
         loadingText={RESTAURANT_STATUS_TEXT.confirmLoading}

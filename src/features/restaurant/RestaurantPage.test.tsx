@@ -26,6 +26,7 @@ const PROFILE: RestaurantProfile = {
     { dayOfWeek: 1, isOpen24h: false, opensAt: '18:00', closesAt: '02:00' },
     { dayOfWeek: 6, isOpen24h: true, opensAt: null, closesAt: null },
   ],
+  activeReservationsCount: 0,
 }
 
 function TestLayout() {

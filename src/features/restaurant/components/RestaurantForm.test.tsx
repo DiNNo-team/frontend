@@ -16,6 +16,7 @@ const PROFILE: RestaurantProfile = {
     { dayOfWeek: 1, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' },
     { dayOfWeek: 6, isOpen24h: true, opensAt: null, closesAt: null },
   ],
+  activeReservationsCount: 0,
 }
 
 // The edition of /restaurante (Jacobo) as it would use the form.
