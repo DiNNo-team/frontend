@@ -16,6 +16,24 @@
 
 ---
 
+## 8 nov 2026 · Sebastián · Front del Sprint 3 completo: ya se puede hacer QA
+
+- **Web y app terminadas:** web #70 a #72 (en `main`) y app #30, #32, #33 y #34 (en `develop`). Así se cumplen los pasos 2 y 3 del orden de merge de Elizabeth, y **el QA del Sprint 3 puede empezar** (Jacobo: M1, M2, M3, M8, M9 y T1; Sergio: M5 y M6; Santiago: M4, M7, M10, M11, M12 y T2).
+- **Probado de punta a punta contra Render**: reservar en la app → aparece en la web sin recargar → «Validar código» en la web → la app pasa sola a «Cumplida». También cancelar, el vencimiento y la mesa protegida.
+- **Pendiente 2.2, opción A (equipo):**
+  - El login web muestra «¿Quieres tu restaurante en DiNNo? **Escríbenos**», debajo de «Continuar con Google».
+  - También aparece en la pestaña «Crear cuenta», junto con la dirección.
+  - El enlace abre un correo a `dinnoteam2026@gmail.com` con el asunto «Quiero mi restaurante en DiNNo» y los datos que necesitamos para habilitar la cuenta.
+  - Sigue sin haber registro público.
+- **Para Jacobo** (tu área de auth):
+  - `AuthLink.tsx` suma `AuthAnchor`, el mismo estilo de enlace para un `<a>`.
+  - El texto y el `mailto:` viven en `src/features/auth/restaurant-request.ts`.
+  - No cambió nada del inicio de sesión.
+- **Para la demo:** el recorrido y la preparación están en la sección 10 del reparto. Después de `demo:reset`, recarguen la web y reabran la app, porque el reset no emite eventos.
+- **Sin dependencias, variables ni cambios del kit.**
+
+---
+
 ## 8 nov 2026 · Sebastián · Dashboard en tiempo real (Socket.IO) y «En vivo»
 
 - **Dependencia nueva: `socket.io-client` ^4.8.4** (la misma que usa la app). **Corre `npm ci` después de hacer pull.**
