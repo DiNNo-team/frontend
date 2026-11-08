@@ -27,6 +27,8 @@ export interface StatusPickerProps<T extends string> {
   returnFocusId: string
   /** Replaces the options with a message and one action, e.g. an inactive table and "Reactivar mesa". */
   inactive?: { message: ReactNode; actionLabel: string; onAction: () => void; loading?: boolean; loadingText?: string }
+  /** Replaces the options with a message only: the status cannot change by hand (a table held by a DiNNo reservation). */
+  locked?: { message: ReactNode }
   /** The element the popover sits next to. */
   children: ReactNode
   /** Layout of the anchor wrapper (it takes the place of the children in their parent). */
@@ -59,6 +61,7 @@ export function StatusPicker<T extends string>({
   onValueChange,
   returnFocusId,
   inactive,
+  locked,
   children,
   anchorClassName,
   anchorStyle,
@@ -70,7 +73,10 @@ export function StatusPicker<T extends string>({
 
   function focusInitial(event: Event) {
     event.preventDefault()
-    const target = list.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]') ?? list.current?.querySelector<HTMLButtonElement>('button')
+    const target =
+      list.current?.querySelector<HTMLElement>('[aria-checked="true"]') ??
+      list.current?.querySelector<HTMLElement>('button') ??
+      list.current?.querySelector<HTMLElement>('[tabindex="-1"]')
     target?.focus()
   }
 
@@ -90,7 +96,14 @@ export function StatusPicker<T extends string>({
     items[(index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus()
   }
 
-  const body = inactive ? (
+  const body = locked ? (
+    <div ref={list} className="flex flex-col gap-3 p-2">
+      {/* Focusable so the picker has a starting point for keyboard and screen-reader users. */}
+      <p tabIndex={-1} className="text-sec text-fg outline-none">
+        {locked.message}
+      </p>
+    </div>
+  ) : inactive ? (
     <div ref={list} className="flex flex-col gap-3 p-2">
       <p className="text-sec text-fg">{inactive.message}</p>
       <Button variant="outline" size="sm" icon={RotateCcw} loading={inactive.loading} loadingText={inactive.loadingText} onClick={inactive.onAction} className="self-start">

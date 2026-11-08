@@ -7,7 +7,7 @@ import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { TableLogChange } from './components/TableLogChange'
 import { ALL_TABLES, TableLogFilter } from './components/TableLogFilter'
 import { useTableLogsQuery } from './hooks'
-import { TABLE_LOG_TEXT, tableWithoutChangesText } from './messages'
+import { logAuthor, TABLE_LOG_TEXT, tableWithoutChangesText } from './messages'
 import { TABLE_LOGS_LIMIT, type TableLog } from './types'
 
 const COLUMNS: DataTableColumn<TableLog>[] = [
@@ -26,7 +26,7 @@ const COLUMNS: DataTableColumn<TableLog>[] = [
     cell: (log) => <TableLogChange previousStatus={log.previousStatus} newStatus={log.newStatus} />,
     mobileLine: 1,
   },
-  { key: 'user', header: TABLE_LOG_TEXT.columnUser, cell: (log) => log.userEmail, className: 'break-all', mobileLine: 2 },
+  { key: 'user', header: TABLE_LOG_TEXT.columnUser, cell: (log) => logAuthor(log), className: 'break-all', mobileLine: 2 },
 ]
 
 /** The backend already answers newest first; sorting again keeps the order whatever the source. */

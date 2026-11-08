@@ -305,17 +305,34 @@ src/
 - Se conecta en `src/app/layouts.tsx`: `statusSlot={<RestaurantStatusControl />}` (switch del topbar + diálogo de confirmación) y `banner={<RestaurantStatusBanner />}` (aviso de cerrado con "Abrir ahora" y errores de carga o guardado). Los dos se coordinan por la caché de React Query, sin contexto.
 - El switch del topbar usa la variante de estado del kit: `<Switch … onStatus="open" offStatus="closed" />` (punto que pulsa en `ok` / raya en `inactive`, de `STATUS_META`). Para un switch de estado en otra pantalla, usa esas dos props; no dibujes la forma a mano.
 - Para leer el estado en otra pantalla, usa `useRestaurantStatusQuery()` (query key `restaurantStatusQueryKey`). No llames al endpoint por tu cuenta.
-- Para avisar al cerrar con reservas en curso, usa `activeReservationsCount` de `GET /v1/restaurants/me` (§12.2 y §12.8), no el conteo de mesas `reserved`: una mesa Reservada a mano no es una reserva de DiNNo. Hoy el código cuenta mesas con `useTablesQuery` y `countTables` de `features/tables` (sin modificarlos); eso se reemplaza al integrar el Sprint 3.
+- Para avisar al cerrar con reservas en curso, usa `activeReservationsCount` de `GET /v1/restaurants/me` (§12.2 y §12.8), no el conteo de mesas `reserved`: una mesa Reservada a mano no es una reserva de DiNNo. Lo hace `useCountActiveReservations` (`use-active-reservations.ts`), que vuelve a pedir el restaurante justo antes de cerrar, y el texto sale de `closeWithReservationsText` (`@/features/reservations/messages`). Mock: `?mockActiveReservations=2`.
 - Mock (con `VITE_USE_MOCKS=true`, en cualquier pantalla del dashboard): `?mockClosed` (empieza cerrado), `?mockError=restaurant-status-load` o `restaurant-status-save`, y `?mockLatency=`, que es compartido con mesas. Con `?mockEmpty` no hay mesas, así que el restaurante cierra sin pedir confirmación.
 
 
 ### Bitácora de mesas (Sergio, PBI 9)
 - Vive en `src/features/activity-log/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). La pantalla es `/bitacora` (`ActivityLogPage.tsx`).
-- **Consume `GET /v1/table-logs`** (contrato en el `CLAUDE.md` del backend, "Bitácora de mesas"): `[{ id, tableId, tableIdentifier, previousStatus, newStatus, changedAt, userEmail, source }]` (desde el Sprint 3 `userEmail` puede ser `null` y `source` es `manual`, `reservation` o `system`; el texto del autor se decide por `source`, ver §12.3), más reciente primero, máximo 200 filas, sin paginación. El filtro por mesa manda `?tableId=<id>`; sin filtro no manda nada. El restaurante sale de la sesión.
+- **Consume `GET /v1/table-logs`** (contrato en el `CLAUDE.md` del backend, "Bitácora de mesas"): `[{ id, tableId, tableIdentifier, previousStatus, newStatus, changedAt, userEmail, source }]` (desde el Sprint 3 `userEmail` puede ser `null` y `source` es `manual`, `reservation` o `system`; el texto del autor se decide por `source` con `logAuthor` de `messages.ts`, ver §12.3), más reciente primero, máximo 200 filas, sin paginación. El filtro por mesa manda `?tableId=<id>`; sin filtro no manda nada. El restaurante sale de la sesión.
 - `useTableLogsQuery(tableId?)` (query key `['table-logs', tableId ?? 'all']`) lleva **`refetchOnMount: 'always'`**: cada vez que se abre la pantalla vuelve a pedir la bitácora, así un cambio hecho en `/mesas` aparece aunque el `staleTime` global (30 s) no haya vencido. No toca `features/tables`.
 - Reutiliza de mesas, sin modificarlos: `useTablesQuery` + `sortTables` para el filtro (todas las mesas, inactivas incluidas; si fallan, el filtro queda deshabilitado con "Todas las mesas") y `toTableDisplayStatus` para los chips (incluido `inactive`).
 - El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
 - Mock (con `VITE_USE_MOCKS=true`, datos fijos con las mesas del mock de mesas): `?mockError=table-logs-load`, `?mockTableLogsFull` (200 filas) y `?mockEmpty` / `?mockLatency=` (compartidos con mesas). No refleja los cambios hechos en `/mesas`: para eso, el backend real.
+
+### Reservas DiNNo y check-in (Sebastián, Sprint 3)
+- Viven en `src/features/reservations/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). Contrato en §12.8: `GET /v1/restaurants/me/reservations` y `POST /v1/restaurants/me/check-ins`. **La web nunca recibe ni muestra el código de una reserva**: los tipos no lo tienen y no se agrega.
+- `messages.ts` es el único mapa `errorCode → texto` del sprint (mesas protegidas, check-in, cierre con reservas). `code.ts` normaliza el código (mayúsculas, sin espacios, 6 del alfabeto). `countdown.ts` calcula el tiempo restante con `expiresAt − serverTime` y un reloj monotónico, nunca solo con el reloj del equipo.
+- En `/mesas`: el panel «Reservas DiNNo» (`ReservationsPanel`, consulta cada 30 s) y «Validar código» (`CheckInDialog`), el botón principal de la pantalla. Una mesa con reserva activa se ve como «Reserva DiNNo» (`useDinnoTableIds` cruza la lista con las mesas por `tableId`): sin selector de estado, sin atajos D/R/O y sin «Desactivar».
+- Mock (con `VITE_USE_MOCKS=true`): `?mockDinno=01,07` crea reservas en esas mesas (los dos mocks lo leen). Códigos: `K7M4QX` y `P3R8TW` son válidos; `VENC9D` (vencida), `USAD4S` (ya usado) y `CANC3X` (cancelada) fuerzan cada resultado. `?mockError=reservations-list` o `check-in`.
+
+### Tiempo real del dashboard (Sebastián, Sprint 3)
+- **Un solo socket por sesión:** `useRestaurantRealtime` (`src/features/realtime/`), montado en `DashboardLayout`. Usa `socket.io-client`, se conecta a `API_ORIGIN` (`src/lib/api.ts`, sin `/v1`) por WebSocket, con `auth` como función que pide un token nuevo con `getAuthToken()` en cada conexión. **No abras otro socket**; para escuchar algo nuevo, agrégalo en ese hook.
+- Solo conecta con el restaurante ya registrado (`useRestaurantQuery` con datos) y nunca con `VITE_USE_MOCKS=true`. Se desconecta al cerrar sesión, y reconecta si cambia el restaurante (las salas se fijan al conectar).
+- **Eventos (§12.8):**
+  - `reservation.created` agrega la fila del panel (sin duplicar).
+  - `reservation.cancelled`, `.expired` y `.checked_in` la quitan, con un toast corto (no para el check-in hecho en este mismo dispositivo).
+  - `table.status_changed` vuelve a pedir las mesas, lo que también hace sonar el anillo de cambio remoto.
+- **Fallas:** al reconectar se vuelve a pedir todo. `connect_error` `SERVER_ERROR` se reintenta a los 5, 15 y 30 s; los demás códigos no se reintentan. El panel sigue consultando cada 30 s.
+- El estado de la conexión vive en `connection.ts` (`useLiveConnection`) y lo muestra el `LiveIndicator` del kit en el topbar (`RestaurantLiveIndicator`).
+- **Pruebas:** `socket.io-client` está simulado en todas (`src/test/fake-socket.ts`, desde `setup.ts`), así que ninguna abre una conexión real. Usa `lastSocket()` para emitir eventos del servidor.
 
 ### Registro del restaurante (Santiago, PBI 3)
 - Vive en `src/features/restaurant/` (carpeta compartida con la pantalla `/restaurante` de Jacobo): `types.ts`, `api.ts`, `hooks.ts`, `restaurant-form.ts`, `components/RestaurantForm.tsx` y `OnboardingPage.tsx` (`/onboarding`). Sin mock: el endpoint ya existe.

@@ -109,6 +109,13 @@ Estado = **color + forma + palabra**, siempre los tres. La palabra es texto real
 | `open` | Abierto | `ok` | punto con pulso (Active Dot) |
 | `closed` | Cerrado | `inactive` | raya |
 | `error` | Error | `error` | punto + ícono de alerta |
+| `dinno` | Reserva DiNNo | `reserved` | cuadrado + candado (mesa con reserva de DiNNo en curso: no se cambia a mano, §12.2) |
+| `reservation-active` | Activa | `ok` | punto con pulso |
+| `reservation-completed` | Cumplida | `busy` | cuadrado rayado |
+| `reservation-expired` | Vencida | `inactive` | raya |
+| `reservation-cancelled` | Cancelada | `inactive` | raya |
+
+Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
 
 ```tsx
 <StatusChip status="occupied" />
@@ -335,7 +342,7 @@ Tarjetas de resumen (manual 12.2, v2.1): una tarjeta de vidrio por estado, todas
 
 ## StatusLine
 
-Estado sin pastilla: forma de 10 px en su color + palabra en tinta (`size="md"` 14/20 · `sm` 12/16). Va **dentro de superficies que ya llevan el tinte del estado** (tarjeta de mesa, nodo del plano), donde un chip repetiría el color.
+Estado sin pastilla: forma de 10 px en su color + palabra en tinta (`size="md"` 14/20 · `sm` 12/16). Va **dentro de superficies que ya llevan el tinte del estado** (tarjeta de mesa, nodo del plano), donde un chip repetiría el color. Con `wrap`, una palabra larga ("Reserva DiNNo") baja de línea en vez de cortarse (la tarjeta de mesa lo usa).
 
 ## TableCard
 
@@ -343,12 +350,13 @@ Tarjeta de mesa (pieza visual; la lógica va en `features/tables`). La superfici
 
 | Prop | Notas |
 |---|---|
-| `name`, `capacity`, `status` | `status`: `available · reserved · occupied · inactive` |
+| `name`, `capacity`, `status` | `status`: `available · reserved · occupied · inactive · dinno` (Reserva DiNNo: superficie de Reservada, candado, sin atajos) |
 | `selected` | Su selector está abierto: borde de selección + `aria-expanded` |
 | `onSelect` | Clic, Enter o Espacio. También en inactivas (su selector ofrece "Reactivar mesa") |
 | `onShortcut` | D · R · O con la tarjeta enfocada (no en inactivas) |
 | `toggleId`, `menuItems`, `menuTriggerId` | Ids para devolver el foco; menú ⋯ |
 | `highlight` | Un valor nuevo reproduce una vez el anillo de "cambio desde otro dispositivo" |
+| `lockedReason` | Por qué no se puede cambiar el estado (mesa `dinno`): tooltip al pasar el puntero y con el foco del teclado, y parte de la descripción accesible |
 
 ## TableNode
 
@@ -364,13 +372,21 @@ Mesa en el plano (manual 12.2 y 13.10; pieza visual, el plano vive en `features/
 
 ## StatusPicker
 
-Selector de estado (manual 12.2): popover de vidrio junto a la mesa desde 768 px, hoja inferior en el teléfono. El estado actual va teñido y con ✓; flechas, Enter aplica, Esc cierra y el foco vuelve a la mesa. Con `inactive` muestra un mensaje y una sola acción. Opcionales: `details` (datos reales bajo el título), `actions` (acciones secundarias abajo, donde no hay menú ⋯, como en el plano) y `anchorStyle` (posición del ancla).
+Selector de estado (manual 12.2): popover de vidrio junto a la mesa desde 768 px, hoja inferior en el teléfono. El estado actual va teñido y con ✓; flechas, Enter aplica, Esc cierra y el foco vuelve a la mesa. Con `inactive` muestra un mensaje y una sola acción; con `locked`, solo un mensaje (una mesa con reserva de DiNNo: su estado no se cambia a mano). Opcionales: `details` (datos reales bajo el título), `actions` (acciones secundarias abajo, donde no hay menú ⋯, como en el plano) y `anchorStyle` (posición del ancla).
 
 ```tsx
 <StatusPicker open={open} onOpenChange={setOpen} title="Estado de Mesa 04" options={TABLE_STATUS_OPTIONS}
   value={table.status} onValueChange={change} returnFocusId={toggleId} anchorClassName="flex flex-1">
   <TableCard … />
 </StatusPicker>
+```
+
+## LiveIndicator
+
+Conexión en vivo del dashboard (manual 12.2 y 13.7), en el topbar a la izquierda del switch. `state`: `live` («En vivo» con el Active Dot que pulsa) · `reconnecting` (raya + «Reconectando…» + «Actualizado 7:42 p. m.» con `updatedAt`) · `offline` (punto de alerta + «Sin conexión» + «Intentar de nuevo» con `onRetry`). En el teléfono solo se ve la forma (la palabra queda para el lector de pantalla). En el dashboard lo alimenta `features/realtime` (`RestaurantLiveIndicator`); no lo conectes a mano.
+
+```tsx
+<LiveIndicator state="reconnecting" updatedAt={lastUpdate} onRetry={retry} />
 ```
 
 ## DetailList

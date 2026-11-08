@@ -13,6 +13,13 @@ export function getTableDisplayStatus(table: Pick<Table, 'status' | 'isActive'>)
   return table.isActive ? table.status : 'inactive'
 }
 
+/** What a card or plan node shows: `dinno` (Reserva DiNNo, CLAUDE.md §12.2) for a table held by a DiNNo reservation. */
+export type TableBoardStatus = TableDisplayStatus | 'dinno'
+
+export function getTableBoardStatus(table: Pick<Table, 'id' | 'status' | 'isActive'>, dinnoTableIds: ReadonlySet<string>): TableBoardStatus {
+  return table.isActive && dinnoTableIds.has(table.id) ? 'dinno' : getTableDisplayStatus(table)
+}
+
 /**
  * Tolerant mapping for status codes coming from other modules: "occupied", "OCCUPIED" and the
  * activity log's "inactive" (deactivations) all map to the display status. Unknown codes → undefined.

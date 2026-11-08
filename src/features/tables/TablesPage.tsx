@@ -1,9 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, ScanLine } from 'lucide-react'
 import { Alert, Button, ConfirmDialog, EmptyState, PageHeader, SegmentedControl, useToast } from '@/components/ui'
 import { formatTableName } from '@/lib/format'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { useMediaQuery } from '@/lib/use-media-query'
+import { CheckInDialog } from '@/features/reservations/components/CheckInDialog'
+import { ReservationsPanel } from '@/features/reservations/components/ReservationsPanel'
+import { useDinnoTableIds } from '@/features/reservations/hooks'
+import { RESERVATION_TEXT } from '@/features/reservations/messages'
 import { TableFormDialog } from './components/TableFormDialog'
 import { TablesGrid } from './components/TablesGrid'
 import { TablesSkeleton } from './components/TablesSkeleton'
@@ -104,6 +108,8 @@ export default function TablesPage() {
   const selection = useTableSelection(tables)
   const editor = usePlanEditor(tables)
   const highlights = useRemoteHighlights()
+  const dinnoTableIds = useDinnoTableIds()
+  const [checkInOpen, setCheckInOpen] = useState(false)
   const canEditPlan = !useMediaQuery('(max-width: 767px)')
   const [storedView, setStoredView] = useState(readStoredView)
   const hasPlan = tables.some((table) => placementOf(table) !== null)
@@ -208,6 +214,7 @@ export default function TablesPage() {
         error={deactivateError}
         onConfirm={() => void confirmDeactivate()}
       />
+      <CheckInDialog open={checkInOpen} onOpenChange={setCheckInOpen} />
     </>
   )
 
@@ -295,13 +302,18 @@ export default function TablesPage() {
                 { value: 'grid', label: 'Cuadrícula' },
               ]}
             />
-            <Button icon={Plus} onClick={openCreate} className="rounded-full">
+            {/* In service the main action is the check-in (Sprint 3): «Agregar mesa» steps down to outline. */}
+            <Button variant="outline" icon={Plus} onClick={openCreate} className="rounded-full">
               Agregar mesa
+            </Button>
+            <Button icon={ScanLine} onClick={() => setCheckInOpen(true)} className="rounded-full">
+              {RESERVATION_TEXT.validateCode}
             </Button>
           </>
         }
       />
       <TablesStats counts={counts} filter={view === 'grid' ? filter : null} onFilterChange={view === 'grid' ? setFilter : undefined} />
+      <ReservationsPanel />
       {view === 'grid' && !hasPlan && canEditPlan && (
         <Alert
           type="info"
@@ -333,6 +345,7 @@ export default function TablesPage() {
           toggleIdFor={selection.toggleIdFor}
           reactivatingId={activation.reactivatingId}
           highlights={highlights}
+          dinnoTableIds={dinnoTableIds}
           announce={setAnnouncement}
           {...menuActions}
         />
@@ -357,6 +370,7 @@ export default function TablesPage() {
           menuIdFor={selection.menuIdFor}
           reactivatingId={activation.reactivatingId}
           highlights={highlights}
+          dinnoTableIds={dinnoTableIds}
           {...menuActions}
         />
       )}

@@ -21,6 +21,7 @@ function log(overrides: Partial<TableLog> & Pick<TableLog, 'id' | 'changedAt'>):
     previousStatus: 'available',
     newStatus: 'occupied',
     userEmail: 'admin@casa72.co',
+    source: 'manual',
     ...overrides,
   }
 }

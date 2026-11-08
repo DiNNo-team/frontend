@@ -1,4 +1,4 @@
-import { CircleAlert } from 'lucide-react'
+import { CircleAlert, Lock } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Icon } from '@/lib/icon'
 import type { StatusShapeName } from './status'
@@ -11,7 +11,7 @@ export interface StatusShapeProps {
   className?: string
 }
 
-function ShapeSvg({ shape, size = 8 }: { shape: Exclude<StatusShapeName, 'dot-alert' | 'live-dot'>; size?: 8 | 10 }) {
+function ShapeSvg({ shape, size = 8 }: { shape: Exclude<StatusShapeName, 'dot-alert' | 'live-dot' | 'square-lock'>; size?: 8 | 10 }) {
   return (
     <svg viewBox="0 0 8 8" className={cn('shrink-0', size === 10 ? 'size-2.5' : 'size-2')} aria-hidden="true" focusable="false">
       {shape === 'dot' && <circle cx="4" cy="4" r="4" fill="currentColor" />}
@@ -30,7 +30,7 @@ function ShapeSvg({ shape, size = 8 }: { shape: Exclude<StatusShapeName, 'dot-al
 
 /**
  * 8 px status shape (manual 3.1). Decorative: the status word next to it is the accessible text.
- * Shapes stay distinguishable without color: dot · square · striped square · diamond · dash.
+ * Shapes stay distinguishable without color: dot · square · striped square · diamond · dash · square + lock.
  */
 export function StatusShape({ shape, size = 8, className }: StatusShapeProps) {
   if (shape === 'live-dot') {
@@ -38,6 +38,16 @@ export function StatusShape({ shape, size = 8, className }: StatusShapeProps) {
       <span className={cn('relative inline-flex shrink-0', size === 10 ? 'size-2.5' : 'size-2', className)} aria-hidden="true">
         <span className="absolute -inset-0.5 animate-live-pulse rounded-full bg-current/30 motion-reduce:animate-none" />
         <ShapeSvg shape="dot" size={size} />
+      </span>
+    )
+  }
+
+  if (shape === 'square-lock') {
+    // Like `dot-alert`: the base shape plus a 16 px icon, so it reads apart from Reservada without color.
+    return (
+      <span className={cn('inline-flex shrink-0 items-center gap-1', className)} aria-hidden="true">
+        <ShapeSvg shape="square" size={size} />
+        <Icon icon={Lock} size={16} />
       </span>
     )
   }

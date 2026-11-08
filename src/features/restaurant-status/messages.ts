@@ -17,12 +17,8 @@ export const RESTAURANT_STATUS_TEXT = {
   confirmTitle: '¿Cerrar el restaurante?',
   confirmLabel: 'Cerrar restaurante',
   confirmLoading: 'Cerrando…',
-  /** When the reserved tables could not be counted (the tables request failed). */
+  /** When the DiNNo reservations in course could not be counted (GET /restaurants/me failed). */
   confirmUnknownReservations: 'Los comensales no verán tu restaurante en DiNNo mientras esté cerrado.',
 } as const
 
-/** Approved. "Tienes 1 mesa reservada. …" / "Tienes 2 mesas reservadas. …" */
-export function closeWithReservationsText(reserved: number): string {
-  const tables = reserved === 1 ? '1 mesa reservada' : `${reserved} mesas reservadas`
-  return `Tienes ${tables}. Mientras esté cerrado, los comensales no verán tu restaurante en DiNNo.`
-}
+// The warning before closing with DiNNo reservations is `closeWithReservationsText` (@/features/reservations/messages).

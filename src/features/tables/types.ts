@@ -35,10 +35,13 @@ export interface CreateTableInput {
 
 export type UpdateTableInput = Partial<CreateTableInput>
 
-// Errors: `{ statusCode, message, error, errorCode? }` (NestJS default). Each tables route has a single
-// reason per status, so the front branches on the HTTP status: 409 on create/edit = repeated identifier,
-// on status change = inactive table, on deactivate/reactivate = already in that state; 404 = not found
-// (or another restaurant's table). `message` is never shown: the UI uses the manual's texts.
+// Errors: `{ statusCode, message, error, errorCode? }` (NestJS default). The Sprint 1 errors of tables come without
+// errorCode, so the front branches on the HTTP status: 409 on create/edit = repeated identifier, on status change =
+// inactive table, on deactivate/reactivate = already in that state; 404 = not found (or another restaurant's table).
+// Sprint 3 (CLAUDE.md §12.2) adds two 409 WITH errorCode, checked first (`tableProtectionMessage`):
+// TABLE_HAS_ACTIVE_RESERVATION (status change — even to the same status —, deactivate, and lowering the capacity under
+// the reservation's party size) and TABLE_NOT_AVAILABLE_TO_DEACTIVATE (only an `available` table is deactivated).
+// `message` is never shown: the UI uses the manual's texts.
 
 /** Limits shared by the form and the mock. The column allows 50 characters; the UI keeps 10 (pending confirmation with Elizabeth). */
 export const TABLE_LIMITS = {

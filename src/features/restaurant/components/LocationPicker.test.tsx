@@ -172,6 +172,7 @@ describe('RestaurantForm · ubicación en la edición', () => {
     latitude: 4.655671,
     longitude: -74.057006,
     schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }],
+    activeReservationsCount: 0,
   }
 
   it('shows the pin on the saved location', () => {

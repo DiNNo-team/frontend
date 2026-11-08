@@ -19,6 +19,7 @@ const CREATED: RestaurantProfile = {
   latitude: null,
   longitude: null,
   schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }],
+  activeReservationsCount: 0,
 }
 
 beforeEach(() => {

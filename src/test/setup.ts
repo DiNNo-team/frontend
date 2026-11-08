@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
+import { fakeIo, resetFakeSockets } from './fake-socket'
+
+// No test opens a real Socket.IO connection (src/test/fake-socket.ts).
+vi.mock('socket.io-client', () => ({ io: fakeIo }))
 
 // jsdom lacks a few browser APIs that Radix (Select, Dialog, Tooltip) and the AppShell use.
 class ResizeObserverStub {
@@ -27,5 +31,6 @@ window.matchMedia ??= (query: string) =>
 
 afterEach(() => {
   cleanup()
+  resetFakeSockets()
   vi.useRealTimers()
 })

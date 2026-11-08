@@ -1,7 +1,8 @@
 import { StatusPicker, TableCard } from '@/components/ui'
 import { formatTableName } from '@/lib/format'
+import { RESERVATION_TEXT } from '@/features/reservations/messages'
 import { tableMenuItems, type TableMenuActions } from '../table-menu'
-import { getTableDisplayStatus, TABLE_STATUS_OPTIONS } from '../table-status'
+import { getTableBoardStatus, TABLE_STATUS_OPTIONS } from '../table-status'
 import type { Table, TableStatus } from '../types'
 
 export interface TablesGridProps extends TableMenuActions {
@@ -18,7 +19,11 @@ export interface TablesGridProps extends TableMenuActions {
   reactivatingId: string | null
   /** "Changed from another device" ring, by table id. */
   highlights?: Record<string, number>
+  /** Tables held by a DiNNo reservation: «Reserva DiNNo», no status change, no Desactivar (CLAUDE.md §12.2). */
+  dinnoTableIds?: ReadonlySet<string>
 }
+
+const NO_TABLES: ReadonlySet<string> = new Set()
 
 /** Grid of table cards, min 168 px, gap 12, equal heights (manual 13.10); each card opens its status picker. */
 export function TablesGrid({
@@ -31,6 +36,7 @@ export function TablesGrid({
   menuIdFor,
   reactivatingId,
   highlights,
+  dinnoTableIds = NO_TABLES,
   ...actions
 }: TablesGridProps) {
   return (
@@ -38,6 +44,8 @@ export function TablesGrid({
       {tables.map((table) => {
         const name = formatTableName(table.identifier)
         const open = table.id === openId
+        const status = getTableBoardStatus(table, dinnoTableIds)
+        const locked = status === 'dinno'
         return (
           <li key={table.id} className="flex">
             <StatusPicker
@@ -49,6 +57,7 @@ export function TablesGrid({
               onValueChange={(status) => onChangeStatus(table, status)}
               returnFocusId={toggleIdFor(table.id)}
               anchorClassName="flex min-w-0 flex-1"
+              locked={locked ? { message: RESERVATION_TEXT.tableHasActiveReservation } : undefined}
               inactive={
                 table.isActive
                   ? undefined
@@ -64,12 +73,13 @@ export function TablesGrid({
               <TableCard
                 name={name}
                 capacity={table.capacity}
-                status={getTableDisplayStatus(table)}
+                status={status}
                 selected={open}
                 onSelect={() => onToggle(table)}
-                onShortcut={(status) => onChangeStatus(table, status)}
+                onShortcut={(next) => onChangeStatus(table, next)}
+                lockedReason={locked ? RESERVATION_TEXT.lockedReason : undefined}
                 toggleId={toggleIdFor(table.id)}
-                menuItems={tableMenuItems(table, actions)}
+                menuItems={tableMenuItems(table, actions, { locked })}
                 menuTriggerId={menuIdFor(table.id)}
                 highlight={highlights?.[table.id]}
                 headingAs="h2"

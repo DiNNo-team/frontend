@@ -24,7 +24,17 @@ const SEED: [tableNumber: number, previousStatus: string, newStatus: string, cha
   [6, 'occupied', 'inactive', '2026-10-07T16:30:00Z'],
 ]
 
-function entry(index: number, tableNumber: number, previousStatus: string, newStatus: string, changedAt: string): TableLog {
+type Author = Pick<TableLog, 'source' | 'userEmail'>
+
+const ADMIN: Author = { source: 'manual', userEmail: EMAIL }
+
+/** Sprint 3 authors (§12.3) for the seed rows that fit them: a diner's reservation and the admin's check-in. */
+const SEED_AUTHORS: Record<number, Author> = {
+  1: { source: 'reservation', userEmail: null },
+  3: { source: 'reservation', userEmail: EMAIL },
+}
+
+function entry(index: number, tableNumber: number, previousStatus: string, newStatus: string, changedAt: string, author = ADMIN): TableLog {
   return {
     id: `log-${index + 1}`,
     tableId: `mock-${tableNumber}`,
@@ -32,12 +42,14 @@ function entry(index: number, tableNumber: number, previousStatus: string, newSt
     previousStatus,
     newStatus,
     changedAt,
-    userEmail: EMAIL,
+    ...author,
   }
 }
 
 function seedLogs(): TableLog[] {
-  return SEED.map(([tableNumber, previous, next, changedAt], index) => entry(index, tableNumber, previous, next, changedAt))
+  return SEED.map(([tableNumber, previous, next, changedAt], index) =>
+    entry(index, tableNumber, previous, next, changedAt, SEED_AUTHORS[index]),
+  )
 }
 
 /** More rows than the limit, one minute apart, to see the "200 most recent" notice. */

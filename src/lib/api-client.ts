@@ -26,6 +26,11 @@ export function setAuthTokenProvider(provider: TokenProvider | null) {
   tokenProvider = provider
 }
 
+/** Fresh Firebase token of the session (null without one). The socket asks for it on every (re)connection. */
+export async function getAuthToken(): Promise<string | null> {
+  return tokenProvider ? tokenProvider() : null
+}
+
 /** Fired on `window` when the backend answers 401, so the auth feature can send the user to /login. */
 export const SESSION_EXPIRED_EVENT = 'dinno:session-expired'
 

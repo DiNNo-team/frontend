@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import { renderWithProviders } from '@/test/render'
+import { mockReservationsControl } from '@/features/reservations/api.mock'
 import { mockTablesApi, mockTablesControl } from './api.mock'
 import TablesPage from './TablesPage'
 
 vi.mock('./api', () => ({ tablesApi: mockTablesApi }))
+vi.mock('@/features/reservations/api', async () => ({ reservationsApi: (await import('@/features/reservations/api.mock')).mockReservationsApi }))
 
 beforeEach(() => {
   mockTablesControl.reset()
   mockTablesControl.setLatency(0)
+  mockReservationsControl.reset()
+  mockReservationsControl.setLatency(0)
 })
 
 async function renderPage() {
@@ -117,6 +121,22 @@ describe('TablesPage · cambiar estado', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Mesa 04 está inactiva. Reactívala para cambiar su estado.')
     expect(within(screen.getByRole('alert')).queryByRole('button')).not.toBeInTheDocument()
     await waitFor(() => expect(metric('Inactivas')).toHaveTextContent('2'))
+  })
+
+  it('409 TABLE_HAS_ACTIVE_RESERVATION: the change is undone and the reason shows, with no retry', async () => {
+    mockTablesControl.setDinnoReservations({ 'mock-4': 2 })
+    const { user } = await renderPage()
+    await user.click(card('Mesa 04'))
+    await user.click(within(picker('Mesa 04')).getByRole('radio', { name: 'Ocupada' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(
+      'Esta mesa tiene una reserva de DiNNo en curso. Se libera sola cuando el comensal llegue, cancele o se venza la reserva.',
+    )
+    expect(within(alert).queryByRole('button')).not.toBeInTheDocument()
+    await waitFor(() => expect(card('Mesa 04')).toHaveAccessibleDescription('2 personas Disponible'))
+    expect(storedStatus('04')).toBe('available')
+    expect(metric('Inactiva')).toHaveTextContent('1')
   })
 
   it('keyboard: Enter opens on the current status, arrows move, Enter applies and focus returns; Esc closes', async () => {

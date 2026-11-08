@@ -50,6 +50,8 @@ export interface TablesPlanViewProps extends TableMenuActions {
   reactivatingId: string | null
   highlights: Record<string, number>
   announce: (message: string) => void
+  /** Tables held by a DiNNo reservation (CLAUDE.md §12.2). */
+  dinnoTableIds?: ReadonlySet<string>
 }
 
 /**
@@ -69,6 +71,7 @@ export function TablesPlanView({
   reactivatingId,
   highlights,
   announce,
+  dinnoTableIds,
   ...actions
 }: TablesPlanViewProps) {
   const toast = useToast()
@@ -254,6 +257,7 @@ export function TablesPlanView({
             toggleIdFor={toggleIdFor}
             reactivatingId={reactivatingId}
             highlights={highlights}
+            dinnoTableIds={dinnoTableIds}
             selectedId={selectedId}
             onSelect={setSelectedId}
             announce={announce}

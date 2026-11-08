@@ -3,6 +3,7 @@ import type { RegisterScheduleInput, RestaurantProfile, RestaurantSchedule } fro
 
 // In-memory stand-in for GET and PATCH /restaurants/me with VITE_USE_MOCKS=true, so the dashboard shows a real-looking
 // restaurant name next to the mocked tables. Registration and geocoding still go to the backend: they have no sample.
+// DiNNo reservations in course (asked before closing): /mesas?mockActiveReservations=2 (0 by default).
 
 function toSchedule(input: RegisterScheduleInput): RestaurantSchedule {
   return input.isOpen24h
@@ -23,9 +24,26 @@ let restaurant: RestaurantProfile = {
     opensAt: '12:00',
     closesAt: dayOfWeek >= 5 ? '01:00' : '22:00',
   })),
+  activeReservationsCount: initialActiveReservations(),
 }
 
-const wait = () => new Promise((resolve) => setTimeout(resolve, 300))
+function initialActiveReservations(): number {
+  const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('mockActiveReservations')
+  return Math.max(0, Number(value ?? 0) || 0)
+}
+
+/** Test and dev controls. */
+export const mockRestaurantControl = {
+  setLatency(ms: number) {
+    latencyMs = ms
+  },
+  setActiveReservations(count: number) {
+    restaurant = { ...restaurant, activeReservationsCount: count }
+  },
+}
+
+let latencyMs = 300
+const wait = () => new Promise((resolve) => setTimeout(resolve, latencyMs))
 
 export const mockRestaurantApi: Pick<RestaurantApi, 'get' | 'update'> = {
   async get() {

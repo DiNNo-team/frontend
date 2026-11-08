@@ -9,6 +9,9 @@ import { TABLE_LIMITS, type Table, type TableShape, type TableStatus } from './t
 // Slower responses to see loading states: /mesas?mockLatency=3000
 // Tables start unplaced, like every real table after the AddTablePlan migration; with a plan already drawn: /mesas?mockPlan
 // A big room (40 tables, placed by "Ubicar automáticamente"): /mesas?mockPlan&mockMany
+// Sprint 3 rules (CLAUDE.md §12.2): only an available table is deactivated; a table held by a DiNNo reservation
+// (`mockTablesControl.setDinnoReservations`, or /mesas?mockDinno=01,07, which also turns them Reservada) answers
+// 409 TABLE_HAS_ACTIVE_RESERVATION on status change, deactivate and lowering the capacity under the party size.
 
 export type MockOperation = 'list' | 'create' | 'status' | 'update' | 'deactivate' | 'reactivate' | 'plan'
 
@@ -87,7 +90,10 @@ function initialTables(): Table[] {
   const params = urlParams()
   if (params.has('mockEmpty')) return []
   if (params.has('mockMany')) return manyPlacedTables()
-  return params.has('mockPlan') ? seedPlacedTables() : seedTables()
+  const seed = params.has('mockPlan') ? seedPlacedTables() : seedTables()
+  // A DiNNo reservation always leaves its table Reservada (§12.3), whatever the seed said.
+  const dinno = params.get('mockDinno')?.split(',') ?? []
+  return seed.map((table) => (dinno.includes(table.identifier) ? { ...table, status: 'reserved' } : table))
 }
 
 let tables: Table[] = initialTables()
@@ -95,12 +101,31 @@ let nextId = tables.length + 1
 let latencyMs = Number(urlParams().get('mockLatency') ?? 400)
 const forcedFailures = new Set<MockOperation>()
 
+/** Party size of the DiNNo reservation holding each table, by table id. `?mockDinno=03,08` takes identifiers. */
+function initialDinnoReservations(): Map<string, number> {
+  const identifiers = urlParams().get('mockDinno')?.split(',').filter(Boolean) ?? []
+  const ids = tables.filter((table) => identifiers.includes(table.identifier)).map((table) => table.id)
+  return new Map(ids.map((id) => [id, 2]))
+}
+let dinnoReservations = initialDinnoReservations()
+
 /** Test and dev controls. */
 export const mockTablesControl = {
   reset(next: Table[] = seedTables()) {
     tables = next.map((table) => ({ ...table }))
     nextId = tables.length + 1
     forcedFailures.clear()
+    dinnoReservations = new Map()
+  },
+  /** Tables held by an active DiNNo reservation: table id → party size. */
+  setDinnoReservations(next: Record<string, number>) {
+    dinnoReservations = new Map(Object.entries(next))
+  },
+  /** A valid check-in in the reservations mock: the table goes Reservada → Ocupada and is free to change again. */
+  markCheckedIn(tableId: string) {
+    dinnoReservations.delete(tableId)
+    const table = tables.find((item) => item.id === tableId)
+    if (table) table.status = 'occupied'
   },
   setLatency(ms: number) {
     latencyMs = ms
@@ -124,9 +149,21 @@ async function simulate(operation: MockOperation) {
   }
 }
 
-// Same shape as the backend: status + Spanish message, no errorCode for tables errors.
-function fail(status: number, message: string): never {
-  throw new ApiError({ status, message })
+// Same shape as the backend: status + Spanish message; only the Sprint 3 409s carry an errorCode.
+function fail(status: number, message: string, code?: string): never {
+  throw new ApiError({ status, message, code })
+}
+
+const HAS_ACTIVE_RESERVATION = 'TABLE_HAS_ACTIVE_RESERVATION'
+
+function failIfDinnoReserved(table: Table) {
+  if (dinnoReservations.has(table.id)) {
+    fail(
+      409,
+      'Esta mesa tiene una reserva de DiNNo en curso. Se libera sola cuando el comensal llegue, cancele o se venza la reserva.',
+      HAS_ACTIVE_RESERVATION,
+    )
+  }
 }
 
 function findTable(id: string): Table {
@@ -181,6 +218,8 @@ export const mockTablesApi: TablesApi = {
     await simulate('status')
     const table = findTable(id)
     if (!table.isActive) fail(409, 'Esta mesa está inactiva. Reactívala para cambiar su estado.')
+    // Like the backend: checked before the no-op, so asking for the same status also answers 409.
+    failIfDinnoReserved(table)
     // Like the backend: the same status is a valid no-op.
     if (table.status === status) return { ...table }
     return save(table, { status })
@@ -192,6 +231,8 @@ export const mockTablesApi: TablesApi = {
     if (input.identifier !== undefined) patch.identifier = validateIdentifier(input.identifier, id)
     if (input.capacity !== undefined) {
       validateCapacity(input.capacity)
+      const partySize = dinnoReservations.get(id)
+      if (partySize !== undefined && input.capacity < partySize) failIfDinnoReserved(table)
       patch.capacity = input.capacity
     }
     return save(table, patch)
@@ -200,6 +241,10 @@ export const mockTablesApi: TablesApi = {
     await simulate('deactivate')
     const table = findTable(id)
     if (!table.isActive) fail(409, 'Esta mesa ya está inactiva.')
+    failIfDinnoReserved(table)
+    if (table.status !== 'available') {
+      fail(409, 'Para desactivar esta mesa, primero márcala como Disponible.', 'TABLE_NOT_AVAILABLE_TO_DEACTIVATE')
+    }
     return save(table, { isActive: false })
   },
   async reactivate(id) {

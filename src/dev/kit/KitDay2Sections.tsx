@@ -1,31 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { ArrowRight, Ban, Ellipsis, Pencil, Plus, RotateCcw, Tag } from 'lucide-react'
-import {
-  Alert,
-  Button,
-  ConfirmDialog,
-  DataTable,
-  Dialog,
-  DropdownMenu,
-  EmptyState,
-  FloatingBar,
-  HoursEditor,
-  IconButton,
-  NumberStepper,
-  PageHeader,
-  SegmentedControl,
-  Select,
-  Skeleton,
-  StatStrip,
-  StatTile,
-  StatusChip,
-  Switch,
-  TableCard,
-  TextField,
-  TimeSelect,
-  useToast,
-  type WeeklyHours,
-} from '@/components/ui'
+import { Alert, Button, ConfirmDialog, DataTable, Dialog, DropdownMenu, EmptyState, FloatingBar, HoursEditor, IconButton, LiveIndicator, NumberStepper, PageHeader, SegmentedControl, Select, Skeleton, StatStrip, StatTile, StatusChip, Switch, TableCard, TextField, TimeSelect, type WeeklyHours, useToast } from '@/components/ui'
 import { formatDateTime } from '@/lib/format'
 import { Icon } from '@/lib/icon'
 
@@ -249,6 +224,15 @@ function TableCardsDemo() {
       <TableCard name="Mesa 03" capacity={4} status="reserved" selected={selected === '03'} onSelect={() => toggle('03')} menuItems={menu} />
       <TableCard name="Mesa 04" capacity={2} status="available" selected={selected === '04'} onSelect={() => toggle('04')} menuItems={menu} />
       <TableCard
+        name="Mesa 05"
+        capacity={4}
+        status="dinno"
+        lockedReason="Reserva de DiNNo en curso: se libera sola cuando el comensal llegue, cancele o se venza la reserva."
+        selected={selected === '05'}
+        onSelect={() => toggle('05')}
+        menuItems={menu}
+      />
+      <TableCard
         name="Mesa 06"
         capacity={1}
         status="inactive"
@@ -332,6 +316,14 @@ export function KitDay2Sections() {
           <StatTile value="09:42" label="próxima llegada" highlight />
         </div>
         <TableCardsDemo />
+      </KitSection>
+
+      <KitSection title="LiveIndicator">
+        <div className="flex flex-wrap items-center gap-6">
+          <LiveIndicator state="live" />
+          <LiveIndicator state="reconnecting" updatedAt={new Date(2026, 10, 8, 19, 42)} />
+          <LiveIndicator state="offline" onRetry={() => undefined} />
+        </div>
       </KitSection>
 
       <KitSection title="EmptyState · Skeleton">

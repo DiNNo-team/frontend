@@ -9,6 +9,8 @@ import { LocationBanner } from '@/features/restaurant/components/LocationBanner'
 import { useRestaurantQuery } from '@/features/restaurant/hooks'
 import { useRestaurantStatusQuery } from '@/features/restaurant-status/hooks'
 import { useToast } from '@/components/ui'
+import { RestaurantLiveIndicator } from '@/features/realtime/RestaurantLiveIndicator'
+import { useRestaurantRealtime } from '@/features/realtime/use-restaurant-realtime'
 
 export function DashboardLayout() {
   const navigate = useNavigate()
@@ -20,6 +22,10 @@ export function DashboardLayout() {
   // The room's light follows the restaurant (manual v2.1): warm while open or still loading, out once it is closed.
   const statusQuery = useRestaurantStatusQuery({ enabled: !accountEvent && authEvent !== 'email-not-verified' })
   const lit = statusQuery.data?.isOpen !== false
+  // Live dashboard (Sprint 3): only with a registered restaurant (the server rejects an admin without one), never with
+  // the sample data. Keyed by the restaurant: rooms are fixed on connect.
+  const liveRestaurantId = import.meta.env.VITE_USE_MOCKS === 'true' || accountEvent || !user ? undefined : restaurantQuery.data?.id
+  useRestaurantRealtime(liveRestaurantId)
 
   function handleSignOut() {
     void signOut()
@@ -33,7 +39,14 @@ export function DashboardLayout() {
       userEmail={user?.email ?? ''}
       onSignOut={handleSignOut}
       lit={lit}
-      statusSlot={accountEvent ? undefined : <RestaurantStatusControl />}
+      statusSlot={
+        accountEvent ? undefined : (
+          <>
+            <RestaurantLiveIndicator />
+            <RestaurantStatusControl />
+          </>
+        )
+      }
       banner={
         accountEvent ? undefined : (
           // empty:hidden: with no notice to show, the wrapper takes no gap in the page.

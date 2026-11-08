@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
-import { mockTablesApi, mockTablesControl } from '@/features/tables/api.mock'
+import { mockRestaurantApi, mockRestaurantControl } from '@/features/restaurant/api.mock'
 import { renderWithProviders } from '@/test/render'
 import { mockRestaurantStatusApi, mockRestaurantStatusControl } from './api.mock'
 import { RestaurantStatusBanner } from './components/RestaurantStatusBanner'
 import { RestaurantStatusControl } from './components/RestaurantStatusControl'
 
 vi.mock('./api', () => ({ restaurantStatusApi: mockRestaurantStatusApi }))
-vi.mock('@/features/tables/api', () => ({ tablesApi: mockTablesApi }))
+vi.mock('@/features/restaurant/api', () => ({ restaurantApi: mockRestaurantApi }))
 
 const CLOSED_BANNER = 'Tu restaurante está cerrado. Los comensales no lo ven en DiNNo.'
 const CLOSED_TOAST = 'Restaurante cerrado. Los comensales ya no lo ven'
@@ -16,18 +16,14 @@ const OPENED_TOAST = 'Restaurante abierto. Los comensales ya lo ven'
 beforeEach(() => {
   mockRestaurantStatusControl.reset()
   mockRestaurantStatusControl.setLatency(0)
-  // Seed: Mesa 03 and Mesa 08 are reserved.
-  mockTablesControl.reset()
-  mockTablesControl.setLatency(0)
+  // Two DiNNo reservations in course (activeReservationsCount of GET /restaurants/me).
+  mockRestaurantControl.setActiveReservations(2)
+  mockRestaurantControl.setLatency(0)
 })
 
-/** Keeps only the reserved tables listed (the others become available). */
-function keepReserved(...identifiers: string[]) {
-  mockTablesControl.reset(
-    mockTablesControl
-      .snapshot()
-      .map((table) => (table.status === 'reserved' && !identifiers.includes(table.identifier) ? { ...table, status: 'available' } : table)),
-  )
+/** DiNNo reservations in course when closing. */
+function withReservations(count: number) {
+  mockRestaurantControl.setActiveReservations(count)
 }
 
 // The topbar slot and the banner, as the DashboardLayout mounts them.
@@ -82,8 +78,8 @@ describe('RestaurantStatus', () => {
     expect(screen.getByText('Estado del restaurante')).toHaveClass('sr-only', 'sm:not-sr-only')
   })
 
-  it('closes at once without reserved tables, toasts with "Deshacer", and "Deshacer" opens again', async () => {
-    keepReserved()
+  it('closes at once without DiNNo reservations, toasts with "Deshacer", and "Deshacer" opens again', async () => {
+    withReservations(0)
     const { user } = renderStatus()
     await user.click(await findSwitch())
 
@@ -101,13 +97,13 @@ describe('RestaurantStatus', () => {
     expect(screen.queryByRole('button', { name: 'Deshacer' })).not.toBeInTheDocument()
   })
 
-  it('with reserved tables asks first (plural) and "Cancelar" changes nothing', async () => {
+  it('with DiNNo reservations in course asks first (plural) and "Cancelar" changes nothing', async () => {
     const { user } = renderStatus()
     await user.click(await findSwitch())
 
     const dialog = await screen.findByRole('dialog', { name: '¿Cerrar el restaurante?' })
     expect(dialog).toHaveTextContent(
-      'Tienes 2 mesas reservadas. Mientras esté cerrado, los comensales no verán tu restaurante en DiNNo.',
+      'Tienes 2 reservas en curso; se mantendrán hasta que lleguen o se venzan.',
     )
     await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }))
 
@@ -117,13 +113,13 @@ describe('RestaurantStatus', () => {
     expect(screen.queryByText(CLOSED_BANNER)).not.toBeInTheDocument()
   })
 
-  it('uses the singular with one reserved table and closes after "Cerrar restaurante"', async () => {
-    keepReserved('08')
+  it('uses the singular with one reservation and closes after "Cerrar restaurante"', async () => {
+    withReservations(1)
     const { user } = renderStatus()
     await user.click(await findSwitch())
 
     const dialog = await screen.findByRole('dialog', { name: '¿Cerrar el restaurante?' })
-    expect(dialog).toHaveTextContent('Tienes 1 mesa reservada. Mientras esté cerrado, los comensales no verán tu restaurante en DiNNo.')
+    expect(dialog).toHaveTextContent('Tienes 1 reserva en curso; se mantendrá hasta que llegue o se venza.')
     await user.click(within(dialog).getByRole('button', { name: 'Cerrar restaurante' }))
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
@@ -147,14 +143,27 @@ describe('RestaurantStatus', () => {
     expect(await findSwitch()).toBeChecked()
   })
 
-  it('asks with the safe text when the tables cannot be loaded', async () => {
-    mockTablesControl.failOn('list')
+  it('asks with the safe text when the reservations in course cannot be counted', async () => {
+    const get = vi.spyOn(mockRestaurantApi, 'get').mockRejectedValue(new Error('offline'))
+    try {
+      const { user } = renderStatus()
+      await user.click(await findSwitch())
+
+      const dialog = await screen.findByRole('dialog', { name: '¿Cerrar el restaurante?' })
+      expect(dialog).toHaveTextContent('Los comensales no verán tu restaurante en DiNNo mientras esté cerrado.')
+      expect(dialog).not.toHaveTextContent('Tienes')
+    } finally {
+      get.mockRestore()
+    }
+  })
+
+  it('a table Reservada by hand is not a DiNNo reservation: with none in course it closes at once', async () => {
+    withReservations(0)
     const { user } = renderStatus()
     await user.click(await findSwitch())
 
-    const dialog = await screen.findByRole('dialog', { name: '¿Cerrar el restaurante?' })
-    expect(dialog).toHaveTextContent('Los comensales no verán tu restaurante en DiNNo mientras esté cerrado.')
-    expect(dialog).not.toHaveTextContent('Tienes')
+    await toastShown(CLOSED_TOAST)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('"Abrir ahora" opens and shows its toast', async () => {
@@ -170,7 +179,7 @@ describe('RestaurantStatus', () => {
   })
 
   it('if saving fails the status goes back and the banner shows the error with "Intentar de nuevo"', async () => {
-    keepReserved()
+    withReservations(0)
     mockRestaurantStatusControl.failOn('restaurant-status-save')
     const { user } = renderStatus()
     await user.click(await findSwitch())
@@ -189,7 +198,7 @@ describe('RestaurantStatus', () => {
   })
 
   it('cannot be pressed again while saving', async () => {
-    keepReserved()
+    withReservations(0)
     const { user } = renderStatus()
     const control = await findSwitch()
 
@@ -226,7 +235,7 @@ describe('RestaurantStatus', () => {
   })
 
   it('keyboard: Space toggles and the focus comes back to the switch after saving', async () => {
-    keepReserved()
+    withReservations(0)
     const { user } = renderStatus()
     const control = await findSwitch()
     control.focus()

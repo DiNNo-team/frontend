@@ -5,6 +5,57 @@
 
 ---
 
+## 8 nov 2026 · Sebastián · Dashboard en tiempo real (Socket.IO) y «En vivo»
+
+- **Dependencia nueva: `socket.io-client` ^4.8.4** (la misma que usa la app). **Corre `npm ci` después de hacer pull.**
+- **El dashboard se actualiza solo:**
+  - Una reserva nueva aparece en el panel con el aviso «Nueva reserva · Mesa 04 · 2 personas».
+  - Al cancelarse, vencerse o hacerse check-in, la reserva sale del panel con su aviso.
+  - Los cambios de mesa hechos desde otro dispositivo llegan con su anillo.
+  - Probado contra Render: la reserva apareció en 44 ms y salió al instante al cancelarla.
+- **Topbar:** a la izquierda del switch aparece «En vivo», que cambia a «Reconectando…» (con la hora de la última actualización) y, si el corte sigue 30 s, a «Sin conexión» con «Intentar de nuevo». Es el `LiveIndicator` del manual, que ya no es propuesta futura (manual 12.2, 13.7 y 19 actualizados).
+- **Para quien toque el layout o escuche eventos:** hay un solo socket por sesión, en `src/features/realtime/use-restaurant-realtime.ts`. No abras otro: agrega ahí el evento que necesites (CLAUDE.md §11, «Tiempo real del dashboard»).
+- **Pruebas:** `socket.io-client` está simulado en todas las pruebas (`src/test/fake-socket.ts`): ninguna se conecta de verdad.
+- **Sin variables de entorno nuevas:** el socket usa `VITE_API_URL`.
+- **Dato de Casa 72:** su dirección volvió a la del seed, «Av. Calle 72 con Cra. 9, Chapinero, Bogotá» (4.655671, -74.057006). Se había movido a la Calle 92 en una prueba del pin, y así no aparecía buscando la zona Calle 72 a 2 km.
+
+---
+
+## 8 nov 2026 · Sebastián · Check-in, panel «Reservas DiNNo» y mesas protegidas en `/mesas`
+
+- **`/mesas`:**
+  - «Validar código» pasa a ser el botón principal (en servicio es la acción más usada) y «Agregar mesa» pasa a botón de borde.
+  - Debajo del resumen aparece el panel «Reservas DiNNo»: nombre o «Comensal», mesa, personas y tiempo restante. **Nunca el código.**
+  - Una mesa con reserva de DiNNo en curso se ve como «Reserva DiNNo» (cuadrado + candado), en la cuadrícula y en el plano. No ofrece cambiar el estado, los atajos D/R/O ni «Desactivar», y al pasar el puntero (o con el foco) explica por qué. Editar sigue igual.
+- **Kit (`components/ui`, cambios aditivos):**
+  - `STATUS_META` tiene `dinno` (Reserva DiNNo) y los cuatro estados de reserva (`reservation-active` · `-completed` · `-expired` · `-cancelled`: Activa · Cumplida · Vencida · Cancelada), los mismos de la app. Forma nueva `square-lock`. `RESERVATION_STATUS` pasa del estado de la API al del kit.
+  - `TableCard` y `TableNode` aceptan `status="dinno"`. `TableCard` tiene `lockedReason` (tooltip accesible).
+  - `StatusPicker` tiene `locked` (solo mensaje). `StatusLine` tiene `wrap`.
+  - Ejemplos en `/kit`.
+- **Código nuevo:** `src/features/reservations/` (detalle en CLAUDE.md §11). El tiempo real (socket) llega en el siguiente PR; mientras tanto, el panel consulta cada 30 s y al volver a la pestaña.
+- **Para quien pruebe con mock:** `/mesas?mockDinno=01,07`. Códigos `K7M4QX` y `P3R8TW` válidos; `VENC9D`, `USAD4S` y `CANC3X` fuerzan vencida, ya usado y cancelada.
+- **Sin dependencias nuevas ni variables de entorno nuevas.**
+
+---
+
+## 8 nov 2026 · Sebastián · Web compatible con el backend del Sprint 3 (mesas, bitácora y cierre)
+
+**Contexto:** el backend del Sprint 3 ya está en `develop` y en Render (`/v1/health` → `15be6cf`), así que la entrada del 6 nov de abajo («NO está desplegado») quedó vieja. La web de producción todavía trataba los 409 nuevos como si fueran los del Sprint 1. Este PR lo corrige (rama `fix/sprint3-mesas-409-bitacora`).
+
+- **Mesas (`features/tables/`):** los 409 con `errorCode` se revisan primero, con los textos de §12.2:
+  - `TABLE_HAS_ACTIVE_RESERVATION` al cambiar el estado, al desactivar y al bajar la capacidad.
+  - `TABLE_NOT_AVAILABLE_TO_DEACTIVATE` al desactivar.
+  
+  El 409 **sin** `errorCode` sigue significando lo de antes (inactiva, ya inactiva o identificador repetido). Los textos viven en `src/features/reservations/messages.ts` (el mapa único `errorCode → texto` del sprint).
+- **Mock de mesas:** sigue las reglas nuevas. Solo se desactiva una mesa Disponible, y `?mockDinno=03,08` (o `mockTablesControl.setDinnoReservations`) simula mesas con reserva de DiNNo.
+- **Para Sergio:** toqué tus dos carpetas, sin cambiar nada de lo que ya funcionaba.
+  - **Bitácora (`features/activity-log/`):** `TableLog` ahora trae `source`, y `userEmail` puede ser `null`. El autor sale de `logAuthor` (`messages.ts`): `manual` → correo · `reservation` sin correo → «Comensal» · `reservation` con correo (check-in) → correo · `system` → «Automático».
+  - **Abierto/Cerrado (`features/restaurant-status/`):** antes de cerrar se cuenta `activeReservationsCount` de `GET /v1/restaurants/me` (`use-active-reservations.ts`, que reemplaza a `use-reserved-tables.ts`), y no las mesas Reservadas. El texto nuevo es «Tienes N reservas en curso; se mantendrán hasta que lleguen o se venzan.», en singular con 1. Sin reservas de DiNNo, cierra de una vez aunque haya mesas Reservadas a mano.
+- **Para Santiago y Jacobo:** `RestaurantProfile` tiene `activeReservationsCount: number`. Agregué `activeReservationsCount: 0` a los datos de prueba de `features/restaurant/` (6 archivos `*.test.ts(x)`), sin cambiar ninguna prueba. El mock del restaurante acepta `?mockActiveReservations=2`.
+- **Sin dependencias nuevas, sin variables de entorno nuevas y sin cambios en el kit.**
+
+---
+
 ## 6 nov 2026 · Elizabeth · Sprint 3 backend: cierre y plan de merge
 
 **Esta entrada reemplaza la lista de «Pendiente» de la entrada de abajo («Backend del Sprint 3: estado real…», también del 6 nov), que queda tachada ahí:** el WebSocket (tarea 8), la exportación anónima de datos y `demo:reset` (tarea 9) ya están hechos en la rama.

@@ -561,7 +561,7 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 | `BottomSheet` | Hoja interna de `StatusPicker` en < 768 (no es un componente aparte) | ✓ | En la web reemplaza al popover en el teléfono |
 | `Glass` (niveles de la sección 7) | utilidades CSS | `GlassSurface` | Android 12+: `BlurView` (`expo-blur`) solo en el login; sobre el mapa y en Android 11 o anterior, respaldo sólido. iOS: `BlurView` de `expo-blur` (sin verificar en un iPhone: no hay Xcode en el equipo) |
 
-**Solo web:** `Select`, `TimeSelect`, `HoursEditor`, `Switch`, `DropdownMenu`, `DataTable`, `PageHeader`, `AppShell`, `TableCard`, `TableNode`, `FloorPlan`, `StatusPicker`, `StatStrip`, `DetailList`, `FloatingBar` y, como propuesta futura, `LiveIndicator` (19). Son herramientas del restaurante.
+**Solo web:** `Select`, `TimeSelect`, `HoursEditor`, `Switch`, `DropdownMenu`, `DataTable`, `PageHeader`, `AppShell`, `TableCard`, `TableNode`, `FloorPlan`, `StatusPicker`, `StatStrip`, `DetailList`, `FloatingBar` y `LiveIndicator` (Sprint 3). Son herramientas del restaurante.
 
 **Solo móvil:** `Text` (React Native necesita un componente de texto), `ScreenHeader`, `FilterChip`, `MapMarkers`, `GoogleLogo`. Son del comensal.
 
@@ -698,9 +698,9 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 - **< 1024:** 2 × 2.
 - **✗** Íconos en círculos de color · la palabra "libres" (no está en el glosario) · una tarjeta de un color distinto a las demás.
 
-#### `LiveIndicator` *(propuesta futura, sección 19)*
+#### `LiveIndicator`
 
-**No está implementado.** Depende del socket del restaurante (decisión D5, fase F5); hoy solo se ve en la página de muestra `/sistema`. Así se vería:
+Implementado en el Sprint 3 (`components/ui/LiveIndicator.tsx`), alimentado por el socket del restaurante (`features/realtime`):
 
 | Estado | Cómo se ve |
 |---|---|
@@ -767,7 +767,7 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 
 - **Fondo (v2.1):** `AmbientGround`, la luz del salón (sección 8), fija detrás de todo. `lit` sigue al estado del restaurante: abierto, cálido; cerrado, apagado.
 - **Dock de navegación** `NavDock` (v2.1, en todos los tamaños), como el de macOS: una cápsula de vidrio centrada a 16 del borde inferior (más el área segura del teléfono). De izquierda a derecha: el símbolo de DiNNo (desde 640; el pin visible mide unos 36, sin deformarlo), un separador, cada sección como ícono 20 con su palabra debajo (12/16 700, nunca ícono solo), en ítems de 96 de ancho y unos 52 de alto, otro separador y el cambio de tema. El activo es una píldora: petróleo con texto crema en claro, crema con texto petróleo en oscuro. Al pasar el puntero, el ícono se asoma (sube 4 px y crece al 108%, sin movimiento con reducir movimiento). **El vidrio sigue al tema.** La página reserva abajo `--dock-clearance` (112) para que el dock nunca tape la última fila.
-- **Barra superior** `Topbar` (v2.1): una píldora de vidrio de 64 de alto, *sticky* a 16 del borde. A la izquierda, **el nombre real del restaurante en todos los tamaños** (Título 3, recortado si no cabe; skeleton mientras carga, nunca "Restaurante"). A la derecha, el switch Abierto/Cerrado y la cuenta (`UserMenu`): la inicial del restaurante sobre `--grad-highlight`, y un menú con el restaurante y el correo arriba, el tema y "Cerrar sesión". El `LiveIndicator` irá a la izquierda del switch *(propuesta futura, sección 19)*.
+- **Barra superior** `Topbar` (v2.1): una píldora de vidrio de 64 de alto, *sticky* a 16 del borde. A la izquierda, **el nombre real del restaurante en todos los tamaños** (Título 3, recortado si no cabe; skeleton mientras carga, nunca "Restaurante"). A la derecha, el switch Abierto/Cerrado y la cuenta (`UserMenu`): la inicial del restaurante sobre `--grad-highlight`, y un menú con el restaurante y el correo arriba, el tema y "Cerrar sesión". El `LiveIndicator` va a la izquierda del switch (en el teléfono, solo la forma; la palabra queda para el lector de pantalla).
 - **Hoja de contenido** (v2.1): `glass-sheet`, radio 28 (32 desde 1024), padding 16 / 24 / 32. Todo lo de la página va encima.
 - **Centrado:** la barra y la hoja van en una columna centrada de 1280 como máximo. Ya no hay menú lateral ni cajón: el dock es la navegación en todos los tamaños.
 
@@ -826,7 +826,7 @@ Sin cambios de fondo respecto al v1.1:
   3. Las tarjetas del resumen.
   4. Las mesas.
 - **El trabajo más frecuente, a un toque:** tocar una mesa abre su selector; con teclado, D, R y O.
-- **Datos honestos:** los ceros como "0" y sin cifras inventadas. La marca "Actualizado 7:42 p. m." llega con el `LiveIndicator` *(propuesta futura, sección 19)*.
+- **Datos honestos:** los ceros como "0" y sin cifras inventadas. La marca "Actualizado 7:42 p. m." la muestra el `LiveIndicator` mientras reconecta.
 
 ### 13.6 Estados vacíos y de carga
 
@@ -850,14 +850,15 @@ Sin cambios de fondo respecto al v1.1:
 | Cambio rápido reversible (estado de mesa, cerrar sin reservas) | Toast con "Deshacer" (6 s) |
 | Error al guardar o al cargar | `Alert` de error en el bloque, sin desaparecer solo, con "Intentar de nuevo" |
 | Contexto persistente (restaurante cerrado, ubicación incompleta) | `Alert` info arriba del contenido |
-| Estado de la conexión en vivo | `LiveIndicator` en el topbar *(propuesta futura, sección 19)* |
+| Estado de la conexión en vivo | `LiveIndicator` en el topbar |
 | Otra persona cambió una mesa | Anillo de cambio remoto en esa mesa, en la cuadrícula y en el plano (implementado). **Sin toast** (sería ruido). El anuncio para lectores de pantalla (un único `role="status"`, como máximo uno cada 5 s) es *(propuesta futura, sección 19)* |
-| Se perdió la conexión | `LiveIndicator` en "Reconectando…" y, si sigue, "Sin conexión" *(propuesta futura, sección 19)*. La pantalla sigue usable con lo último que llegó |
+| Se perdió la conexión | `LiveIndicator` en "Reconectando…" y, si sigue 30 s, "Sin conexión". La pantalla sigue usable con lo último que llegó |
 
-**Tiempo real del dashboard** *(propuesta futura, sección 19)*:
+**Tiempo real del dashboard** (Sprint 3):
 
-- **Objetivo (D5):** los cambios de otros dispositivos llegan **al instante** por el socket del restaurante. Si el socket cae, la pantalla consulta cada 30 s hasta reconectarse, al volver a la pestaña y al recuperar internet.
-- **Hoy:** la lista se vuelve a pedir al volver a la pestaña y después de cada cambio propio. Un cambio de otro dispositivo aparece entonces, con su anillo.
+- Los cambios de otros dispositivos llegan **al instante** por el socket del restaurante (D5): reservas nuevas, canceladas, vencidas y con check-in, y cambios de mesa (con su anillo).
+- Respaldo: el panel de reservas consulta cada 30 s, y todo se vuelve a pedir al reconectar y al volver a la pestaña.
+- Una reserva nueva o que sale del panel sin que este dispositivo lo haga muestra un toast corto (info); un cambio de mesa, solo el anillo.
 
 ### 13.8 Responsive
 
@@ -1009,7 +1010,7 @@ Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en clar
 | Toast al desactivar | Mesa 04 desactivada · Deshacer |
 | Toast al guardar el plano | Plano guardado |
 | Toast al cerrar | Restaurante cerrado. Los comensales ya no lo ven · Deshacer |
-| Conexión *(propuesta futura, sección 19)* | En vivo · Reconectando… · Sin conexión |
+| Conexión | En vivo · Reconectando… · Sin conexión |
 | Error de red | No pudimos conectarnos. Revisa tu conexión e intenta de nuevo. |
 | Sesión vencida | Tu sesión terminó. Inicia sesión de nuevo. |
 | Sin permiso | No tienes acceso a esta sección. |
@@ -1610,8 +1611,6 @@ Lo que este manual describe y todavía no existe en el código. Cada punto se im
 
 | Propuesta | Sección | Depende de | Hoy |
 |---|---|---|---|
-| `LiveIndicator` ("En vivo", "Reconectando…", "Sin conexión", "Actualizado 7:42 p. m.") en el topbar | 12.2, 13.5, 13.7, 14 | Socket de `restaurant_admin` (D5, fase F5) | No aparece. Solo en la página de muestra `/sistema` |
-| Tiempo real del dashboard por socket, con respaldo cada 30 s | 13.7 | D5 (cambio de backend aprobado, sin hacer) | La lista se vuelve a pedir al volver a la pestaña y tras cada cambio propio |
 | Anuncio de cambios remotos en `role="status"` (uno cada 5 s como máximo) | 13.7, 15 | — | Solo el anillo visual. `role="status"` anuncia los movimientos del plano |
 | Transición Cuadrícula ↔ Plano con View Transitions | 11.3 | — | Cambio instantáneo. La maqueta `/sistema` la prueba |
 | Grupo con título "Inactivas" en la cuadrícula | 13.10 | — | Las inactivas van al final, sin encabezado |
