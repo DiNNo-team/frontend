@@ -65,6 +65,9 @@
 /* ===== Utilidades del manual v2.0 (16.4): valores sin token y piezas compuestas ===== */
 @utility text-btn { font-size: 15px; line-height: 20px; font-weight: 700; }      /* texto de botón 15/20 700 · manual 4 */
 @utility border-field { border-width: 1.5px; }                                      /* borde de campos · manual 6.2 */
+/* Listas que se abren desde un control (Select, menú ⋯): por encima de los diálogos, porque también se abren dentro de
+   ellos (la «Zona» del formulario de mesa). Con --z-dropdown quedaban detrás del fondo del diálogo y no se podían usar. */
+@utility z-popover { z-index: calc(var(--z-modal) + 1); }
 @utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(min(168px, calc(50% - 6px)), 1fr)); grid-auto-rows: 1fr; } /* dos columnas también en el teléfono */ /* grilla de mesas · manual 13.10 */
 
 /* Vidrio (manual 7) con su respaldo sólido. Encima, solo texto en tinta o crema. */

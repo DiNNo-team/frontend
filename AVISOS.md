@@ -5,6 +5,14 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · Las listas de `Select` y del menú ⋯ ya se abren dentro de los diálogos
+
+- **Error:** en el formulario de mesa, el campo «Zona» no abría sus opciones. La lista del `Select` usaba la capa `--z-dropdown` (20) y quedaba detrás del fondo del diálogo (`--z-overlay`, 40), que tapaba el clic.
+- **Arreglo (kit):** `Select` y `DropdownMenu` usan la utilidad nueva `z-popover` (`--z-modal` + 1, en `globals.css`), así que sus listas quedan encima de cualquier diálogo.
+- **Regla:** cualquier lista o menú que pueda abrirse dentro de un diálogo usa `z-popover`, no `z-(--z-dropdown)`.
+
+---
+
 ## 10 nov 2026 · Sebastián · Zonas de mesas, búsqueda y filtros en /mesas
 
 **Requiere el backend de zonas** (backend `feat/sprint3-zonas-mesas`, migración `CreateTableAreas` en Neon). Si el backend todavía no lo tiene, `/mesas` funciona como antes: sin zonas, la barra muestra solo «Crear zonas», y crear una mesa sin zona no envía `areaId`.
