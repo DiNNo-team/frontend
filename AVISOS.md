@@ -5,6 +5,13 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · «Agregar mesa» y «Editar» del restaurante en naranja
+
+- «Agregar mesa» (barra de `/mesas`) y «Editar» (`/restaurante`) pasan a `primary`: naranja con texto oscuro.
+- **Excepción a «un solo botón principal por pantalla»:** `/mesas` queda con dos, «Validar código» y «Agregar mesa». Es una decisión de Sebastián y está anotada en el manual (13.10). En las demás pantallas la regla sigue igual.
+
+---
+
 ## 10 nov 2026 · Sebastián · Botones de /mesas en la barra de filtros, y bitácora con búsqueda, zonas y páginas
 
 - **`/mesas`:** el selector Plano · Cuadrícula y «Agregar mesa» se mudaron del encabezado a la barra de filtros, al lado de «Zonas». El encabezado deja solo el saludo y «Validar código». La barra ahora es `role="group"` («Organizar mesas»).
