@@ -5,6 +5,28 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · Botones de /mesas en la barra de filtros, y bitácora con búsqueda, zonas y páginas
+
+- **`/mesas`:** el selector Plano · Cuadrícula y «Agregar mesa» se mudaron del encabezado a la barra de filtros, al lado de «Zonas». El encabezado deja solo el saludo y «Validar código». La barra ahora es `role="group"` («Organizar mesas»).
+- **`/bitacora`** (Sergio, para que lo sepas):
+  - Tiene «Buscar mesa» y «Zona», que filtran los cambios ya cargados, y «Mesa» sigue igual.
+  - Muestra **15 cambios por página**.
+  - Cualquier filtro vuelve a la página 1.
+- **Kit:**
+  - `Pagination` es nuevo («16–30 de 74 cambios», «Anterior», «Página 2 de 5» y «Siguiente»). Con una sola página no se muestra.
+  - `Button` acepta `iconPosition="end"`.
+  - Los dos están en el README del kit.
+
+---
+
+## 10 nov 2026 · Sebastián · El topbar ya no muestra «En vivo»
+
+- Se quitó el indicador «En vivo» (`RestaurantLiveIndicator`) del topbar: no aportaba y Sebastián no lo quiere en el dashboard.
+- **El tiempo real no cambia:** el socket del restaurante (`useRestaurantRealtime`) sigue conectado, el panel de reservas y las mesas se actualizan solos, y el panel sigue consultando cada 30 s como respaldo.
+- El `LiveIndicator` sigue en el kit, pero hoy no se usa. Si vuelve, se alimenta con `useLiveConnection` de `features/realtime`.
+
+---
+
 ## 10 nov 2026 · Sebastián · Las listas de `Select` y del menú ⋯ ya se abren dentro de los diálogos
 
 - **Error:** en el formulario de mesa, el campo «Zona» no abría sus opciones. La lista del `Select` usaba la capa `--z-dropdown` (20) y quedaba detrás del fondo del diálogo (`--z-overlay`, 40), que tapaba el clic.

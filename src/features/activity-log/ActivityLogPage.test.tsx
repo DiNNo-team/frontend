@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import { mockTablesControl } from '@/features/tables/api.mock'
+import { MOCK_AREAS, mockAreasControl } from '@/features/tables/areas/api.mock'
 import { ApiError } from '@/lib/api-client'
 import { renderWithProviders } from '@/test/render'
 import ActivityLogPage from './ActivityLogPage'
@@ -10,6 +11,7 @@ import type { TableLog } from './types'
 // Async factories: the page imports both APIs while the mocks are still loading.
 vi.mock('./api', async () => ({ tableLogsApi: (await import('./api.mock')).mockTableLogsApi }))
 vi.mock('@/features/tables/api', async () => ({ tablesApi: (await import('@/features/tables/api.mock')).mockTablesApi }))
+vi.mock('@/features/tables/areas/api', async () => ({ tableAreasApi: (await import('@/features/tables/areas/api.mock')).mockTableAreasApi }))
 
 // Dates are shown in the browser's time zone: fix it so "7:30 p. m." does not depend on the machine.
 vi.stubEnv('TZ', 'America/Bogota')
@@ -32,6 +34,8 @@ beforeEach(() => {
   // Seed: Mesa 01…08, Mesa 06 inactive.
   mockTablesControl.reset()
   mockTablesControl.setLatency(0)
+  mockAreasControl.reset()
+  mockAreasControl.setLatency(0)
 })
 
 afterEach(() => {
@@ -228,8 +232,53 @@ describe('ActivityLogPage', () => {
 
     mockTableLogsControl.reset(rows(220))
     await renderPage()
-    expect(bodyRows()).toHaveLength(200)
+    // 200 rows arrive; the table shows them 15 per page.
+    expect(bodyRows()).toHaveLength(15)
+    expect(screen.getByText('1–15 de 200 cambios')).toBeInTheDocument()
     expect(screen.getByText(notice)).toBeInTheDocument()
+  })
+
+  it('shows 15 changes per page and moves between pages', async () => {
+    window.HTMLElement.prototype.scrollIntoView = vi.fn()
+    mockTableLogsControl.reset(
+      Array.from({ length: 40 }, (_, index) => log({ id: `p${index}`, changedAt: new Date(Date.UTC(2026, 9, 8) - index * 60_000).toISOString() })),
+    )
+    const { user } = await renderPage()
+
+    expect(bodyRows()).toHaveLength(15)
+    expect(screen.getByText('Página 1 de 3')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(screen.getByText('31–40 de 40 cambios')).toBeInTheDocument()
+    expect(bodyRows()).toHaveLength(10)
+  })
+
+  it('searches by table and goes back to page 1 when the search changes', async () => {
+    window.HTMLElement.prototype.scrollIntoView = vi.fn()
+    mockTableLogsControl.reset(
+      Array.from({ length: 30 }, (_, index) =>
+        log({
+          id: `s${index}`,
+          tableId: index % 2 ? 'mock-4' : 'mock-1',
+          tableIdentifier: index % 2 ? '04' : '01',
+          changedAt: new Date(Date.UTC(2026, 9, 8) - index * 60_000).toISOString(),
+        }),
+      ),
+    )
+    const { user } = await renderPage()
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar mesa' }), '4')
+
+    // 15 changes of Mesa 04 fit in one page: back on page 1, without pagination.
+    expect(screen.queryByRole('navigation', { name: 'Paginación' })).not.toBeInTheDocument()
+    expect(bodyRows()).toHaveLength(15)
+    expect(bodyRows().every((row) => cellsOf(row)[1].textContent === 'Mesa 04')).toBe(true)
+    await user.clear(screen.getByRole('searchbox', { name: 'Buscar mesa' }))
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar mesa' }), 'T9')
+    expect(screen.getByText('No hay cambios con esos filtros')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Ver todos los cambios' }))
+    expect(screen.getByText('1–15 de 30 cambios')).toBeInTheDocument()
   })
 
   it('asks again every time the screen is opened, so a change made in /mesas shows up', async () => {
@@ -253,5 +302,20 @@ describe('ActivityLogPage', () => {
     expect(first).toHaveTextContent('Mesa 04')
     expect(first).toHaveTextContent('Disponible a Ocupada')
     expect(second).toHaveTextContent('30 sept · 7:30 p. m. · admin@casa72.co')
+  })
+
+  it('filters by the current zone of each table', async () => {
+    mockAreasControl.reset(MOCK_AREAS)
+    mockTablesControl.reset(mockTablesControl.snapshot().map((table) => ({ ...table, areaId: table.id === 'mock-5' ? 'area-terraza' : 'area-salon' })))
+    mockTableLogsControl.reset([
+      log({ id: 'z1', tableId: 'mock-1', tableIdentifier: '01', changedAt: '2026-10-08T12:00:00Z' }),
+      log({ id: 'z2', tableId: 'mock-5', tableIdentifier: '05', changedAt: '2026-10-08T11:00:00Z' }),
+    ])
+    const { user } = await renderPage()
+
+    await user.click(await screen.findByRole('combobox', { name: 'Zona' }))
+    await user.click(screen.getByRole('option', { name: 'Terraza' }))
+
+    expect(bodyRows().map((row) => cellsOf(row)[1].textContent)).toEqual(['Mesa 05'])
   })
 })

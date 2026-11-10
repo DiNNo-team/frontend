@@ -316,6 +316,7 @@ src/
 - `useTableLogsQuery(tableId?)` (query key `['table-logs', tableId ?? 'all']`) lleva **`refetchOnMount: 'always'`**: cada vez que se abre la pantalla vuelve a pedir la bitácora, así un cambio hecho en `/mesas` aparece aunque el `staleTime` global (30 s) no haya vencido. No toca `features/tables`.
 - Reutiliza de mesas, sin modificarlos: `useTablesQuery` + `sortTables` para el filtro (todas las mesas, inactivas incluidas; si fallan, el filtro queda deshabilitado con "Todas las mesas") y `toTableDisplayStatus` para los chips (incluido `inactive`).
 - El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
+- **Buscar, zona y páginas (10 nov 2026):** «Buscar mesa» y «Zona» filtran en el navegador los cambios ya cargados (la zona es la actual de cada mesa, cruzada con `useTablesQuery`; funciones de `features/tables/table-filters.ts`). «Mesa» sigue pidiendo `?tableId=` al backend. La lista muestra **15 cambios por página** con el `Pagination` del kit, y cualquier filtro vuelve a la página 1.
 - Mock (con `VITE_USE_MOCKS=true`, datos fijos con las mesas del mock de mesas): `?mockError=table-logs-load`, `?mockTableLogsFull` (200 filas) y `?mockEmpty` / `?mockLatency=` (compartidos con mesas). No refleja los cambios hechos en `/mesas`: para eso, el backend real.
 
 ### Zonas, búsqueda y filtros de mesas (Sebastián)
@@ -338,7 +339,7 @@ src/
   - `reservation.cancelled`, `.expired` y `.checked_in` la quitan, con un toast corto (no para el check-in hecho en este mismo dispositivo).
   - `table.status_changed` vuelve a pedir las mesas, lo que también hace sonar el anillo de cambio remoto.
 - **Fallas:** al reconectar se vuelve a pedir todo. `connect_error` `SERVER_ERROR` se reintenta a los 5, 15 y 30 s; los demás códigos no se reintentan. El panel sigue consultando cada 30 s.
-- El estado de la conexión vive en `connection.ts` (`useLiveConnection`) y lo muestra el `LiveIndicator` del kit en el topbar (`RestaurantLiveIndicator`).
+- El estado de la conexión vive en `connection.ts` (`useLiveConnection`). **No se muestra en el dashboard** (desde el 10 nov se quitó el «En vivo» del topbar); el `LiveIndicator` sigue en el kit, sin usarse.
 - **Pruebas:** `socket.io-client` está simulado en todas (`src/test/fake-socket.ts`, desde `setup.ts`), así que ninguna abre una conexión real. Usa `lastSocket()` para emitir eventos del servidor.
 
 ### Registro del restaurante (Santiago, PBI 3)

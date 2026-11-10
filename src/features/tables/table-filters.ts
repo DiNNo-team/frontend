@@ -18,7 +18,7 @@ export interface TableFilters {
 
 export const NO_FILTERS: TableFilters = { area: ALL_AREAS, query: '', status: null, minCapacity: null }
 
-export function inArea(table: Table, area: AreaFilter): boolean {
+export function inArea(table: Pick<Table, 'areaId'>, area: AreaFilter): boolean {
   if (area === ALL_AREAS) return true
   if (area === NO_AREA) return table.areaId === null
   return table.areaId === area
@@ -29,7 +29,7 @@ export function inArea(table: Table, area: AreaFilter): boolean {
  * and "04" find Mesa 04, never Mesa 14). Any other text matches the start of the identifier or part of the name
  * ("t" finds Mesa T1 and Mesa T2; "barra" finds Mesa Barra 1).
  */
-export function matchesQuery(table: Table, query: string): boolean {
+export function matchesQuery(table: Pick<Table, 'identifier'>, query: string): boolean {
   const typed = query.trim().toLowerCase().replace(/^mesa\s*/, '')
   if (!typed) return true
   if (/^\d+$/.test(typed)) return normalizeTableIdentifier(table.identifier) === normalizeTableIdentifier(typed)
