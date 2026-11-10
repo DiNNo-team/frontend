@@ -5,6 +5,28 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · Zonas de mesas, búsqueda y filtros en /mesas
+
+**Requiere el backend de zonas** (backend `feat/sprint3-zonas-mesas`, migración `CreateTableAreas` en Neon). Si el backend todavía no lo tiene, `/mesas` funciona como antes: sin zonas, la barra muestra solo «Crear zonas», y crear una mesa sin zona no envía `areaId`.
+
+- **Qué hay nuevo:** para restaurantes grandes, con muchas mesas o varios pisos.
+  - **Zonas** con nombre libre («Piso 1», «Terraza»), que se crean, renombran y eliminan en el diálogo «Zonas».
+  - **Cuadrícula agrupada por zona,** con «Buscar mesa» y los filtros de zona y de personas.
+  - **Plano por zona:** cada zona tiene su propio plano.
+  - **Formulario de mesa con el campo «Zona».**
+  - Manual 13.10 actualizado.
+- **Código:**
+  - `features/tables/areas/`: `api.ts` con su mock, `hooks.ts` (query key `['table-areas']`), `area-form.ts` y `AreasDialog.tsx`.
+  - `features/tables/table-filters.ts`: búsqueda, filtros y agrupación, como funciones puras.
+  - `components/TablesToolbar.tsx`.
+  - `usePlanEditor(tablesDeLaZona, todasLasMesas)`: `PUT /v1/tables/plan` reemplaza el plano completo, así que el editor manda también las mesas de las otras zonas con su lugar actual.
+- **Tipos:** `Table` trae `areaId` (`string | null`). Si construyes mesas a mano en una prueba, agrega `areaId: null`.
+- **Mock** (con `VITE_USE_MOCKS=true`):
+  - `?mockAreas` deja las mesas 01–04 en «Salón», las 05–07 en «Terraza» y la 08 sin zona. Se combina con `?mockPlan`.
+  - `?mockError=areas-list` y `?mockError=areas-save` fuerzan errores de zonas.
+
+---
+
 ## 10 nov 2026 · Sebastián · El vidrio ya funciona en Chrome, Edge y Firefox, y la luz de fondo queda en dos esquinas
 
 - **El vidrio solo funcionaba en Safari.** Escribíamos `backdrop-filter` y `-webkit-backdrop-filter` juntos, y el compilador de Tailwind v4 dejaba solo el prefijado, que Chrome, Edge y Firefox ignoran: la barra superior, el dock, los menús y las tarjetas dejaban ver el texto de abajo sin difuminar. Ahora `globals.css` escribe solo `backdrop-filter` y el prefijo para Safari lo agrega el compilador.
