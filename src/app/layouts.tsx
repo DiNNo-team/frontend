@@ -9,7 +9,6 @@ import { LocationBanner } from '@/features/restaurant/components/LocationBanner'
 import { useRestaurantQuery } from '@/features/restaurant/hooks'
 import { useRestaurantStatusQuery } from '@/features/restaurant-status/hooks'
 import { useToast } from '@/components/ui'
-import { RestaurantLiveIndicator } from '@/features/realtime/RestaurantLiveIndicator'
 import { useRestaurantRealtime } from '@/features/realtime/use-restaurant-realtime'
 
 export function DashboardLayout() {
@@ -40,12 +39,7 @@ export function DashboardLayout() {
       onSignOut={handleSignOut}
       lit={lit}
       statusSlot={
-        accountEvent ? undefined : (
-          <>
-            <RestaurantLiveIndicator />
-            <RestaurantStatusControl />
-          </>
-        )
+        accountEvent ? undefined : <RestaurantStatusControl />
       }
       banner={
         accountEvent ? undefined : (

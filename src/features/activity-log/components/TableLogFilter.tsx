@@ -31,7 +31,7 @@ export function TableLogFilter({ value, onValueChange, tables }: TableLogFilterP
       value={tables ? value : ALL_TABLES}
       onValueChange={onValueChange}
       disabled={!tables}
-      className="w-full max-w-100"
+      className="md:min-w-48 md:flex-1"
     />
   )
 }

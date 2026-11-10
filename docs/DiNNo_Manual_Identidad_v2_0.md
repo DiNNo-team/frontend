@@ -702,7 +702,7 @@ Cuando un estado no aplica, la ficha del componente lo dice.
 
 #### `LiveIndicator`
 
-Implementado en el Sprint 3 (`components/ui/LiveIndicator.tsx`), alimentado por el socket del restaurante (`features/realtime`):
+Implementado en el Sprint 3 (`components/ui/LiveIndicator.tsx`). **Desde el 10 nov 2026 no se muestra en el dashboard:** Sebastián lo quitó del topbar porque no aportaba. Sigue en el kit por si se vuelve a necesitar:
 
 | Estado | Cómo se ve |
 |---|---|
@@ -769,7 +769,7 @@ Implementado en el Sprint 3 (`components/ui/LiveIndicator.tsx`), alimentado por 
 
 - **Fondo (v2.1):** `AmbientGround`, la luz del salón (sección 8), fija detrás de todo. `lit` sigue al estado del restaurante: abierto, cálido; cerrado, apagado.
 - **Dock de navegación** `NavDock` (v2.1, en todos los tamaños), como el de macOS: una cápsula de vidrio centrada a 16 del borde inferior (más el área segura del teléfono). De izquierda a derecha: el símbolo de DiNNo (desde 640; el pin visible mide unos 36, sin deformarlo), un separador, cada sección como ícono 20 con su palabra debajo (12/16 700, nunca ícono solo), en ítems de 96 de ancho y unos 52 de alto, otro separador y el cambio de tema. El activo es una píldora: petróleo con texto crema en claro, crema con texto petróleo en oscuro. Al pasar el puntero, el ícono se asoma (sube 4 px y crece al 108%, sin movimiento con reducir movimiento). **El vidrio sigue al tema.** La página reserva abajo `--dock-clearance` (112) para que el dock nunca tape la última fila.
-- **Barra superior** `Topbar` (v2.1): una píldora de vidrio de 64 de alto, *sticky* a 16 del borde. A la izquierda, **el nombre real del restaurante en todos los tamaños** (Título 3, recortado si no cabe; skeleton mientras carga, nunca "Restaurante"). A la derecha, el switch Abierto/Cerrado y la cuenta (`UserMenu`): la inicial del restaurante sobre `--grad-highlight`, y un menú con el restaurante y el correo arriba, el tema y "Cerrar sesión". El `LiveIndicator` va a la izquierda del switch (en el teléfono, solo la forma; la palabra queda para el lector de pantalla).
+- **Barra superior** `Topbar` (v2.1): una píldora de vidrio de 64 de alto, *sticky* a 16 del borde. A la izquierda, **el nombre real del restaurante en todos los tamaños** (Título 3, recortado si no cabe; skeleton mientras carga, nunca "Restaurante"). A la derecha, el switch Abierto/Cerrado y la cuenta (`UserMenu`): la inicial del restaurante sobre `--grad-highlight`, y un menú con el restaurante y el correo arriba, el tema y "Cerrar sesión". El topbar no muestra el estado de la conexión en vivo (el `LiveIndicator` se quitó el 10 nov 2026).
 - **Hoja de contenido** (v2.1): `glass-sheet`, radio 28 (32 desde 1024), padding 16 / 24 / 32. Todo lo de la página va encima.
 - **Centrado:** la barra y la hoja van en una columna centrada de 1280 como máximo. Ya no hay menú lateral ni cajón: el dock es la navegación en todos los tamaños.
 
@@ -828,7 +828,7 @@ Sin cambios de fondo respecto al v1.1:
   3. Las tarjetas del resumen.
   4. Las mesas.
 - **El trabajo más frecuente, a un toque:** tocar una mesa abre su selector; con teclado, D, R y O.
-- **Datos honestos:** los ceros como "0" y sin cifras inventadas. La marca "Actualizado 7:42 p. m." la muestra el `LiveIndicator` mientras reconecta.
+- **Datos honestos:** los ceros como "0" y sin cifras inventadas.
 
 ### 13.6 Estados vacíos y de carga
 
@@ -852,7 +852,7 @@ Sin cambios de fondo respecto al v1.1:
 | Cambio rápido reversible (estado de mesa, cerrar sin reservas) | Toast con "Deshacer" (6 s) |
 | Error al guardar o al cargar | `Alert` de error en el bloque, sin desaparecer solo, con "Intentar de nuevo" |
 | Contexto persistente (restaurante cerrado, ubicación incompleta) | `Alert` info arriba del contenido |
-| Estado de la conexión en vivo | `LiveIndicator` en el topbar |
+| Estado de la conexión en vivo | No se muestra (se quitó el 10 nov 2026); el `LiveIndicator` queda en el kit |
 | Otra persona cambió una mesa | Anillo de cambio remoto en esa mesa, en la cuadrícula y en el plano (implementado). **Sin toast** (sería ruido). El anuncio para lectores de pantalla (un único `role="status"`, como máximo uno cada 5 s) es *(propuesta futura, sección 19)* |
 | Se perdió la conexión | `LiveIndicator` en "Reconectando…" y, si sigue 30 s, "Sin conexión". La pantalla sigue usable con lo último que llegó |
 
@@ -957,7 +957,7 @@ Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en clar
 - **Barra de filtros** (debajo de las reservas), con campos que muestran su label:
   - En la Cuadrícula: «Buscar mesa», «Zona» y «Personas».
   - En el Plano: solo «Zona».
-  - En las dos vistas, el botón «Zonas».
+  - En las dos vistas, a la derecha: «Zonas», el selector Plano · Cuadrícula y «Agregar mesa» (outline). Desde el 10 nov 2026 viven aquí y no en el encabezado, que deja solo el saludo y «Validar código», el único botón principal.
   - Los estados se siguen filtrando con la tira de resumen.
 - **Buscar mesa:** un número encuentra esa mesa ("4" encuentra la Mesa 04, nunca la Mesa 14); un texto busca en el identificador.
 - **Cuadrícula:** con «Todas las zonas» se agrupa por zona. Cada grupo lleva un título 3 con el conteo ("Terraza · 3 mesas"), y «Sin zona» va al final.

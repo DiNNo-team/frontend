@@ -33,7 +33,7 @@ const TABLES_REFETCH_DEBOUNCE_MS = 300
  * Live dashboard (Tasks 5.1.4 and 3.2.4, CLAUDE.md §12.7): one Socket.IO connection per signed-in restaurant, with a
  * fresh Firebase token on every (re)connection. The server puts it in `restaurant:{id}`; rooms are fixed on connect, so
  * a new `restaurantId` reconnects. Events update the panel and the tables; each reconnection asks everything again, and
- * the 30 s refresh of the panel stays as backup. A dropped socket never shows an error by itself: the LiveIndicator does.
+ * the 30 s refresh of the panel stays as backup. A dropped socket never shows an error: the polling keeps the screen fresh.
  * Pass `undefined` (signed out, no restaurant yet, sample data) to stay disconnected.
  */
 export function useRestaurantRealtime(restaurantId: string | undefined) {

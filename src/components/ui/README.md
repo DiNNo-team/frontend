@@ -23,7 +23,8 @@ Botón de texto. **Un solo `primary` por pantalla.** Texto = verbo + objeto ("Ag
 | `size` | `'md' \| 'sm'` | `'md'` | `md` 48 · `sm` 40 (tablas y barras de escritorio) |
 | `loading` | `boolean` | `false` | Spinner + `loadingText`, mismo ancho, `aria-busy`, no se puede volver a pulsar |
 | `loadingText` | `string` | el texto normal | Gerundio con "…": "Guardando…" |
-| `icon` | `LucideIcon` | — | A la izquierda, 20 px |
+| `icon` | `LucideIcon` | — | 20 px |
+| `iconPosition` | `'start' \| 'end'` | `'start'` | `end` para flechas de avance («Siguiente →») |
 | `fullWidth` | `boolean` | `false` | |
 | …nativas | `button` | `type="button"` | Para formularios pasa `type="submit"` |
 
@@ -383,7 +384,7 @@ Selector de estado (manual 12.2): popover de vidrio junto a la mesa desde 768 px
 
 ## LiveIndicator
 
-Conexión en vivo del dashboard (manual 12.2 y 13.7), en el topbar a la izquierda del switch. `state`: `live` («En vivo» con el Active Dot que pulsa) · `reconnecting` (raya + «Reconectando…» + «Actualizado 7:42 p. m.» con `updatedAt`) · `offline` (punto de alerta + «Sin conexión» + «Intentar de nuevo» con `onRetry`). En el teléfono solo se ve la forma (la palabra queda para el lector de pantalla). En el dashboard lo alimenta `features/realtime` (`RestaurantLiveIndicator`); no lo conectes a mano.
+Conexión en vivo del dashboard (manual 12.2 y 13.7), en el topbar a la izquierda del switch. `state`: `live` («En vivo» con el Active Dot que pulsa) · `reconnecting` (raya + «Reconectando…» + «Actualizado 7:42 p. m.» con `updatedAt`) · `offline` (punto de alerta + «Sin conexión» + «Intentar de nuevo» con `onRetry`). En el teléfono solo se ve la forma (la palabra queda para el lector de pantalla). **Hoy no se usa en el dashboard** (se quitó del topbar el 10 nov 2026). Si vuelve, se alimenta con `useLiveConnection` de `features/realtime`.
 
 ```tsx
 <LiveIndicator state="reconnecting" updatedAt={lastUpdate} onRetry={retry} />
@@ -426,6 +427,14 @@ Tabla genérica (bitácora). Encabezados `text-label` con mayúscula inicial. En
     { key: 'user', header: 'Usuario', cell: (e) => e.userName },
   ]}
 />
+```
+
+## Pagination
+
+Páginas de una lista larga: «16–30 de 74 cambios», «Anterior», «Página 2 de 5» y «Siguiente». Va debajo de la lista. Con una sola página no se muestra. La página es 1-based; la pantalla corta las filas y vuelve a la página 1 cuando cambia un filtro.
+
+```tsx
+<Pagination page={page} pageSize={15} totalItems={rows.length} onPageChange={setPage} itemsLabel="cambios" />
 ```
 
 ## PageHeader
