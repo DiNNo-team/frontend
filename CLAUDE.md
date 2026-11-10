@@ -338,7 +338,7 @@ src/
   - `reservation.cancelled`, `.expired` y `.checked_in` la quitan, con un toast corto (no para el check-in hecho en este mismo dispositivo).
   - `table.status_changed` vuelve a pedir las mesas, lo que también hace sonar el anillo de cambio remoto.
 - **Fallas:** al reconectar se vuelve a pedir todo. `connect_error` `SERVER_ERROR` se reintenta a los 5, 15 y 30 s; los demás códigos no se reintentan. El panel sigue consultando cada 30 s.
-- El estado de la conexión vive en `connection.ts` (`useLiveConnection`) y lo muestra el `LiveIndicator` del kit en el topbar (`RestaurantLiveIndicator`).
+- El estado de la conexión vive en `connection.ts` (`useLiveConnection`). **No se muestra en el dashboard** (desde el 10 nov se quitó el «En vivo» del topbar); el `LiveIndicator` sigue en el kit, sin usarse.
 - **Pruebas:** `socket.io-client` está simulado en todas (`src/test/fake-socket.ts`, desde `setup.ts`), así que ninguna abre una conexión real. Usa `lastSocket()` para emitir eventos del servidor.
 
 ### Registro del restaurante (Santiago, PBI 3)

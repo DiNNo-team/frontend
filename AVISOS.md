@@ -5,6 +5,14 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · El topbar ya no muestra «En vivo»
+
+- Se quitó el indicador «En vivo» (`RestaurantLiveIndicator`) del topbar: no aportaba y Sebastián no lo quiere en el dashboard.
+- **El tiempo real no cambia:** el socket del restaurante (`useRestaurantRealtime`) sigue conectado, el panel de reservas y las mesas se actualizan solos, y el panel sigue consultando cada 30 s como respaldo.
+- El `LiveIndicator` sigue en el kit, pero hoy no se usa. Si vuelve, se alimenta con `useLiveConnection` de `features/realtime`.
+
+---
+
 ## 10 nov 2026 · Sebastián · Las listas de `Select` y del menú ⋯ ya se abren dentro de los diálogos
 
 - **Error:** en el formulario de mesa, el campo «Zona» no abría sus opciones. La lista del `Select` usaba la capa `--z-dropdown` (20) y quedaba detrás del fondo del diálogo (`--z-overlay`, 40), que tapaba el clic.
