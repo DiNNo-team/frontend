@@ -71,26 +71,26 @@
 @utility glass-panel {
   background: var(--glass-panel-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-float);
   backdrop-filter: blur(var(--glass-blur-panel)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur-panel)) saturate(var(--glass-saturate));
+
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; }
 }
 @utility glass-bar {
   background: var(--glass-bar-bg);
   backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturate));
+
   @supports not (backdrop-filter: blur(1px)) { background: var(--bg); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; }
 }
 /* Login: tarjeta de vidrio sobre la luz del salón (AmbientGround), la misma del dashboard (manual 7.1 y 13.9). */
 @utility glass-login {
   background: color-mix(in srgb, var(--surface) 55%, transparent);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(44px) saturate(1.5);
-  -webkit-backdrop-filter: blur(44px) saturate(1.5);
+
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
 }
 
 /* Texturas de la forma (manual 8): el "cuadrado rayado" de Ocupada y la trama del plano. No son gradientes de adorno. */
@@ -121,54 +121,51 @@
 }
 
 /* ===== v2.1 "Salón de vidrio" (manual 7 y 8): luz de fondo, hoja, tarjetas, píldoras y riel =====
-   La luz es fija y no pesa: tres gradientes radiales enormes, sin desenfoque. Abierto = cálido (naranja + ámbar);
-   cerrado = apagado (gris). Se cruzan en --dur-highlight. Todo vidrio tiene su respaldo sólido. */
+   La luz es fija y no pesa: dos gradientes radiales enormes en esquinas opuestas, sin desenfoque. Abierto = cálido
+   arriba a la izquierda (naranja) y petróleo abajo a la derecha; cerrado = la luz cálida se apaga a gris. Se cruzan en --dur-highlight. Todo vidrio tiene su respaldo sólido. */
 @utility app-ambient { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-color: var(--amb-base); }
 @utility amb-open {
   background-image:
-    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-warm), transparent 66%),
-    radial-gradient(46vmax 40vmax at 96% 6%, var(--amb-glow), transparent 66%),
-    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
-    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+    radial-gradient(68vmax 56vmax at 6% -14%, var(--amb-warm), transparent 66%),
+    radial-gradient(78vmax 66vmax at 108% 112%, var(--amb-cool), transparent 64%);
 }
 @utility amb-closed {
   background-image:
-    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-off), transparent 66%),
-    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
-    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+    radial-gradient(68vmax 56vmax at 6% -14%, var(--amb-off), transparent 66%),
+    radial-gradient(78vmax 66vmax at 108% 112%, var(--amb-cool), transparent 64%);
 }
 @utility glass-sheet {
   background: var(--glass-sheet-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
-  backdrop-filter: blur(28px) saturate(1.5); -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  backdrop-filter: blur(28px) saturate(1.5);
   @supports not (backdrop-filter: blur(1px)) { background: var(--bg); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--bg); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--bg); border-color: var(--border-strong); backdrop-filter: none; }
 }
 /* Sobre la hoja, el texto secundario usa --text-2-sheet; dentro de una tarjeta o superficie sólida vuelve al de siempre. */
 .glass-sheet { --text-2: var(--text-2-sheet); }
 .glass-sheet :is(.glass-card, .bg-surface, .bg-surface-2) { --text-2: var(--text-2-base); }
 @utility glass-card {
   background: var(--glass-card-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen);
-  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; }
 }
 @utility glass-pill {
   background: var(--glass-pill-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-float);
-  backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; }
 }
 /* Dock de navegación (v2.1): vidrio que sigue al tema, con un brillo cálido que sube desde abajo. Flota centrado. */
 @utility glass-dock {
   background: radial-gradient(70% 120% at 50% 130%, var(--dock-glow), transparent 70%), var(--dock-bg);
   border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
-  backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; }
 }
 @utility dock-position { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); translate: -50% 0; z-index: var(--z-sticky); }
 /* El ícono del dock se asoma al pasar el puntero, como en macOS. `translate` + `scale`, así se suma a `press`. */
