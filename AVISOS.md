@@ -5,6 +5,14 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · El vidrio ya funciona en Chrome, Edge y Firefox, y la luz de fondo queda en dos esquinas
+
+- **El vidrio solo funcionaba en Safari.** Escribíamos `backdrop-filter` y `-webkit-backdrop-filter` juntos, y el compilador de Tailwind v4 dejaba solo el prefijado, que Chrome, Edge y Firefox ignoran: la barra superior, el dock, los menús y las tarjetas dejaban ver el texto de abajo sin difuminar. Ahora `globals.css` escribe solo `backdrop-filter` y el prefijo para Safari lo agrega el compilador.
+- **Regla nueva (manual 7.4):** en el CSS escribe solo `backdrop-filter`. Si escribes también `-webkit-backdrop-filter`, el vidrio se rompe otra vez fuera de Safari.
+- **La luz del salón** (fondo del login, del registro y del dashboard) queda con dos luces: naranja arriba a la izquierda y petróleo abajo a la derecha, en los dos temas. Quitamos la ámbar de arriba a la derecha y la de abajo a la izquierda. Con el restaurante cerrado, la de arriba se apaga a gris, como antes.
+
+---
+
 ## 8 nov 2026 · Sebastián · Qué le falta a cada uno para cerrar el Sprint 3
 
 **El código del Sprint 3 está completo:** el backend (Elizabeth), la web y la app (Sebastián) están en `develop`, y probamos todo de punta a punta contra Render. Ninguna tarea de código del flujo principal está pendiente. Lo que queda es probar, ensayar la demo y cerrar las tareas del reparto que no son del flujo principal.
