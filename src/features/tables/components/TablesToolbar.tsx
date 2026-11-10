@@ -96,7 +96,8 @@ export function TablesToolbar({
             { value: 'grid', label: 'Cuadrícula' },
           ]}
         />
-        <Button variant="outline" icon={Plus} onClick={onAddTable}>
+        {/* Orange by Sebastián's decision of 10 nov 2026, next to «Validar código» (manual 13.10). */}
+        <Button icon={Plus} onClick={onAddTable}>
           Agregar mesa
         </Button>
       </div>
