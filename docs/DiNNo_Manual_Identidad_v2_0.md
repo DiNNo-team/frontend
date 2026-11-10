@@ -950,6 +950,19 @@ Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en clar
 - El Plano es solo para servicio y se desplaza dentro de su marco.
 - "Editar plano" no aparece; en su lugar va la nota "Edita el plano desde una tablet o un computador".
 
+**Zonas, búsqueda y filtros (10 nov 2026):** son para restaurantes grandes, con muchas mesas o varios pisos.
+- **Zona:** un piso o área con nombre libre ("Piso 1", "Terraza", "Bar"). Una mesa está en una zona o queda sin zona. Las zonas se crean, renombran y eliminan en el diálogo «Zonas». Eliminar una zona nunca borra mesas: quedan sin zona y salen del plano, y el diálogo lo dice antes de confirmar.
+- **Barra de filtros** (debajo de las reservas), con campos que muestran su label:
+  - En la Cuadrícula: «Buscar mesa», «Zona» y «Personas».
+  - En el Plano: solo «Zona».
+  - En las dos vistas, el botón «Zonas».
+  - Los estados se siguen filtrando con la tira de resumen.
+- **Buscar mesa:** un número encuentra esa mesa ("4" encuentra la Mesa 04, nunca la Mesa 14); un texto busca en el identificador.
+- **Cuadrícula:** con «Todas las zonas» se agrupa por zona. Cada grupo lleva un título 3 con el conteo ("Terraza · 3 mesas"), y «Sin zona» va al final.
+- **Plano:** muestra una zona a la vez, porque cada zona tiene su propio plano. Mientras se edita, el selector de zona queda bloqueado. Guardar una zona no mueve las mesas de las otras.
+- **Tira de resumen:** cuenta la zona que se está mirando. El saludo cuenta todo el restaurante.
+- **Formulario de mesa:** tiene el campo «Zona» solo si el restaurante tiene zonas. Si una mesa ubicada cambia de zona, el formulario avisa que sale del plano.
+
 ### 13.11 App del comensal: Explorar y detalle
 
 **Explorar (mapa):**

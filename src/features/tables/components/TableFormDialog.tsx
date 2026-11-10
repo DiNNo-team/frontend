@@ -1,8 +1,10 @@
 import { useId, useState, type FormEvent } from 'react'
-import { Alert, Button, Dialog, DialogFooter, NumberStepper, TextField } from '@/components/ui'
+import { Alert, Button, Dialog, DialogFooter, NumberStepper, Select, TextField } from '@/components/ui'
 import { formatTableName } from '@/lib/format'
 import { describeTableSaveError, validateCapacity, validateIdentifier, validateTableForm, type TableFormErrors, type TableFormValues } from '../table-form'
-import { TABLE_LIMITS, type Table } from '../types'
+import { TABLE_LIMITS, type Table, type TableArea } from '../types'
+
+const NO_AREA_VALUE = 'none'
 
 export interface TableFormDialogProps {
   open: boolean
@@ -11,6 +13,10 @@ export interface TableFormDialogProps {
   existingTables: Table[]
   /** The table being edited. Without it the dialog creates a new one. */
   table?: Table
+  /** Zones of the restaurant; without zones the field is not shown. */
+  areas?: TableArea[]
+  /** Zone of a new table: the one being looked at, if any. */
+  defaultAreaId?: string | null
   saving: boolean
   onSubmit: (values: TableFormValues) => Promise<Table>
   onSaved: (table: Table) => void
@@ -28,19 +34,23 @@ export function TableFormDialog({ open, onOpenChange, table, saving, ...formProp
   )
 }
 
-interface TableFormProps extends Pick<TableFormDialogProps, 'existingTables' | 'table' | 'saving' | 'onSubmit' | 'onSaved'> {
+interface TableFormProps
+  extends Pick<TableFormDialogProps, 'existingTables' | 'table' | 'areas' | 'defaultAreaId' | 'saving' | 'onSubmit' | 'onSaved'> {
   onCancel: () => void
   onDone: () => void
 }
 
-function TableForm({ existingTables, table, saving, onSubmit, onSaved, onCancel, onDone }: TableFormProps) {
+function TableForm({ existingTables, table, areas = [], defaultAreaId = null, saving, onSubmit, onSaved, onCancel, onDone }: TableFormProps) {
   const formId = useId()
   const identifierId = `${formId}-identifier`
   const capacityId = `${formId}-capacity`
   const [values, setValues] = useState<TableFormValues>({
     identifier: table?.identifier ?? '',
     capacity: table?.capacity ?? DEFAULT_CAPACITY,
+    areaId: table ? table.areaId : defaultAreaId,
   })
+  const areaChanged = table !== undefined && values.areaId !== table.areaId
+  const placed = table !== undefined && table.planX !== null
   const [errors, setErrors] = useState<TableFormErrors>({})
   const [formError, setFormError] = useState<string>()
 
@@ -59,7 +69,7 @@ function TableForm({ existingTables, table, saving, onSubmit, onSaved, onCancel,
     }
 
     try {
-      const saved = await onSubmit({ identifier: values.identifier.trim(), capacity: values.capacity })
+      const saved = await onSubmit({ identifier: values.identifier.trim(), capacity: values.capacity, areaId: values.areaId })
       onSaved(saved)
       onDone()
     } catch (error) {
@@ -96,6 +106,16 @@ function TableForm({ existingTables, table, saving, onSubmit, onSaved, onCancel,
         onValueChange={(capacity) => setValues((current) => ({ ...current, capacity }))}
         onBlur={() => setErrors((current) => ({ ...current, capacity: validateCapacity(values.capacity) }))}
       />
+      {areas.length > 0 && (
+        <Select
+          label="Zona"
+          options={[...areas.map((area) => ({ value: area.id, label: area.name })), { value: NO_AREA_VALUE, label: 'Sin zona' }]}
+          value={values.areaId ?? NO_AREA_VALUE}
+          onValueChange={(value) => setValues((current) => ({ ...current, areaId: value === NO_AREA_VALUE ? null : value }))}
+          helperText={areaChanged && placed ? 'Al cambiar de zona, la mesa sale del plano. La ubicas de nuevo en el plano de su zona.' : undefined}
+          error={errors.areaId}
+        />
+      )}
       <DialogFooter>
         <Button variant="outline" onClick={onCancel} disabled={saving}>
           Cancelar

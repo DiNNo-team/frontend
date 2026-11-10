@@ -29,7 +29,7 @@ function setup(restaurantId: string | null = 'rest-1', rows: TimedReservation[] 
   const queryClient = createTestQueryClient()
   queryClient.setQueryData(restaurantReservationsQueryKey, rows)
   queryClient.setQueryData<Table[]>(tablesQueryKey, [
-    { id: 't7', identifier: '07', capacity: 2, status: 'reserved', isActive: true, planX: null, planY: null, planShape: null },
+    { id: 't7', areaId: null, identifier: '07', capacity: 2, status: 'reserved', isActive: true, planX: null, planY: null, planShape: null },
   ])
   const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
   const wrapper = ({ children }: { children: ReactNode }) => <Providers queryClient={queryClient}>{children}</Providers>

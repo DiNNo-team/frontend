@@ -12,6 +12,9 @@ import { TableFormDialog } from './components/TableFormDialog'
 import { TablesGrid } from './components/TablesGrid'
 import { TablesSkeleton } from './components/TablesSkeleton'
 import { TablesStats } from './components/TablesStats'
+import { TablesToolbar } from './components/TablesToolbar'
+import { AreasDialog } from './areas/AreasDialog'
+import { useTableAreasQuery } from './areas/hooks'
 import { useCreateTable, useTablesQuery, useUpdateTable } from './hooks'
 import { usePageAlert } from './page-alert'
 import { placementOf } from './plan/plan-geometry'
@@ -19,8 +22,9 @@ import { TablesPlanView } from './plan/TablesPlanView'
 import { usePlanEditor } from './plan/use-plan-editor'
 import type { TableMenuActions } from './table-menu'
 import type { TableFormValues } from './table-form'
-import { activeFirst, countTables, getTableDisplayStatus, sortTables, type TableDisplayStatus } from './table-status'
-import type { Table, UpdateTableInput } from './types'
+import { ALL_AREAS, filterTables, groupByArea, hasActiveFilters, inArea, NO_FILTERS, type TableFilters } from './table-filters'
+import { activeFirst, countTables, sortTables, type TableDisplayStatus } from './table-status'
+import type { Table, TableStatus, UpdateTableInput } from './types'
 import { useRemoteHighlights } from './use-remote-highlights'
 import { useTableActivation } from './use-table-activation'
 import { useTableSelection } from './use-table-selection'
@@ -46,6 +50,17 @@ const FILTER_WORDS: Record<TableDisplayStatus, string> = {
   inactive: 'inactivas',
 }
 
+/** "No hay mesas disponibles para 6 personas o más que coincidan con «T»." — says which filters left the grid empty. */
+function emptyFilterText(filters: TableFilters, area: string): string {
+  const parts = ['No hay mesas']
+  if (filters.status) parts.push(FILTER_WORDS[filters.status])
+  if (area === 'none') parts.push('sin zona')
+  else if (area !== ALL_AREAS) parts.push('en esta zona')
+  if (filters.minCapacity !== null) parts.push(`para ${filters.minCapacity} personas o más`)
+  if (filters.query.trim()) parts.push(`que coincidan con «${filters.query.trim()}»`)
+  return hasActiveFilters({ ...filters, area }) ? `${parts.join(' ')}.` : 'No hay mesas ahora.'
+}
+
 type TablesView = 'plan' | 'grid'
 const VIEW_STORAGE_KEY = 'dinno:mesas:vista'
 
@@ -68,12 +83,18 @@ function storeView(view: TablesView) {
   }
 }
 
-/** Only the fields that changed, so editing one does not resend the other. */
+/** Only the fields that changed, so editing one does not resend the others. */
 function changedFields(table: Table, values: TableFormValues): UpdateTableInput {
   const input: UpdateTableInput = {}
   if (values.identifier !== table.identifier) input.identifier = values.identifier
   if (values.capacity !== table.capacity) input.capacity = values.capacity
+  if (values.areaId !== table.areaId) input.areaId = values.areaId
   return input
+}
+
+/** A new table without zone does not send `areaId`, so creating keeps working on a backend without zones. */
+function createInput({ areaId, ...rest }: TableFormValues) {
+  return areaId ? { ...rest, areaId } : rest
 }
 
 /**
@@ -85,28 +106,28 @@ export default function TablesPage() {
   const tablesQuery = useTablesQuery()
   const showSkeleton = useDelayedFlag(tablesQuery.isPending)
   const tables = useMemo(() => activeFirst(sortTables(tablesQuery.data ?? [])), [tablesQuery.data])
-  const counts = useMemo(() => countTables(tables), [tables])
+  const allCounts = useMemo(() => countTables(tables), [tables])
+  // Without the zones (still loading, or a backend without them) the screen works as one room.
+  const areasQuery = useTableAreasQuery()
+  const areas = useMemo(() => areasQuery.data ?? [], [areasQuery.data])
+  const [areasOpen, setAreasOpen] = useState(false)
+  const [filters, setFilters] = useState<TableFilters>(NO_FILTERS)
+  const hasUnzoned = areas.length > 0 && tables.some((table) => table.areaId === null || !areas.some((area) => area.id === table.areaId))
   // Read once when the screen opens: the greeting and the date do not need to tick while it is open.
   const [now] = useState(() => new Date())
   // Just the greeting: the restaurant's name is already in the top bar.
   const title = greetingFor(now)
-  const active = counts.available + counts.reserved + counts.occupied
+  const active = allCounts.available + allCounts.reserved + allCounts.occupied
   const liveLine =
     active > 0
-      ? ` · ${counts.available} ${counts.available === 1 ? 'mesa disponible' : 'mesas disponibles'} de ${active}`
+      ? ` · ${allCounts.available} ${allCounts.available === 1 ? 'mesa disponible' : 'mesas disponibles'} de ${active}`
       : ''
   const greeting = { variant: 'hero', title, description: `${todayLabel(now)}${liveLine}` } as const
-  const [filter, setFilter] = useState<TableDisplayStatus | null>(null)
-  const visibleTables = useMemo(
-    () => (filter ? tables.filter((table) => getTableDisplayStatus(table) === filter) : tables),
-    [tables, filter],
-  )
   const toast = useToast()
   const createTable = useCreateTable()
   const updateTable = useUpdateTable()
   const pageAlert = usePageAlert()
   const selection = useTableSelection(tables)
-  const editor = usePlanEditor(tables)
   const highlights = useRemoteHighlights()
   const dinnoTableIds = useDinnoTableIds()
   const [checkInOpen, setCheckInOpen] = useState(false)
@@ -116,6 +137,20 @@ export default function TablesPage() {
   // With no choice on this device: the plan if the restaurant already has one; phones open in the grid (manual 13.10).
   const view: TablesView = storedView ?? (hasPlan && canEditPlan ? 'plan' : 'grid')
   const [announcement, setAnnouncement] = useState('')
+  // The plan shows one zone at a time; "Todas las zonas" opens the first one.
+  const knownArea = filters.area === ALL_AREAS || filters.area === 'none' || areas.some((area) => area.id === filters.area)
+  const areaFilter = knownArea ? filters.area : ALL_AREAS
+  const planArea = areas.length === 0 ? ALL_AREAS : areaFilter === ALL_AREAS ? areas[0].id : areaFilter
+  const scopeArea = view === 'plan' ? planArea : areaFilter
+  const planTables = useMemo(() => tables.filter((table) => inArea(table, planArea)), [tables, planArea])
+  const editor = usePlanEditor(planTables, tables)
+  // The strip counts the zone being looked at: what the restaurant needs to see on that floor.
+  const counts = useMemo(() => countTables(tables.filter((table) => inArea(table, scopeArea))), [tables, scopeArea])
+  const visibleTables = useMemo(() => filterTables(tables, { ...filters, area: areaFilter }), [tables, filters, areaFilter])
+  const groups = areas.length > 0 && areaFilter === ALL_AREAS ? groupByArea(visibleTables, areas) : null
+  const statusFilter = filters.status
+  const setStatusFilter = (status: TableDisplayStatus | null) => setFilters((current) => ({ ...current, status }))
+  const newTableArea = scopeArea === ALL_AREAS || scopeArea === 'none' ? null : scopeArea
 
   function changeView(next: TablesView) {
     selection.clear()
@@ -185,10 +220,12 @@ export default function TablesPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         table={editingTable}
+        areas={areas}
+        defaultAreaId={newTableArea}
         existingTables={tables}
         saving={createTable.isPending || updateTable.isPending}
         onSubmit={async (values) => {
-          if (!editingTable) return createTable.mutateAsync(values)
+          if (!editingTable) return createTable.mutateAsync(createInput(values))
           const input = changedFields(editingTable, values)
           if (Object.keys(input).length === 0) return editingTable
           return updateTable.mutateAsync({ id: editingTable.id, input })
@@ -215,6 +252,7 @@ export default function TablesPage() {
         onConfirm={() => void confirmDeactivate()}
       />
       <CheckInDialog open={checkInOpen} onOpenChange={setCheckInOpen} />
+      <AreasDialog open={areasOpen} onOpenChange={setAreasOpen} areas={areas} tables={tables} />
     </>
   )
 
@@ -270,6 +308,21 @@ export default function TablesPage() {
   }
 
   const { alert } = pageAlert
+  const gridProps = {
+    openId: selection.openId,
+    onToggle: selection.toggle,
+    onOpenChange: selection.setOpen,
+    onChangeStatus: (table: Table, status: TableStatus) => {
+      selection.clear()
+      void statusChange.changeStatus(table, status)
+    },
+    toggleIdFor: selection.toggleIdFor,
+    menuIdFor: selection.menuIdFor,
+    reactivatingId: activation.reactivatingId,
+    highlights,
+    dinnoTableIds,
+    ...menuActions,
+  }
 
   return (
     <>
@@ -312,7 +365,11 @@ export default function TablesPage() {
           </>
         }
       />
-      <TablesStats counts={counts} filter={view === 'grid' ? filter : null} onFilterChange={view === 'grid' ? setFilter : undefined} />
+      <TablesStats
+        counts={counts}
+        filter={view === 'grid' ? statusFilter : null}
+        onFilterChange={view === 'grid' ? setStatusFilter : undefined}
+      />
       <ReservationsPanel />
       {view === 'grid' && !hasPlan && canEditPlan && (
         <Alert
@@ -327,12 +384,26 @@ export default function TablesPage() {
           Ubica tus mesas como están en el salón y ve de un vistazo cuáles están libres.
         </Alert>
       )}
+      <TablesToolbar
+        areas={areas}
+        filters={{ ...filters, area: view === 'plan' ? planArea : areaFilter }}
+        onFiltersChange={(next) => {
+          selection.clear()
+          setFilters(next)
+        }}
+        mode={view}
+        hasUnzoned={hasUnzoned}
+        onManageAreas={() => setAreasOpen(true)}
+        // While editing a zone's plan, the way out is "Guardar plano" or "Cancelar".
+        disabled={editor.editing}
+      />
       <p role="status" className="sr-only">
         {announcement}
       </p>
       {view === 'plan' ? (
         <TablesPlanView
-          tables={tables}
+          key={planArea}
+          tables={planTables}
           editor={editor}
           canEdit={canEditPlan}
           openId={selection.openId}
@@ -351,28 +422,27 @@ export default function TablesPage() {
         />
       ) : visibleTables.length === 0 ? (
         <div className="flex flex-col items-start gap-3 rounded-tile border border-dashed border-line-strong p-6">
-          <p className="text-sec text-fg">No hay mesas {filter ? FILTER_WORDS[filter] : ''} ahora.</p>
-          <Button variant="ghost" size="sm" className="px-0" onClick={() => setFilter(null)}>
+          <p className="text-sec text-fg">{emptyFilterText(filters, areaFilter)}</p>
+          <Button variant="ghost" size="sm" className="px-0" onClick={() => setFilters(NO_FILTERS)}>
             Ver todas las mesas
           </Button>
         </div>
+      ) : groups ? (
+        <div className="flex flex-col gap-6">
+          {groups.map((group) => {
+            const label = group.area?.name ?? 'Sin zona'
+            return (
+              <section key={group.area?.id ?? 'none'} aria-label={label} className="flex flex-col gap-3">
+                <h2 className="text-h3 text-fg">
+                  {label} <span className="text-sec text-fg-2">· {group.tables.length === 1 ? '1 mesa' : `${group.tables.length} mesas`}</span>
+                </h2>
+                <TablesGrid tables={group.tables} label={`Mesas de ${label}`} headingAs="h3" {...gridProps} />
+              </section>
+            )
+          })}
+        </div>
       ) : (
-        <TablesGrid
-          tables={visibleTables}
-          openId={selection.openId}
-          onToggle={selection.toggle}
-          onOpenChange={selection.setOpen}
-          onChangeStatus={(table, status) => {
-            selection.clear()
-            void statusChange.changeStatus(table, status)
-          }}
-          toggleIdFor={selection.toggleIdFor}
-          menuIdFor={selection.menuIdFor}
-          reactivatingId={activation.reactivatingId}
-          highlights={highlights}
-          dinnoTableIds={dinnoTableIds}
-          {...menuActions}
-        />
+        <TablesGrid tables={visibleTables} {...gridProps} />
       )}
       {dialogs}
     </>

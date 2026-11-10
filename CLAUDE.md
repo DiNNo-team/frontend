@@ -124,6 +124,7 @@ Las decisiones y contratos del Sprint 2 están en la sección 10.
 - **Identificador de mesa:** corto ("04", "T1") y se muestra "Mesa 04"; "4", "04" y "Mesa 4" son la misma mesa; máximo 10 caracteres; en la interfaz se llama "Identificador" (manual 12.4).
 - **Bitácora de mesas:** cambiar el estado, desactivar (`available` → `inactive`; desde §12.2 solo se desactiva una mesa `available`) y reactivar (`inactive` → `available`) se registran; editar el identificador o la capacidad no. Desde el Sprint 3, cada registro lleva `source` (`manual`, `reservation` o `system`) y las entradas automáticas (`system`, el vencimiento de una reserva) tienen `user_id` en `null` (§12.3).
 - **Plano de mesas:** la posición de cada mesa vive en `tables` (`plan_x`, `plan_y`, `plan_shape`, en NULL mientras no está ubicada) y se guarda con `PUT /v1/tables/plan`, que reemplaza el plano completo (gana el último que guarda). No se registra en la bitácora ni cambia la disponibilidad.
+- **Zonas de mesas:** un restaurante agrupa sus mesas en zonas con nombre libre ("Piso 1", "Terraza"): tabla `table_areas` y `tables.area_id` (NULL = sin zona), rutas `/v1/table-areas`. Cada zona tiene su propio plano: cambiar una mesa de zona la saca del plano y borrar una zona deja sus mesas sin zona. No se registra en la bitácora ni cambia la disponibilidad.
 - Nuevas decisiones: se agregan aquí, en una línea, en el mismo PR que las aplica.
 
 ---
@@ -316,6 +317,12 @@ src/
 - Reutiliza de mesas, sin modificarlos: `useTablesQuery` + `sortTables` para el filtro (todas las mesas, inactivas incluidas; si fallan, el filtro queda deshabilitado con "Todas las mesas") y `toTableDisplayStatus` para los chips (incluido `inactive`).
 - El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
 - Mock (con `VITE_USE_MOCKS=true`, datos fijos con las mesas del mock de mesas): `?mockError=table-logs-load`, `?mockTableLogsFull` (200 filas) y `?mockEmpty` / `?mockLatency=` (compartidos con mesas). No refleja los cambios hechos en `/mesas`: para eso, el backend real.
+
+### Zonas, búsqueda y filtros de mesas (Sebastián)
+- Las zonas viven en `src/features/tables/areas/` (`api.ts` + `api.mock.ts`, `hooks.ts`, `area-form.ts`, `AreasDialog.tsx`). Contrato: `GET/POST /v1/table-areas`, `PATCH/DELETE /v1/table-areas/:id`, y `areaId` en las mesas (CLAUDE.md del backend y §8).
+- Búsqueda, filtros y agrupación por zona son funciones puras en `features/tables/table-filters.ts`; la barra es `components/TablesToolbar.tsx`. El texto de manual está en 13.10.
+- **El plano es por zona:** `usePlanEditor(mesasDeLaZona, todasLasMesas)`. Como `PUT /v1/tables/plan` reemplaza el plano completo, `items()` manda también las mesas de las otras zonas con su lugar actual. No llames a `savePlan` con las mesas de una sola zona.
+- Mock: `?mockAreas` (01–04 «Salón», 05–07 «Terraza», 08 sin zona); `?mockError=areas-list` o `areas-save`.
 
 ### Reservas DiNNo y check-in (Sebastián, Sprint 3)
 - Viven en `src/features/reservations/`, con el mismo patrón que `features/tables` (`types.ts`, `api.ts` + `api.mock.ts`, `hooks.ts`, `components/`). Contrato en §12.8: `GET /v1/restaurants/me/reservations` y `POST /v1/restaurants/me/check-ins`. **La web nunca recibe ni muestra el código de una reserva**: los tipos no lo tienen y no se agrega.

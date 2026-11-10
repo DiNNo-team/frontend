@@ -5,6 +5,28 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · Zonas de mesas, búsqueda y filtros en /mesas
+
+**Requiere el backend de zonas** (backend `feat/sprint3-zonas-mesas`, migración `CreateTableAreas` en Neon). Si el backend todavía no lo tiene, `/mesas` funciona como antes: sin zonas, la barra muestra solo «Crear zonas», y crear una mesa sin zona no envía `areaId`.
+
+- **Qué hay nuevo:** para restaurantes grandes, con muchas mesas o varios pisos.
+  - **Zonas** con nombre libre («Piso 1», «Terraza»), que se crean, renombran y eliminan en el diálogo «Zonas».
+  - **Cuadrícula agrupada por zona,** con «Buscar mesa» y los filtros de zona y de personas.
+  - **Plano por zona:** cada zona tiene su propio plano.
+  - **Formulario de mesa con el campo «Zona».**
+  - Manual 13.10 actualizado.
+- **Código:**
+  - `features/tables/areas/`: `api.ts` con su mock, `hooks.ts` (query key `['table-areas']`), `area-form.ts` y `AreasDialog.tsx`.
+  - `features/tables/table-filters.ts`: búsqueda, filtros y agrupación, como funciones puras.
+  - `components/TablesToolbar.tsx`.
+  - `usePlanEditor(tablesDeLaZona, todasLasMesas)`: `PUT /v1/tables/plan` reemplaza el plano completo, así que el editor manda también las mesas de las otras zonas con su lugar actual.
+- **Tipos:** `Table` trae `areaId` (`string | null`). Si construyes mesas a mano en una prueba, agrega `areaId: null`.
+- **Mock** (con `VITE_USE_MOCKS=true`):
+  - `?mockAreas` deja las mesas 01–04 en «Salón», las 05–07 en «Terraza» y la 08 sin zona. Se combina con `?mockPlan`.
+  - `?mockError=areas-list` y `?mockError=areas-save` fuerzan errores de zonas.
+
+---
+
 ## 8 nov 2026 · Sebastián · Qué le falta a cada uno para cerrar el Sprint 3
 
 **El código del Sprint 3 está completo:** el backend (Elizabeth), la web y la app (Sebastián) están en `develop`, y probamos todo de punta a punta contra Render. Ninguna tarea de código del flujo principal está pendiente. Lo que queda es probar, ensayar la demo y cerrar las tareas del reparto que no son del flujo principal.
