@@ -378,6 +378,8 @@ El mismo elemento pasa a `--surface` con borde fino y `--shadow-float` cuando:
 - El navegador no soporta `backdrop-filter`.
 - La persona pide **reducir la transparencia** (`prefers-reduced-transparency`).
 - La persona pide **más contraste** (`prefers-contrast: more`). En ese caso además lleva `--border-strong`.
+
+**En el CSS se escribe solo `backdrop-filter`, nunca junto a `-webkit-backdrop-filter`.** Lightning CSS (el compilador de Tailwind v4) agrega el prefijo para Safari; si se escriben los dos, deja solo el prefijado y el vidrio deja de funcionar en Chrome, Edge y Firefox (corregido el 10 nov).
 - Es Android sobre el mapa: el desenfoque no puede leer la superficie del mapa, así que va sólido, como hoy.
 - Es Android sin `BlurTargetView` (fuera del login, sección 13.9): se usa el respaldo sólido al 92%.
 
@@ -402,7 +404,7 @@ Siguen siendo **solo dos**, construidos con colores de la paleta:
 
 **Uso actual:**
 - El panel de marca del login web (`--grad-petrol`).
-- **v2.1 · La luz del salón** (`AmbientGround`): las dos formas del login convertidas en luz. Son gradientes radiales enormes de naranja, ámbar y petróleo, sin borde que se lea como círculo, fijos detrás de todo el dashboard, del registro y del login. Con el restaurante cerrado se apagan a gris en `--dur-highlight`.
+- **v2.1 · La luz del salón** (`AmbientGround`): las dos formas del login convertidas en luz, en dos esquinas opuestas: naranja arriba a la izquierda y petróleo abajo a la derecha (las otras dos esquinas quedan limpias desde el 10 nov). Son gradientes radiales enormes, sin borde que se lea como círculo, fijos detrás de todo el dashboard, del registro y del login. Con el restaurante cerrado se apagan a gris en `--dur-highlight`.
 - **v2.1 · El avatar de la cuenta** (`--grad-highlight`): petróleo → verde de la marca, con la inicial en crema.
 - **v2.1 · El brillo del dock:** un resplandor naranja que sube desde abajo.
 
@@ -1150,229 +1152,52 @@ mobile/src/
   --plan-canvas:var(--surface-2); --plan-dot:color-mix(in srgb,var(--border-strong) 45%,transparent);
 }
 
-/* ===== v2.1 "Salón de vidrio" (27 oct 2026): el dashboard vive sobre la luz del login =====
-   Fondo: las dos formas de marca del login, convertidas en luz difusa (sin bordes). Abierto = cálido; cerrado = apagado.
-   Vidrio: hoja de contenido + tarjetas encima; riel de navegación en petróleo. Solo mezclas de la paleta. */
-:root, .t-light, [data-theme="light"]{
-  --amb-base:var(--cream);
-  --amb-warm:color-mix(in srgb,var(--orange) 55%,transparent);
-  --amb-glow:color-mix(in srgb,var(--amber) 36%,transparent);
-  --amb-cool:color-mix(in srgb,var(--petrol) 42%,transparent);
-  --amb-off:color-mix(in srgb,var(--inactive) 34%,transparent);
-  --glass-sheet-bg:color-mix(in srgb,var(--surface) 30%,transparent);
-  /* Texto secundario sobre la hoja: casi tinta (AA con la luz más fuerte detrás); en tarjetas vuelve a --text-2-base. */
-  --text-2-sheet:color-mix(in srgb,var(--ink) 85%,var(--white)); --text-2-base:#5E6B70;
-  --glass-card-bg:color-mix(in srgb,var(--surface) 72%,transparent);
-  --glass-pill-bg:color-mix(in srgb,var(--surface) 64%,transparent);
-  /* Dock de navegación (v2.1): sigue al tema. Claro: vidrio claro con la activa en petróleo. */
-  --dock-bg:var(--glass-pill-bg); --dock-fg:var(--text); --dock-active-bg:var(--petrol); --dock-active-fg:var(--cream);
-  --dock-hover:color-mix(in srgb,var(--petrol) 8%,transparent); --dock-glow:color-mix(in srgb,var(--orange) 14%,transparent);
-  --glass-edge:rgba(255,255,255,.62);
-  --glass-sheen:inset 0 1px 0 rgba(255,255,255,.7);
-  --shadow-sheet:0 2px 8px -4px rgba(16,37,43,.10),0 48px 96px -56px rgba(16,37,43,.45);
-  --shadow-lift:0 2px 6px -2px rgba(16,37,43,.08),0 22px 40px -22px rgba(16,37,43,.38);
-  --grad-highlight:linear-gradient(140deg,var(--petrol-deep) 0%,var(--petrol) 42%,#1C6A6E 72%,var(--ok) 100%);
-  --plan-canvas:color-mix(in srgb,var(--surface) 56%,transparent);
-}
-.t-dark, [data-theme="dark"]{
-  --amb-base:var(--petrol-deep);
-  --amb-warm:color-mix(in srgb,var(--orange) 34%,transparent);
-  --amb-glow:color-mix(in srgb,var(--amber) 14%,transparent);
-  --amb-cool:color-mix(in srgb,#1C6A6E 55%,transparent);
-  --amb-off:color-mix(in srgb,var(--inactive) 18%,transparent);
-  --glass-sheet-bg:color-mix(in srgb,var(--surface) 40%,transparent);
-  --text-2-sheet:#A9BDC0; --text-2-base:#A9BDC0;
-  --glass-card-bg:color-mix(in srgb,var(--surface) 72%,transparent);
-  --glass-pill-bg:color-mix(in srgb,var(--surface) 70%,transparent);
-  --dock-bg:color-mix(in srgb,var(--petrol-deep) 76%,transparent); --dock-fg:var(--cream); --dock-active-bg:var(--cream); --dock-active-fg:var(--petrol);
-  --dock-hover:rgba(255,255,255,.08); --dock-glow:color-mix(in srgb,var(--orange) 20%,transparent);
-  --glass-edge:rgba(255,255,255,.10);
-  --glass-sheen:inset 0 1px 0 rgba(255,255,255,.08);
-  --shadow-sheet:0 2px 8px -4px rgba(0,0,0,.3),0 48px 96px -56px rgba(0,0,0,.7);
-  --shadow-lift:0 2px 6px -2px rgba(0,0,0,.3),0 22px 40px -22px rgba(0,0,0,.7);
-  --grad-highlight:linear-gradient(140deg,#12505A 0%,#1C6A6E 48%,#2B8F62 78%,var(--ok) 100%);
-  --plan-canvas:color-mix(in srgb,var(--surface) 62%,transparent);
-}
-```
-
-Los nombres de los tokens de motion y de vidrio **no coinciden a propósito** con los de Tailwind (`--ease-out`, `--blur-*`), para que el mapeo de 16.4 no se pise.
-
-### 16.4 `globals.css` (web, Tailwind v4)
-
-Copia del archivo implementado (`frontend/src/styles/globals.css`, 27 oct 2026). Mapea los tokens de 16.3 a Tailwind con `@theme inline` y define las utilidades que el manual nombra sin token: vidrios, texturas, `press`, `plan-node`, `plan-drop` y los keyframes de 11.3. Si cambia el archivo, se cambia aquí en el mismo PR.
-
-```css
-@import "tailwindcss";
-@import "./tokens.css";
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .t-dark, .t-dark *));
-
-@theme inline {
-  --font-sans: var(--font);
-  --color-bg: var(--bg);            --color-surface: var(--surface);   --color-surface-2: var(--surface-2);
-  --color-fg: var(--text);          --color-fg-2: var(--text-2);
-  --color-line: var(--border);      --color-line-strong: var(--border-strong);
-  --color-accent: var(--accent);    --color-accent-pressed: var(--accent-pressed);
-  --color-accent-text: var(--accent-text); --color-on-accent: var(--on-accent);
-  --color-brand: var(--brand);      --color-on-brand: var(--on-brand);
-  --color-ok: var(--ok); --color-limited: var(--limited); --color-reserved: var(--reserved);
-  --color-busy: var(--busy); --color-inactive: var(--inactive); --color-error: var(--error); --color-info: var(--info);
-  --color-nav: var(--nav-bg); --color-nav-active: var(--nav-active); --color-nav-fg: var(--nav-text); --color-nav-fg-2: var(--nav-text-2);
-  --color-inverse: var(--inverse-bg); --color-on-inverse: var(--inverse-text); --color-inverse-accent: var(--inverse-accent);
-  --color-selection: var(--selection);
-  --color-tint-ok: var(--tint-ok); --color-tint-reserved: var(--tint-reserved);
-  --color-tint-busy: var(--tint-busy); --color-tint-limited: var(--tint-limited);
-  --color-edge-ok: var(--edge-ok); --color-edge-reserved: var(--edge-reserved);
-  --color-edge-busy: var(--edge-busy); --color-edge-limited: var(--edge-limited);
-  --color-glass-panel: var(--glass-panel-bg); --color-glass-bar: var(--glass-bar-bg);
-  --radius-card: var(--r-card); --radius-tile: var(--r-tile); --radius-btn: var(--r-btn);
-  --radius-input: var(--r-input); --radius-sheet: var(--r-sheet);
-  --shadow-card: var(--shadow-soft); --shadow-lifted: var(--shadow-float);
-  --ease-dinno: var(--ease);
-  --ease-dinno-enter: var(--ease-enter); --ease-dinno-move: var(--ease-move); --ease-dinno-sheet: var(--ease-sheet);
-  --blur-panel: var(--glass-blur-panel); --blur-bar: var(--glass-blur-bar); --blur-map: var(--glass-blur-map);
-  /* tipografía v2.0 (manual 4): text-display, text-h1, text-h2, text-h3, text-body, text-sec, text-label, text-kicker, text-metric, text-figure */
-  --text-display: 48px; --text-display--line-height: 52px; --text-display--letter-spacing: -0.03em; --text-display--font-weight: 800;
-  --text-h1: 28px; --text-h1--line-height: 32px; --text-h1--letter-spacing: -0.025em; --text-h1--font-weight: 800;
-  --text-h2: 22px; --text-h2--line-height: 28px; --text-h2--letter-spacing: -0.015em; --text-h2--font-weight: 700;
-  --text-h3: 18px; --text-h3--line-height: 24px; --text-h3--letter-spacing: -0.01em; --text-h3--font-weight: 700;
-  --text-body: 16px; --text-body--line-height: 24px; --text-body--font-weight: 500;
-  --text-sec: 14px; --text-sec--line-height: 20px; --text-sec--font-weight: 500;
-  --text-label: 12px; --text-label--line-height: 16px; --text-label--letter-spacing: 0.01em; --text-label--font-weight: 700;
-  --text-kicker: 11px; --text-kicker--line-height: 14px; --text-kicker--letter-spacing: 0.08em; --text-kicker--font-weight: 700;
-  --text-metric: 28px; --text-metric--line-height: 32px; --text-metric--letter-spacing: -0.03em; --text-metric--font-weight: 800;
-  --text-figure: 54px; --text-figure--line-height: 54px; --text-figure--letter-spacing: -0.04em; --text-figure--font-weight: 800;
-}
-
-@layer base {
-  html { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
-  p { text-wrap: pretty; }
-  h1, h2, h3 { text-wrap: balance; }
-  :focus-visible { outline: none; box-shadow: var(--focus-ring); }
-  /* Reducir movimiento (manual 11.5): los keyframes leen --motion-rise/--motion-scale, que valen 0 y 1; aquí se
-     detienen los bucles y lo que recorre la pantalla entera pasa a un fundido. Los fundidos se conservan. */
-  @media (prefers-reduced-motion: reduce) {
-    .animate-live-pulse, .animate-skeleton { animation: none !important; }
-    .animate-drawer-in, .animate-sheet-in { animation-name: fade-in !important; }
-    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
-  }
-}
-@layer base { [data-theme="dark"], .t-dark { color-scheme: dark; } }               /* controles nativos en oscuro */
-
-/* ===== Login (no se rediseña, manual 13.9): conserva la escala tipográfica y el movimiento reducido del v1.1 ===== */
-.glass-login .text-h1 { font-size: 32px; line-height: 36px; letter-spacing: -0.03em; font-weight: 800; }
-.glass-login .text-h2 { font-size: 24px; line-height: 28px; letter-spacing: -0.02em; font-weight: 700; }
-.glass-login .text-label { font-size: 11px; line-height: 14px; letter-spacing: 0.08em; font-weight: 700; }
-@media (prefers-reduced-motion: reduce) {
-  .glass-login, .glass-login * { transition-duration: .01ms !important; }
-}
-
-/* ===== Utilidades del manual v2.0 (16.4): valores sin token y piezas compuestas ===== */
-@utility text-btn { font-size: 15px; line-height: 20px; font-weight: 700; }      /* texto de botón 15/20 700 · manual 4 */
-@utility border-field { border-width: 1.5px; }                                      /* borde de campos · manual 6.2 */
-@utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(min(168px, calc(50% - 6px)), 1fr)); grid-auto-rows: 1fr; } /* dos columnas también en el teléfono */ /* grilla de mesas · manual 13.10 */
-
-/* Vidrio (manual 7) con su respaldo sólido. Encima, solo texto en tinta o crema. */
-@utility glass-panel {
-  background: var(--glass-panel-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-float);
-  backdrop-filter: blur(var(--glass-blur-panel)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur-panel)) saturate(var(--glass-saturate));
-  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
-}
-@utility glass-bar {
-  background: var(--glass-bar-bg);
-  backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturate));
-  @supports not (backdrop-filter: blur(1px)) { background: var(--bg); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
-}
-/* Login: tarjeta de vidrio sobre la luz del salón (AmbientGround), la misma del dashboard (manual 7.1 y 13.9). */
-@utility glass-login {
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(44px) saturate(1.5);
-  -webkit-backdrop-filter: blur(44px) saturate(1.5);
-  @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-}
-
-/* Texturas de la forma (manual 8): el "cuadrado rayado" de Ocupada y la trama del plano. No son gradientes de adorno. */
-@utility hatch-busy { background-image: repeating-linear-gradient(135deg, var(--hatch-busy) 0 2px, transparent 2px 8px); }
-/* La trama del plano. El color lo pone su marco (v2.1), así el lienzo y el borde del marco nunca dejan una costura. */
-@utility plan-canvas {
-  background-image: radial-gradient(circle, var(--plan-dot) 1px, transparent 1.5px);
-  background-size: var(--plan-cell, 44px) var(--plan-cell, 44px);
-}
-
-/* Mesa en el plano (manual 13.10 y 11.3): se desliza a su celda al soltarla (200 ms, --ease-enter), vuelve con
-   --ease-move si no cabía, y el estado cambia con un fundido de color. Con el teclado se mueve sin animar (11.4).
-   Reducir movimiento: solo el color. */
-@utility plan-node {
-  position: absolute; top: 0; left: 0;
-  transition: transform var(--dur-base) var(--ease-enter), background-color var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease), box-shadow var(--dur-fast) var(--ease);
-  &[data-editing="true"] { cursor: grab; touch-action: none; }
-  &[data-dragging="true"] { transition: none; z-index: 2; cursor: grabbing; box-shadow: var(--shadow-float); }
-  &[data-returning="true"] { transition-duration: var(--dur-slow); transition-timing-function: var(--ease-move); }
-  &[data-instant="true"] { transition: none; }
-  @media (prefers-reduced-motion: reduce) { transition-property: background-color, border-color, box-shadow; }
-}
-/* Celda de destino mientras se arrastra: naranja de selección si cabe, rojo de error si no. */
-@utility plan-drop {
-  position: absolute; top: 0; left: 0; pointer-events: none;
-  border: 2px dashed var(--selection);
-  &[data-valid="false"] { border-color: var(--error); }
-}
-
 /* ===== v2.1 "Salón de vidrio" (manual 7 y 8): luz de fondo, hoja, tarjetas, píldoras y riel =====
-   La luz es fija y no pesa: tres gradientes radiales enormes, sin desenfoque. Abierto = cálido (naranja + ámbar);
-   cerrado = apagado (gris). Se cruzan en --dur-highlight. Todo vidrio tiene su respaldo sólido. */
+   La luz es fija y no pesa: dos gradientes radiales enormes en esquinas opuestas, sin desenfoque. Abierto = cálido
+   arriba a la izquierda (naranja) y petróleo abajo a la derecha; cerrado = la luz cálida se apaga a gris. Se cruzan en --dur-highlight. Todo vidrio tiene su respaldo sólido. */
 @utility app-ambient { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-color: var(--amb-base); }
 @utility amb-open {
   background-image:
-    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-warm), transparent 66%),
-    radial-gradient(46vmax 40vmax at 96% 6%, var(--amb-glow), transparent 66%),
-    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
-    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+    radial-gradient(68vmax 56vmax at 6% -14%, var(--amb-warm), transparent 66%),
+    radial-gradient(78vmax 66vmax at 108% 112%, var(--amb-cool), transparent 64%);
 }
 @utility amb-closed {
   background-image:
-    radial-gradient(64vmax 52vmax at 22% -16%, var(--amb-off), transparent 66%),
-    radial-gradient(58vmax 52vmax at -8% 108%, var(--amb-cool), transparent 64%),
-    radial-gradient(78vmax 66vmax at 112% 116%, var(--amb-cool), transparent 64%);
+    radial-gradient(68vmax 56vmax at 6% -14%, var(--amb-off), transparent 66%),
+    radial-gradient(78vmax 66vmax at 108% 112%, var(--amb-cool), transparent 64%);
 }
 @utility glass-sheet {
   background: var(--glass-sheet-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
-  backdrop-filter: blur(28px) saturate(1.5); -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  backdrop-filter: blur(28px) saturate(1.5);
   @supports not (backdrop-filter: blur(1px)) { background: var(--bg); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--bg); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--bg); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--bg); border-color: var(--border-strong); backdrop-filter: none; }
 }
 /* Sobre la hoja, el texto secundario usa --text-2-sheet; dentro de una tarjeta o superficie sólida vuelve al de siempre. */
 .glass-sheet { --text-2: var(--text-2-sheet); }
 .glass-sheet :is(.glass-card, .bg-surface, .bg-surface-2) { --text-2: var(--text-2-base); }
 @utility glass-card {
   background: var(--glass-card-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen);
-  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; }
 }
 @utility glass-pill {
   background: var(--glass-pill-bg); border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-float);
-  backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; }
 }
 /* Dock de navegación (v2.1): vidrio que sigue al tema, con un brillo cálido que sube desde abajo. Flota centrado. */
 @utility glass-dock {
   background: radial-gradient(70% 120% at 50% 130%, var(--dock-glow), transparent 70%), var(--dock-bg);
   border: 1px solid var(--glass-edge); box-shadow: var(--glass-sheen), var(--shadow-sheet);
-  backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
   @supports not (backdrop-filter: blur(1px)) { background: var(--surface); }
-  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { background: var(--surface); backdrop-filter: none; }
+  @media (prefers-contrast: more) { background: var(--surface); border-color: var(--border-strong); backdrop-filter: none; }
 }
 @utility dock-position { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); translate: -50% 0; z-index: var(--z-sticky); }
 /* El ícono del dock se asoma al pasar el puntero, como en macOS. `translate` + `scale`, así se suma a `press`. */
