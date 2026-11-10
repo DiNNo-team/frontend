@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Plus, ScanLine } from 'lucide-react'
-import { Alert, Button, ConfirmDialog, EmptyState, PageHeader, SegmentedControl, useToast } from '@/components/ui'
+import { Alert, Button, ConfirmDialog, EmptyState, PageHeader, useToast } from '@/components/ui'
 import { formatTableName } from '@/lib/format'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { useMediaQuery } from '@/lib/use-media-query'
@@ -343,26 +343,10 @@ export default function TablesPage() {
       <PageHeader
         {...greeting}
         actions={
-          <>
-            <SegmentedControl
-              aria-label="Vista de mesas"
-              value={view}
-              onValueChange={changeView}
-              // While editing the plan the way out is "Guardar plano" or "Cancelar".
-              disabled={editor.editing}
-              options={[
-                { value: 'plan', label: 'Plano' },
-                { value: 'grid', label: 'Cuadrícula' },
-              ]}
-            />
-            {/* In service the main action is the check-in (Sprint 3): «Agregar mesa» steps down to outline. */}
-            <Button variant="outline" icon={Plus} onClick={openCreate} className="rounded-full">
-              Agregar mesa
-            </Button>
-            <Button icon={ScanLine} onClick={() => setCheckInOpen(true)} className="rounded-full">
-              {RESERVATION_TEXT.validateCode}
-            </Button>
-          </>
+          // In service the main action is the check-in (Sprint 3). The view switch and «Agregar mesa» live in the toolbar.
+          <Button icon={ScanLine} onClick={() => setCheckInOpen(true)} className="rounded-full">
+            {RESERVATION_TEXT.validateCode}
+          </Button>
         }
       />
       <TablesStats
@@ -394,6 +378,8 @@ export default function TablesPage() {
         mode={view}
         hasUnzoned={hasUnzoned}
         onManageAreas={() => setAreasOpen(true)}
+        onModeChange={changeView}
+        onAddTable={openCreate}
         // While editing a zone's plan, the way out is "Guardar plano" or "Cancelar".
         disabled={editor.editing}
       />

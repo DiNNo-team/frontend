@@ -14,8 +14,10 @@ export interface ButtonProps extends ComponentPropsWithRef<'button'> {
   loading?: boolean
   /** Gerund with an ellipsis, shown while loading: "Guardando…". Defaults to the normal text. */
   loadingText?: string
-  /** Lucide icon on the left, 20 px. */
+  /** Lucide icon, 20 px. */
   icon?: LucideIcon
+  /** Side of the icon: `start` (default) or `end` ("Siguiente →"). */
+  iconPosition?: 'start' | 'end'
   fullWidth?: boolean
 }
 
@@ -45,6 +47,7 @@ export function Button({
   loading = false,
   loadingText,
   icon,
+  iconPosition = 'start',
   fullWidth = false,
   type = 'button',
   className,
@@ -78,8 +81,9 @@ export function Button({
       {...props}
     >
       <span className={cn(LAYER, loading && 'invisible')} aria-hidden={loading || undefined}>
-        {icon && <Icon icon={icon} size={20} />}
+        {icon && iconPosition === 'start' && <Icon icon={icon} size={20} />}
         {children}
+        {icon && iconPosition === 'end' && <Icon icon={icon} size={20} />}
       </span>
       <span className={cn(LAYER, !loading && 'invisible')} aria-hidden={!loading || undefined}>
         <Spinner size={16} />

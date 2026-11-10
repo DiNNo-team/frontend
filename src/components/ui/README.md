@@ -23,7 +23,8 @@ Botón de texto. **Un solo `primary` por pantalla.** Texto = verbo + objeto ("Ag
 | `size` | `'md' \| 'sm'` | `'md'` | `md` 48 · `sm` 40 (tablas y barras de escritorio) |
 | `loading` | `boolean` | `false` | Spinner + `loadingText`, mismo ancho, `aria-busy`, no se puede volver a pulsar |
 | `loadingText` | `string` | el texto normal | Gerundio con "…": "Guardando…" |
-| `icon` | `LucideIcon` | — | A la izquierda, 20 px |
+| `icon` | `LucideIcon` | — | 20 px |
+| `iconPosition` | `'start' \| 'end'` | `'start'` | `end` para flechas de avance («Siguiente →») |
 | `fullWidth` | `boolean` | `false` | |
 | …nativas | `button` | `type="button"` | Para formularios pasa `type="submit"` |
 
@@ -426,6 +427,14 @@ Tabla genérica (bitácora). Encabezados `text-label` con mayúscula inicial. En
     { key: 'user', header: 'Usuario', cell: (e) => e.userName },
   ]}
 />
+```
+
+## Pagination
+
+Páginas de una lista larga: «16–30 de 74 cambios», «Anterior», «Página 2 de 5» y «Siguiente». Va debajo de la lista. Con una sola página no se muestra. La página es 1-based; la pantalla corta las filas y vuelve a la página 1 cuando cambia un filtro.
+
+```tsx
+<Pagination page={page} pageSize={15} totalItems={rows.length} onPageChange={setPage} itemsLabel="cambios" />
 ```
 
 ## PageHeader

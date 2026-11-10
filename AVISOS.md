@@ -5,6 +5,20 @@
 
 ---
 
+## 10 nov 2026 · Sebastián · Botones de /mesas en la barra de filtros, y bitácora con búsqueda, zonas y páginas
+
+- **`/mesas`:** el selector Plano · Cuadrícula y «Agregar mesa» se mudaron del encabezado a la barra de filtros, al lado de «Zonas». El encabezado deja solo el saludo y «Validar código». La barra ahora es `role="group"` («Organizar mesas»).
+- **`/bitacora`** (Sergio, para que lo sepas):
+  - Tiene «Buscar mesa» y «Zona», que filtran los cambios ya cargados, y «Mesa» sigue igual.
+  - Muestra **15 cambios por página**.
+  - Cualquier filtro vuelve a la página 1.
+- **Kit:**
+  - `Pagination` es nuevo («16–30 de 74 cambios», «Anterior», «Página 2 de 5» y «Siguiente»). Con una sola página no se muestra.
+  - `Button` acepta `iconPosition="end"`.
+  - Los dos están en el README del kit.
+
+---
+
 ## 10 nov 2026 · Sebastián · El topbar ya no muestra «En vivo»
 
 - Se quitó el indicador «En vivo» (`RestaurantLiveIndicator`) del topbar: no aportaba y Sebastián no lo quiere en el dashboard.

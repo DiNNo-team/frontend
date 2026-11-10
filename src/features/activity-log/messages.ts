@@ -25,6 +25,16 @@ export const TABLE_LOG_TEXT = {
   authorDiner: 'Comensal',
   authorSystem: 'Automático',
   limitNotice: 'Ves los 200 cambios más recientes. Filtra por mesa para ver cambios anteriores de esa mesa.',
+  // Zones, search and pages (10 nov 2026).
+  searchLabel: 'Buscar mesa',
+  searchPlaceholder: 'Ej.: 04, T1',
+  areaLabel: 'Zona',
+  allAreas: 'Todas las zonas',
+  noArea: 'Sin zona',
+  noMatchesTitle: 'No hay cambios con esos filtros',
+  noMatchesDescription: 'Prueba con otra mesa o zona.',
+  clearFilters: 'Ver todos los cambios',
+  itemsLabel: 'cambios',
 } as const
 
 /** Approved. Empty state while one table is selected: "Mesa 04 todavía no tiene cambios de estado." */

@@ -316,6 +316,7 @@ src/
 - `useTableLogsQuery(tableId?)` (query key `['table-logs', tableId ?? 'all']`) lleva **`refetchOnMount: 'always'`**: cada vez que se abre la pantalla vuelve a pedir la bitácora, así un cambio hecho en `/mesas` aparece aunque el `staleTime` global (30 s) no haya vencido. No toca `features/tables`.
 - Reutiliza de mesas, sin modificarlos: `useTablesQuery` + `sortTables` para el filtro (todas las mesas, inactivas incluidas; si fallan, el filtro queda deshabilitado con "Todas las mesas") y `toTableDisplayStatus` para los chips (incluido `inactive`).
 - El cambio se muestra con `StatusChip` → `arrow-right` → `StatusChip`; el lector de pantalla lee "Disponible a Ocupada". Fechas con `formatDateTime`, mesas con `formatTableName`.
+- **Buscar, zona y páginas (10 nov 2026):** «Buscar mesa» y «Zona» filtran en el navegador los cambios ya cargados (la zona es la actual de cada mesa, cruzada con `useTablesQuery`; funciones de `features/tables/table-filters.ts`). «Mesa» sigue pidiendo `?tableId=` al backend. La lista muestra **15 cambios por página** con el `Pagination` del kit, y cualquier filtro vuelve a la página 1.
 - Mock (con `VITE_USE_MOCKS=true`, datos fijos con las mesas del mock de mesas): `?mockError=table-logs-load`, `?mockTableLogsFull` (200 filas) y `?mockEmpty` / `?mockLatency=` (compartidos con mesas). No refleja los cambios hechos en `/mesas`: para eso, el backend real.
 
 ### Zonas, búsqueda y filtros de mesas (Sebastián)

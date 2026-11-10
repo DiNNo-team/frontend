@@ -1,12 +1,12 @@
-import { Layers, Search, Users } from 'lucide-react'
-import { Button, Select, TextField } from '@/components/ui'
+import { Layers, Plus, Search, Users } from 'lucide-react'
+import { Button, SegmentedControl, Select, TextField } from '@/components/ui'
 import { ALL_AREAS, NO_AREA, type AreaFilter, type TableFilters } from '../table-filters'
 import type { TableArea } from '../types'
 
 /** "Para cuántas personas": tables of at least this many. */
 const CAPACITY_OPTIONS = [
-  { value: 'any', label: 'Cualquier capacidad' },
-  ...[2, 4, 6, 8, 10].map((people) => ({ value: String(people), label: `${people} personas o más` })),
+  { value: 'any', label: 'Cualquiera' },
+  ...[2, 4, 6, 8, 10].map((people) => ({ value: String(people), label: `${people} o más` })),
 ]
 
 export interface TablesToolbarProps {
@@ -18,11 +18,28 @@ export interface TablesToolbarProps {
   /** Some table has no zone: "Sin zona" becomes a choice. */
   hasUnzoned: boolean
   onManageAreas: () => void
+  /** Plano · Cuadrícula (manual 13.10). */
+  onModeChange: (mode: 'grid' | 'plan') => void
+  onAddTable: () => void
+  /** While a zone's plan is being edited: the way out is "Guardar plano" or "Cancelar". */
   disabled?: boolean
 }
 
-/** Organize a big restaurant: search by table, zone (floor or area) and capacity, plus the "Zonas" manager. */
-export function TablesToolbar({ areas, filters, onFiltersChange, mode, hasUnzoned, onManageAreas, disabled }: TablesToolbarProps) {
+/**
+ * Organize a big restaurant: search by table, zone (floor or area) and capacity, then "Zonas", the Plano · Cuadrícula
+ * switch and "Agregar mesa" (they moved here from the header, so the header keeps only "Validar código").
+ */
+export function TablesToolbar({
+  areas,
+  filters,
+  onFiltersChange,
+  mode,
+  hasUnzoned,
+  onManageAreas,
+  onModeChange,
+  onAddTable,
+  disabled,
+}: TablesToolbarProps) {
   const set = (patch: Partial<TableFilters>) => onFiltersChange({ ...filters, ...patch })
   const areaOptions = [
     ...(mode === 'grid' ? [{ value: ALL_AREAS, label: 'Todas las zonas' }] : []),
@@ -31,7 +48,7 @@ export function TablesToolbar({ areas, filters, onFiltersChange, mode, hasUnzone
   ]
 
   return (
-    <div role="search" aria-label="Organizar mesas" className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
+    <div role="group" aria-label="Organizar mesas" className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
       {mode === 'grid' && (
         <TextField
           label="Buscar mesa"
@@ -65,9 +82,24 @@ export function TablesToolbar({ areas, filters, onFiltersChange, mode, hasUnzone
           className="md:min-w-48 md:flex-1"
         />
       )}
-      <Button variant="outline" icon={Layers} onClick={onManageAreas} disabled={disabled} className="md:self-end">
-        {areas.length > 0 ? 'Zonas' : 'Crear zonas'}
-      </Button>
+      <div className="flex flex-wrap items-center gap-3 md:self-end">
+        <Button variant="outline" icon={Layers} onClick={onManageAreas} disabled={disabled}>
+          {areas.length > 0 ? 'Zonas' : 'Crear zonas'}
+        </Button>
+        <SegmentedControl
+          aria-label="Vista de mesas"
+          value={mode}
+          onValueChange={onModeChange}
+          disabled={disabled}
+          options={[
+            { value: 'plan', label: 'Plano' },
+            { value: 'grid', label: 'Cuadrícula' },
+          ]}
+        />
+        <Button variant="outline" icon={Plus} onClick={onAddTable}>
+          Agregar mesa
+        </Button>
+      </div>
     </div>
   )
 }

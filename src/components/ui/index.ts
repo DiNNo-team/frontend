@@ -16,6 +16,7 @@ export { LiveIndicator, type LiveIndicatorProps, type LiveIndicatorState } from 
 export { Logo, type LogoProps, type LogoVariant } from './Logo'
 export { NumberStepper, type NumberStepperProps } from './NumberStepper'
 export { PageHeader, type PageHeaderProps } from './PageHeader'
+export { Pagination, type PaginationProps } from './Pagination'
 export { SegmentedControl, type SegmentedControlProps, type SegmentedOption } from './SegmentedControl'
 export { Select, type SelectOption, type SelectProps } from './Select'
 export { Skeleton, type SkeletonProps } from './Skeleton'
