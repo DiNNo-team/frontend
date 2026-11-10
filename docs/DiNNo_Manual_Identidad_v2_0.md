@@ -957,7 +957,7 @@ Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en clar
 - **Barra de filtros** (debajo de las reservas), con campos que muestran su label:
   - En la Cuadrícula: «Buscar mesa», «Zona» y «Personas».
   - En el Plano: solo «Zona».
-  - En las dos vistas, a la derecha: «Zonas», el selector Plano · Cuadrícula y «Agregar mesa» (outline). Desde el 10 nov 2026 viven aquí y no en el encabezado, que deja solo el saludo y «Validar código», el único botón principal.
+  - En las dos vistas, a la derecha: «Zonas», el selector Plano · Cuadrícula y «Agregar mesa» (outline). Desde el 10 nov 2026 viven aquí y no en el encabezado, que deja solo el saludo y «Validar código». **Excepción aprobada por Sebastián (10 nov 2026):** «Agregar mesa» también va en naranja (`primary`), así que `/mesas` tiene dos botones principales. En `/restaurante`, «Editar» también es `primary`.
   - Los estados se siguen filtrando con la tira de resumen.
 - **Buscar mesa:** un número encuentra esa mesa ("4" encuentra la Mesa 04, nunca la Mesa 14); un texto busca en el identificador.
 - **Cuadrícula:** con «Todas las zonas» se agrupa por zona. Cada grupo lleva un título 3 con el conteo ("Terraza · 3 mesas"), y «Sin zona» va al final.

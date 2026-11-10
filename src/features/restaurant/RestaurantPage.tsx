@@ -182,8 +182,8 @@ export default function RestaurantPage() {
         title="Restaurante"
         actions={
           editing ? undefined : (
-            // Manual 12.2: "Editar" is an alternative, not the page's main action.
-            <Button variant="outline" icon={Pencil} onClick={() => setEditing(true)}>
+            // Orange (primary) by Sebastián's decision of 10 nov 2026: it is the one action of this screen.
+            <Button icon={Pencil} onClick={() => setEditing(true)}>
               Editar
             </Button>
           )

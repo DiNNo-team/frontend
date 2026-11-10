@@ -62,17 +62,16 @@ describe('TablesPage', () => {
     expect(names).toEqual(['Mesa 02', 'Mesa 10', 'Mesa T1'])
   })
 
-  it('opens with the greeting and the single primary "Validar código"; the view switch and "Agregar mesa" sit in the toolbar', async () => {
+  it('opens with the greeting and "Validar código"; the view switch and "Agregar mesa" (orange too) sit in the toolbar', async () => {
     await renderLoaded()
     const header = screen.getByRole('heading', { level: 1, name: /^Buen(os días|as tardes|as noches)/ }).closest('header') as HTMLElement
     expect(within(header).getByText(/3 mesas disponibles de 7/)).toBeInTheDocument()
-    // Sprint 3: in service the check-in is the main action (one primary per screen).
     expect(within(header).getByRole('button', { name: 'Validar código' })).toHaveClass('bg-accent')
     expect(within(header).queryByRole('radiogroup', { name: 'Vista de mesas' })).not.toBeInTheDocument()
     const toolbar = screen.getByRole('group', { name: 'Organizar mesas' })
     expect(within(toolbar).getByRole('radiogroup', { name: 'Vista de mesas' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Agregar mesa' })).toHaveLength(1)
-    expect(within(toolbar).getByRole('button', { name: 'Agregar mesa' })).not.toHaveClass('bg-accent')
+    expect(within(toolbar).getByRole('button', { name: 'Agregar mesa' })).toHaveClass('bg-accent')
   })
 
   it('empty: shows the empty state as the only primary and hides the metrics', async () => {
