@@ -100,7 +100,7 @@ export function Select({
             position="popper"
             sideOffset={4}
             className={cn(
-              'z-(--z-dropdown) min-w-(--radix-select-trigger-width) overflow-hidden rounded-input border border-line bg-surface p-1 shadow-lifted',
+              'z-popover min-w-(--radix-select-trigger-width) overflow-hidden rounded-input border border-line bg-surface p-1 shadow-lifted',
               // Radix measures the free space below the trigger; long lists (TimeSelect) scroll inside it.
               'max-h-(--radix-select-content-available-height) origin-(--radix-select-content-transform-origin) data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in',
             )}

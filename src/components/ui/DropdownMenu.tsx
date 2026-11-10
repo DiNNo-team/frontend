@@ -38,7 +38,7 @@ export function DropdownMenu({ trigger, items, align = 'end', side = 'bottom', h
           align={align}
           side={side}
           sideOffset={4}
-          className="z-(--z-dropdown) min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) rounded-input border border-line bg-surface p-1 shadow-lifted data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+          className="z-popover min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) rounded-input border border-line bg-surface p-1 shadow-lifted data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
         >
           {header && (
             <>
