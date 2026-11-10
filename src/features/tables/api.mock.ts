@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api-client'
+import { mockAreaExists } from './areas/api.mock'
 import { normalizeTableIdentifier } from '@/lib/format'
 import type { TablesApi } from './api'
 import { firstFreeSpot, placementOf, planConflicts, type PlacedTable } from './plan/plan-geometry'
@@ -12,6 +13,7 @@ import { TABLE_LIMITS, type Table, type TableShape, type TableStatus } from './t
 // Sprint 3 rules (CLAUDE.md §12.2): only an available table is deactivated; a table held by a DiNNo reservation
 // (`mockTablesControl.setDinnoReservations`, or /mesas?mockDinno=01,07, which also turns them Reservada) answers
 // 409 TABLE_HAS_ACTIVE_RESERVATION on status change, deactivate and lowering the capacity under the party size.
+// Zones: /mesas?mockAreas puts 01–04 in «Salón» and 05–07 in «Terraza» (areas/api.mock.ts); each zone has its own plan.
 
 export type MockOperation = 'list' | 'create' | 'status' | 'update' | 'deactivate' | 'reactivate' | 'plan'
 
@@ -38,9 +40,17 @@ const SEED_PLAN: [x: number, y: number, shape: TableShape | null][] = [
   [14, 6, null],
 ]
 
+/** Zone of each seed table with ?mockAreas. */
+function seedAreaOf(index: number): string | null {
+  if (!urlParams().has('mockAreas')) return null
+  if (index < 4) return 'area-salon'
+  return index < 7 ? 'area-terraza' : null
+}
+
 function seedTables(): Table[] {
   return SEED.map(([identifier, capacity, status, isActive], index) => ({
     id: `mock-${index + 1}`,
+    areaId: seedAreaOf(index),
     identifier,
     capacity,
     status,
@@ -71,6 +81,7 @@ function manyPlacedTables(): Table[] {
     const capacity = [2, 4, 4, 6, 2, 8, 4, 12][index % 8]
     const table: Table = {
       id: `mock-many-${index + 1}`,
+      areaId: null,
       identifier: String(index + 1).padStart(2, '0'),
       capacity,
       status: statuses[index % statuses.length],
@@ -139,6 +150,12 @@ export const mockTablesControl = {
   snapshot(): Table[] {
     return tables.map((table) => ({ ...table }))
   },
+  /** What the backend does when a zone is deleted: its tables stay, without zone and off the plan. */
+  leaveArea(areaId: string) {
+    tables = tables.map((table) =>
+      table.areaId === areaId ? { ...table, areaId: null, planX: null, planY: null, planShape: null } : table,
+    )
+  },
 }
 
 async function simulate(operation: MockOperation) {
@@ -187,6 +204,12 @@ function validateCapacity(capacity: number) {
   }
 }
 
+function validateArea(areaId: string | null | undefined): string | null {
+  if (!areaId) return null
+  if (!mockAreaExists(areaId)) fail(404, 'No encontramos esta zona. Actualiza la página e intenta de nuevo.')
+  return areaId
+}
+
 function save(table: Table, patch: Partial<Table>): Table {
   Object.assign(table, patch)
   return { ...table }
@@ -197,12 +220,13 @@ export const mockTablesApi: TablesApi = {
     await simulate('list')
     return tables.map((table) => ({ ...table }))
   },
-  async create({ identifier, capacity }) {
+  async create({ identifier, capacity, areaId }) {
     await simulate('create')
     const cleanIdentifier = validateIdentifier(identifier)
     validateCapacity(capacity)
     const table: Table = {
       id: `mock-${nextId++}`,
+      areaId: validateArea(areaId),
       identifier: cleanIdentifier,
       capacity,
       status: 'available',
@@ -235,6 +259,10 @@ export const mockTablesApi: TablesApi = {
       if (partySize !== undefined && input.capacity < partySize) failIfDinnoReserved(table)
       patch.capacity = input.capacity
     }
+    // Another zone is another plan: like the backend, the table goes back to the unplaced ones.
+    if (input.areaId !== undefined && (input.areaId ?? null) !== table.areaId) {
+      Object.assign(patch, { areaId: validateArea(input.areaId), planX: null, planY: null, planShape: null })
+    }
     return save(table, patch)
   },
   async deactivate(id) {
@@ -266,8 +294,13 @@ export const mockTablesApi: TablesApi = {
       const item = byId.get(table.id)
       return { ...table, planX: item?.x ?? null, planY: item?.y ?? null, planShape: item ? item.shape : null }
     })
-    if (planConflicts(next.map((table) => ({ ...table, placement: placementOf(table) }))).size > 0) {
-      fail(400, 'Dos mesas quedaron una encima de otra. Sepáralas e intenta de nuevo.')
+    // Each zone has its own plan: only tables of the same zone can collide.
+    const zones = new Set(next.map((table) => table.areaId))
+    for (const zone of zones) {
+      const inZone = next.filter((table) => table.areaId === zone)
+      if (planConflicts(inZone.map((table) => ({ ...table, placement: placementOf(table) }))).size > 0) {
+        fail(400, 'Dos mesas quedaron una encima de otra. Sepáralas e intenta de nuevo.')
+      }
     }
     tables = next
     return tables.map((table) => ({ ...table }))

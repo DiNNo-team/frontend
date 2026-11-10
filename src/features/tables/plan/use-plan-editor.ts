@@ -18,8 +18,12 @@ function snapshot(tables: Table[]): Draft {
  * Edit mode of the floor plan (manual 13.10): a local draft over the live tables, so statuses keep arriving while the
  * positions wait for "Guardar plano". Nothing is stored in the browser; the draft only becomes the plan when the
  * backend saves it.
+ *
+ * `tables` are the ones of the zone on screen (each zone has its own plan); `allTables`, every table of the restaurant.
+ * `PUT /v1/tables/plan` replaces the whole plan, so the tables of the other zones go in the body with the place they
+ * already have.
  */
-export function usePlanEditor(tables: Table[]) {
+export function usePlanEditor(tables: Table[], allTables: Table[] = tables) {
   const [draft, setDraft] = useState<Draft | null>(null)
   /** Positions from the server when editing started: to tell "dirty" and whether another device saved meanwhile. */
   const [baseline, setBaseline] = useState<Draft>({})
@@ -105,14 +109,18 @@ export function usePlanEditor(tables: Table[]) {
     return left
   }
 
-  /** Body of `PUT /v1/tables/plan`: every placed table. */
+  /** Body of `PUT /v1/tables/plan`: every placed table of this zone, plus the other zones as they are. */
   function items(): TablePlanItem[] {
-    return placed.flatMap(({ id, placement }) => (placement ? [{ id, x: placement.x, y: placement.y, shape: placement.shape }] : []))
+    const here = new Set(tables.map((table) => table.id))
+    const others = allTables.filter((table) => !here.has(table.id)).map((table) => ({ id: table.id, placement: placementOf(table) }))
+    return [...placed, ...others].flatMap(({ id, placement }) =>
+      placement ? [{ id, x: placement.x, y: placement.y, shape: placement.shape }] : [],
+    )
   }
 
-  /** True when `latest` (fresh from the server) has a plan other than the one this editor started from. */
+  /** True when `latest` (fresh from the server) has, in this zone, a plan other than the one this editor started from. */
   function savedElsewhere(latest: Table[]): boolean {
-    return latest.some((table) => !samePlacement(placementOf(table), baseline[table.id] ?? null))
+    return latest.some((table) => table.id in baseline && !samePlacement(placementOf(table), baseline[table.id] ?? null))
   }
 
   return { editing, dirty, conflicts, unplaced, placed, placementFor, start, stop, move, setShape, place, unplace, autoPlace, items, savedElsewhere }

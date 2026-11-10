@@ -14,11 +14,17 @@ export interface TablesApi {
 }
 
 /**
- * The plan fields arrive with the AddTablePlan migration. Until the backend has them, a table simply reads as
- * unplaced, so the grid and the rest of /mesas keep working.
+ * The plan fields arrive with the AddTablePlan migration and `areaId` with CreateTableAreas. Until the backend has
+ * them, a table simply reads as unplaced and without zone, so the grid and the rest of /mesas keep working.
  */
 function withPlan(table: Table): Table {
-  return { ...table, planX: table.planX ?? null, planY: table.planY ?? null, planShape: table.planShape ?? null }
+  return {
+    ...table,
+    areaId: table.areaId ?? null,
+    planX: table.planX ?? null,
+    planY: table.planY ?? null,
+    planShape: table.planShape ?? null,
+  }
 }
 
 const httpTablesApi: TablesApi = {

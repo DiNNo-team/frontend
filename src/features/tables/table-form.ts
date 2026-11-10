@@ -6,15 +6,18 @@ import { TABLE_LIMITS, type Table } from './types'
 export interface TableFormValues {
   identifier: string
   capacity: number
+  /** null = no zone. */
+  areaId: string | null
 }
 
-export type TableFormErrors = Partial<Record<keyof TableFormValues, string>>
+export type TableFormErrors = Partial<Record<'identifier' | 'capacity' | 'areaId', string>>
 
 export const TABLE_FORM_MESSAGES = {
   identifierRequired: 'Escribe el identificador de la mesa',
   identifierTooLong: `Usa máximo ${TABLE_LIMITS.identifierMaxLength} caracteres`,
   identifierTaken: (identifier: string) => `Ya tienes una ${formatTableName(identifier)}. Usa otro identificador.`,
   capacityRange: `La capacidad va de ${TABLE_LIMITS.minCapacity} a ${TABLE_LIMITS.maxCapacity} personas`,
+  areaGone: 'Esa zona ya no existe. Elige otra o deja la mesa sin zona.',
   saveFailed: 'No pudimos guardar la mesa. Revisa tu conexión e intenta de nuevo.',
 } as const
 
@@ -57,6 +60,8 @@ export function describeTableSaveError(error: unknown, values: TableFormValues):
     // Sprint 3 (§12.2): lowering the capacity under a DiNNo reservation's party size → 409 with errorCode.
     const protection = tableProtectionMessage(error)
     if (protection) return { fieldErrors: {}, formError: protection }
+    // The only 404 of create and edit with a zone chosen: the zone was deleted from another device.
+    if (error.status === 404 && values.areaId) return { fieldErrors: { areaId: TABLE_FORM_MESSAGES.areaGone } }
     // The other 409 of create and edit is a repeated identifier (the backend sends no errorCode for it).
     if (error.status === 409) {
       return { fieldErrors: { identifier: TABLE_FORM_MESSAGES.identifierTaken(values.identifier.trim()) } }

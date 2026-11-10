@@ -5,6 +5,7 @@ import type { Table } from './types'
 
 const table = (id: string, identifier: string, isActive = true): Table => ({
   id,
+  areaId: null,
   identifier,
   capacity: 4,
   status: 'available',
@@ -38,7 +39,7 @@ describe('table form validation', () => {
     expect(validateCapacity(21)).toBe('La capacidad va de 1 a 20 personas')
     expect(validateCapacity(2.5)).toBe('La capacidad va de 1 a 20 personas')
     expect(validateCapacity(20)).toBeUndefined()
-    expect(validateTableForm({ identifier: '', capacity: 0 }, EXISTING)).toEqual({
+    expect(validateTableForm({ identifier: '', capacity: 0, areaId: null }, EXISTING)).toEqual({
       identifier: 'Escribe el identificador de la mesa',
       capacity: 'La capacidad va de 1 a 20 personas',
     })
@@ -46,7 +47,7 @@ describe('table form validation', () => {
 })
 
 describe('describeTableSaveError', () => {
-  const values = { identifier: '04', capacity: 4 }
+  const values = { identifier: '04', capacity: 4, areaId: null }
 
   it('turns 409 TABLE_IDENTIFIER_TAKEN into the identifier error', () => {
     expect(describeTableSaveError(new ApiError({ status: 409, code: 'TABLE_IDENTIFIER_TAKEN' }), values)).toEqual({

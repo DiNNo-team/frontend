@@ -6,8 +6,16 @@ export type TableStatus = 'available' | 'reserved' | 'occupied'
 /** Shape on the floor plan; null = a rectangle sized by the capacity (manual 13.10). */
 export type TableShape = 'square' | 'round' | 'rect'
 
+/** A zone of the restaurant ("Piso 1", "Terraza"): groups tables and has its own floor plan (`GET /v1/table-areas`). */
+export interface TableArea {
+  id: string
+  name: string
+}
+
 export interface Table {
   id: string
+  /** Zone of the table; null = no zone. Each zone has its own plan. */
+  areaId: string | null
   /** As typed by the restaurant: "04", "T1". Display it with `formatTableName`. */
   identifier: string
   /** 1–20 people. */
@@ -31,6 +39,8 @@ export interface TablePlanItem {
 export interface CreateTableInput {
   identifier: string
   capacity: number
+  /** null = no zone. Changing it on an edit takes the table off the plan (the backend clears its cell). */
+  areaId?: string | null
 }
 
 export type UpdateTableInput = Partial<CreateTableInput>
@@ -48,4 +58,10 @@ export const TABLE_LIMITS = {
   identifierMaxLength: 10,
   minCapacity: 1,
   maxCapacity: 20,
+} as const
+
+/** Limits of a zone, the same as `POST /v1/table-areas`. */
+export const AREA_LIMITS = {
+  nameMaxLength: 30,
+  maxAreas: 20,
 } as const

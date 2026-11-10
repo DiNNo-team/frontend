@@ -21,6 +21,10 @@ export interface TablesGridProps extends TableMenuActions {
   highlights?: Record<string, number>
   /** Tables held by a DiNNo reservation: «Reserva DiNNo», no status change, no Desactivar (CLAUDE.md §12.2). */
   dinnoTableIds?: ReadonlySet<string>
+  /** Names the list; with zones, "Mesas de Terraza". */
+  label?: string
+  /** Heading level of each card: h3 when the grid sits under a zone heading. */
+  headingAs?: 'h2' | 'h3'
 }
 
 const NO_TABLES: ReadonlySet<string> = new Set()
@@ -37,10 +41,12 @@ export function TablesGrid({
   reactivatingId,
   highlights,
   dinnoTableIds = NO_TABLES,
+  label = 'Mesas',
+  headingAs = 'h2',
   ...actions
 }: TablesGridProps) {
   return (
-    <ul aria-label="Mesas" className="grid grid-tables gap-3">
+    <ul aria-label={label} className="grid grid-tables gap-3">
       {tables.map((table) => {
         const name = formatTableName(table.identifier)
         const open = table.id === openId
@@ -82,7 +88,7 @@ export function TablesGrid({
                 menuItems={tableMenuItems(table, actions, { locked })}
                 menuTriggerId={menuIdFor(table.id)}
                 highlight={highlights?.[table.id]}
-                headingAs="h2"
+                headingAs={headingAs}
                 className="flex-1"
               />
             </StatusPicker>
