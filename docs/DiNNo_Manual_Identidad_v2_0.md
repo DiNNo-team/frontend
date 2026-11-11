@@ -894,9 +894,9 @@ Se verifica en 1280, 1024, 768 y 390 (web) y en 360, 390 y 430 (móvil), en clar
 
 | Principio de la web | En el celular |
 |---|---|
-| Crema con dos formas de marca en esquinas opuestas | Las mismas formas (naranja arriba a la izquierda, petróleo abajo a la derecha, petróleo claro en oscuro), saliendo de las esquinas para no tapar el formulario. Son estáticas |
-| Tarjeta de vidrio sobre las formas | Una tarjeta de vidrio de login a lo ancho (margen de 16), con radio 20 y padding 24. **iOS:** desenfoque real. **Android 12+:** desenfoque real con `BlurView` + `BlurTargetView`, que envuelve solo las formas (no el formulario). **Android 11 o anterior, o con "Reducir transparencia":** respaldo sólido al 92% |
-| Pestañas Iniciar sesión / Crear cuenta con la barra naranja que se desliza | La misma fila de pestañas arriba de la tarjeta. La barra se desliza en 300 ms (`--ease-move`) **antes** de abrir la otra pantalla, con un toque háptico de selección. Al volver, la barra vuelve a su pestaña |
+| La luz del salón (`AmbientGround`) | La misma luz difuminada (`AmbientGround` de la app, con `react-native-svg`): naranja arriba a la izquierda y petróleo abajo a la derecha, con la geometría y los tonos de `amb-open` en claro y oscuro. Es estática |
+| Tarjeta de vidrio sobre la luz | Una tarjeta de vidrio de login a lo ancho (margen de 16), con radio 20 y padding 24. **iOS:** desenfoque real. **Android 12+:** desenfoque real con `BlurView` + `BlurTargetView`, que envuelve solo la luz (no el formulario). **Android 11 o anterior, o con "Reducir transparencia":** respaldo sólido al 92% |
+| Pestañas Iniciar sesión / Crear cuenta con ícono y la barra naranja que se desliza | La misma fila de pestañas arriba de la tarjeta, con los íconos de la web (`UserRoundCheck`, `UserRoundPlus`) junto al texto; el de la pestaña elegida va en `accentText`. La barra se desliza en 300 ms (`--ease-move`) **antes** de abrir la otra pantalla, con un toque háptico de selección. Al volver, la barra vuelve a su pestaña |
 | Entrada con deslizamiento | La tarjeta sube al abrir (300 ms, `--ease-sheet`); con reducir movimiento, solo aparece |
 | Texto en tinta sobre vidrio | Igual: sobre la tarjeta no hay texto `--text-2` |
 | Panel de marca con gradiente (≥ 1024) | No existe en el celular: el logo va dentro de la tarjeta, nunca sobre la forma naranja (perdería contraste) |
