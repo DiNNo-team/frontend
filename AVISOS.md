@@ -5,6 +5,17 @@
 
 ---
 
+## 12 nov 2026 · Sebastián · Check-in por QR: lector USB y cámara (Sprint 4)
+
+- **El QR de la app ahora es real** (mobile PR #44) y contiene solo el código de 6 caracteres. **El backend no cambia:** se sigue validando con `POST /v1/restaurants/me/check-ins`.
+- **Lector USB (modo teclado):** en `/mesas`, un escaneo abre «Validar código» y lo valida solo, sin hacer clic antes ni tener un campo enfocado. Con el diálogo abierto también funciona, esté donde esté el foco. Una ráfaga que no es un código de DiNNo (por ejemplo el código de barras de un producto) se ignora. La lógica está en `features/reservations/scanner.ts` (`createScanBuffer`, `useCodeScanner`): cuenta como escaneo si las teclas llegan a menos de 60 ms entre sí y terminan en Enter.
+- **«Escanear con cámara»** dentro del diálogo: usa la cámara del equipo y lee el QR con `jsqr` (`QrCameraReader`). La cámara solo se enciende mientras se usa y se apaga al leer un código o al cerrar. Si no hay permiso o no hay cámara, lo dice y el campo sigue disponible. Necesita HTTPS (Vercel) o `localhost`.
+- Escribir el código sigue igual. El texto del diálogo cambió a «Escanea el QR que te muestra el comensal en la app o escribe su código de 6 caracteres.».
+- **Dependencia nueva: `jsqr`** (lectura de QR en JS puro, sin dependencias). Después del pull corre `npm install`.
+- `toReservationCode(raw)` nuevo en `code.ts`: el código normalizado, o `null` si no es de DiNNo.
+
+---
+
 ## 10 nov 2026 · Sebastián · «Agregar mesa» y «Editar» del restaurante en naranja
 
 - «Agregar mesa» (barra de `/mesas`) y «Editar» (`/restaurante`) pasan a `primary`: naranja con texto oscuro.
