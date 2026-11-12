@@ -17,3 +17,9 @@ export function codeProblem(normalized: string): CodeProblem | null {
   if (normalized.length !== CODE_LENGTH) return 'format'
   return [...normalized].every((char) => CODE_ALPHABET.includes(char)) ? null : 'format'
 }
+
+/** What a scanner or the camera read → the code, or null when it is not a DiNNo code (any other QR or barcode). */
+export function toReservationCode(raw: string): string | null {
+  const code = normalizeCode(raw)
+  return codeProblem(code) === null ? code : null
+}

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { mockReservationsControl } from '@/features/reservations/api.mock'
 import { renderWithProviders } from '@/test/render'
 import { mockTablesApi, mockTablesControl } from './api.mock'
@@ -143,5 +143,65 @@ describe('TablesPage · Validar código (§12.6)', () => {
     await user.keyboard('{Enter}')
     expect(field).toHaveAccessibleDescription('El código tiene 6 letras y números. Revísalo con el comensal.')
     expect(field).toHaveValue('K7M4')
+  })
+})
+
+/** A USB scanner: the code's keys in a burst (Shift before each letter) and Enter, on whatever has the focus. */
+function scan(code: string) {
+  const target = document.activeElement ?? document.body
+  for (const key of code) {
+    if (/[A-Z]/.test(key)) fireEvent.keyDown(target, { key: 'Shift' })
+    fireEvent.keyDown(target, { key })
+  }
+  fireEvent.keyDown(target, { key: 'Enter' })
+}
+
+describe('TablesPage · check-in por QR (Sprint 4)', () => {
+  afterEach(() => {
+    Object.defineProperty(navigator, 'mediaDevices', { value: undefined, configurable: true })
+  })
+
+  it('a scan anywhere on the dashboard opens «Validar código» already validating that code', async () => {
+    withReservations()
+    await renderPage()
+    scan('K7M4QX')
+    const dialog = await screen.findByRole('dialog', { name: 'Validar código' })
+    expect(await within(dialog).findByRole('status')).toHaveTextContent('Check-in confirmado · Mesa 01 · 3 personas · Laura')
+  })
+
+  it('a burst that is not a DiNNo code (a product barcode) does nothing', async () => {
+    await renderPage()
+    scan('7701234567890')
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('with the dialog open and the focus on a button, a scan still validates', async () => {
+    withReservations()
+    const utils = await renderPage()
+    await utils.user.click(screen.getByRole('button', { name: 'Validar código' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Validar código' })
+    within(dialog).getByRole('button', { name: 'Cerrar' }).focus()
+    scan('P3R8TW')
+    expect(await within(dialog).findByRole('status')).toHaveTextContent('Check-in confirmado · Mesa 07 · 2 personas · Comensal')
+  })
+
+  it.each([
+    ['without a camera', undefined, 'No encontramos una cámara en este equipo. Usa el lector o escribe el código.'],
+    [
+      'without permission',
+      { getUserMedia: () => Promise.reject(new DOMException('denied', 'NotAllowedError')) },
+      'No tenemos permiso para usar la cámara. Actívalo en el navegador o escribe el código.',
+    ],
+  ])('«Escanear con cámara» %s says so and keeps the field', async (_, mediaDevices, text) => {
+    Object.defineProperty(navigator, 'mediaDevices', { value: mediaDevices, configurable: true })
+    const utils = await renderPage()
+    await utils.user.click(screen.getByRole('button', { name: 'Validar código' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Validar código' })
+    await utils.user.click(within(dialog).getByRole('button', { name: 'Escanear con cámara' }))
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(text)
+    expect(within(dialog).getByRole('textbox', { name: 'Código de la reserva' })).toBeInTheDocument()
+    await utils.user.click(within(dialog).getByRole('button', { name: 'Apagar cámara' }))
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
   })
 })
