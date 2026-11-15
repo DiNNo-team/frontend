@@ -16,7 +16,7 @@ vi.mock('@/features/restaurant/components/LocationBanner', () => ({ LocationBann
 // The topbar shows the restaurant's name from GET /restaurants/me (manual 12.2), not the session's displayName.
 vi.mock('@/features/restaurant/api', () => ({
   restaurantApi: {
-    get: async () => ({ id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [], activeReservationsCount: 0 }),
+    get: async () => ({ id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [], activeReservationsCount: 0, approvalStatus: 'approved', rejectionReason: null, contactPhone: null }),
   },
 }))
 
@@ -31,6 +31,7 @@ const SESSION: AuthContextValue = {
   clearAccountEvent: vi.fn(),
   emailVerificationRetried: false,
   signIn: vi.fn(),
+  signUp: vi.fn(),
   signInWithGoogle: vi.fn(),
   sendPasswordReset: vi.fn(),
   signOut: vi.fn(),

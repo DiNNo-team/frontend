@@ -14,6 +14,8 @@ export interface AuthContextValue {
   clearAccountEvent: () => void
   emailVerificationRetried: boolean
   signIn: (email: string, password: string) => Promise<void>
+  /** Creates the Firebase account and sends the verification email (public restaurant registration, step 1). */
+  signUp: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<boolean>
   sendPasswordReset: (email: string) => Promise<void>
   signOut: () => Promise<void>

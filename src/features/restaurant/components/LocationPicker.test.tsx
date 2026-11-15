@@ -173,6 +173,9 @@ describe('RestaurantForm · ubicación en la edición', () => {
     longitude: -74.057006,
     schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }],
     activeReservationsCount: 0,
+    approvalStatus: 'approved',
+    rejectionReason: null,
+    contactPhone: null,
   }
 
   it('shows the pin on the saved location', () => {

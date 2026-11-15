@@ -9,6 +9,8 @@ export interface UpdateRestaurantInput {
   latitude?: number
   longitude?: number
   schedules?: RegisterScheduleInput[]
+  /** 7 to 15 digits (spaces, dashes, dots, parentheses and a leading + allowed); never `null`. */
+  contactPhone?: string
 }
 
 /** Restaurant endpoints (contract in types.ts). The restaurant always comes from the session, never from here. */
@@ -16,6 +18,8 @@ export interface RestaurantApi {
   get: () => Promise<RestaurantProfile>
   register: (input: RegisterRestaurantInput) => Promise<RestaurantProfile>
   update: (input: UpdateRestaurantInput) => Promise<RestaurantProfile>
+  /** POST /restaurants/me/resubmit: only from `rejected`, back to `pending` (409 RESTAURANT_NOT_REJECTED otherwise). */
+  resubmit: () => Promise<RestaurantProfile>
   /** GET /geocode: 404 ADDRESS_NOT_FOUND or 503 GEOCODING_UNAVAILABLE when there is no point to show. */
   geocode: (address: string) => Promise<GeocodeResult>
 }
@@ -28,6 +32,7 @@ const httpRestaurantApi: RestaurantApi = {
     if (Object.keys(input).length === 0) throw new Error('Restaurant update requires at least one field')
     return apiRequest<RestaurantProfile>('/restaurants/me', { method: 'PATCH', body: input })
   },
+  resubmit: () => apiRequest<RestaurantProfile>('/restaurants/me/resubmit', { method: 'POST' }),
 }
 
 // With VITE_USE_MOCKS=true, GET and PATCH /restaurants/me answer from a sample restaurant (loaded on demand, so
@@ -40,5 +45,6 @@ export const restaurantApi: RestaurantApi =
         ...httpRestaurantApi,
         get: async () => (await loadMock()).get(),
         update: async (input) => (await loadMock()).update(input),
+        resubmit: async () => (await loadMock()).resubmit(),
       }
     : httpRestaurantApi

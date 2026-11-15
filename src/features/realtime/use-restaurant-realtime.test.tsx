@@ -133,6 +133,18 @@ describe('useRestaurantRealtime (§12.7)', () => {
     expect(socket.connectCalls).toBe(2)
   })
 
+  it.each(['ACCOUNT_PENDING_APPROVAL', 'ACCOUNT_REJECTED', 'ADMIN_ACCOUNT', 'RESTAURANT_REQUIRED'])(
+    '%s is final: it never retries (§10)',
+    (code) => {
+      vi.useFakeTimers()
+      setup()
+      const socket = lastSocket()!
+      act(() => socket.rejectConnection(code))
+      act(() => vi.advanceTimersByTime(120_000))
+      expect(socket.connectCalls).toBe(1)
+    },
+  )
+
   it('disconnects on unmount (sign out) and reconnects for another restaurant (rooms are fixed on connect)', () => {
     const { rerender, unmount } = setup('rest-1')
     const first = lastSocket()!

@@ -50,6 +50,24 @@ export const ACCOUNT_NOT_ENABLED_EVENT = 'dinno:account-not-enabled'
 /** Fired on `window` when a diner account opens a restaurant route. */
 export const DINER_ACCOUNT_EVENT = 'dinno:diner-account'
 
+/** Sprint 4 (CLAUDE.md §10 and §12.12): restaurant under review or rejected, and the DiNNo administrator account. */
+export const ACCOUNT_PENDING_APPROVAL_CODE = 'ACCOUNT_PENDING_APPROVAL'
+export const ACCOUNT_REJECTED_CODE = 'ACCOUNT_REJECTED'
+export const ADMIN_ACCOUNT_CODE = 'ADMIN_ACCOUNT'
+/** A 403 with any of those means the account's state changed: the session flow asks `/me` and the restaurant again. */
+export const ACCESS_CHANGED_EVENT = 'dinno:access-changed'
+
+/** Texts of the account codes of Sprint 4 (the contract's, section 10). The backend `message` is never shown. */
+export const ACCOUNT_ERROR_TEXT = {
+  pending: 'Tu solicitud está en revisión. Te avisaremos cuando tu cuenta esté aprobada.',
+  rejected: 'Tu solicitud no fue aprobada. Revisa el motivo, corrige tus datos y vuelve a enviarla.',
+  admin: 'Esta es una cuenta de administrador de DiNNo. Usa el panel de administración en la web.',
+} as const
+
+function isAccessChangeCode(code: string | undefined): boolean {
+  return code === ACCOUNT_PENDING_APPROVAL_CODE || code === ACCOUNT_REJECTED_CODE || code === ADMIN_ACCOUNT_CODE
+}
+
 /** `errorCode` of the 403 for a session user without a restaurant yet. */
 export const RESTAURANT_REQUIRED_CODE = 'RESTAURANT_REQUIRED'
 
@@ -75,6 +93,17 @@ async function toApiError(response: Response): Promise<ApiError> {
   }
   const message = Array.isArray(body.message) ? body.message.join('; ') : body.message
   return new ApiError({ status: response.status, code: body.errorCode ?? body.code, fieldErrors: body.fields, message })
+}
+
+/** Tells the session flow (AuthProvider, AccessGuard) what the error says about the account. */
+function announceAccountEvents(error: ApiError) {
+  const fire = (name: string) => window.dispatchEvent(new CustomEvent(name))
+  if (error.status === 401) fire(error.code === EMAIL_NOT_VERIFIED_CODE ? EMAIL_NOT_VERIFIED_EVENT : SESSION_EXPIRED_EVENT)
+  if (error.code === RESTAURANT_REQUIRED_CODE) fire(RESTAURANT_REQUIRED_EVENT)
+  if (error.status !== 403) return
+  if (error.code === ACCOUNT_NOT_ENABLED_CODE) fire(ACCOUNT_NOT_ENABLED_EVENT)
+  if (error.code === DINER_ACCOUNT_CODE) fire(DINER_ACCOUNT_EVENT)
+  if (isAccessChangeCode(error.code)) fire(ACCESS_CHANGED_EVENT)
 }
 
 export interface ApiRequestOptions {
@@ -105,15 +134,7 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, signal
 
   if (!response.ok) {
     const error = await toApiError(response)
-    if (error.status === 401) {
-      const event = error.code === EMAIL_NOT_VERIFIED_CODE ? EMAIL_NOT_VERIFIED_EVENT : SESSION_EXPIRED_EVENT
-      window.dispatchEvent(new CustomEvent(event))
-    }
-    if (error.code === RESTAURANT_REQUIRED_CODE) window.dispatchEvent(new CustomEvent(RESTAURANT_REQUIRED_EVENT))
-    if (error.status === 403 && error.code === ACCOUNT_NOT_ENABLED_CODE) {
-      window.dispatchEvent(new CustomEvent(ACCOUNT_NOT_ENABLED_EVENT))
-    }
-    if (error.status === 403 && error.code === DINER_ACCOUNT_CODE) window.dispatchEvent(new CustomEvent(DINER_ACCOUNT_EVENT))
+    announceAccountEvents(error)
     throw error
   }
   if (response.status === 204) return undefined as T
@@ -129,6 +150,9 @@ export function getApiErrorMessage(error: unknown, fallback = 'No pudimos conect
       return 'Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.'
     }
     if (error.code === DINER_ACCOUNT_CODE) return 'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.'
+    if (error.code === ACCOUNT_PENDING_APPROVAL_CODE) return ACCOUNT_ERROR_TEXT.pending
+    if (error.code === ACCOUNT_REJECTED_CODE) return ACCOUNT_ERROR_TEXT.rejected
+    if (error.code === ADMIN_ACCOUNT_CODE) return ACCOUNT_ERROR_TEXT.admin
     if (error.status === 401) return 'Tu sesión terminó. Inicia sesión de nuevo.'
     if (error.status === 403) return 'No tienes acceso a esta sección.'
   }
@@ -138,4 +162,10 @@ export function getApiErrorMessage(error: unknown, fallback = 'No pudimos conect
 /** 401 (session ended, email not verified) or 403 (no access): show `getApiErrorMessage`, and retrying makes no sense. */
 export function isAccessError(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 401 || error.status === 403)
+}
+
+/** Query retry rule: an answer the server gave on purpose (4xx) will not change by asking again; network and server errors retry once. */
+export function retryUnlessAnswered(failureCount: number, error: unknown): boolean {
+  if (error instanceof ApiError && !error.isNetworkError && error.status < 500) return false
+  return failureCount < 1
 }
