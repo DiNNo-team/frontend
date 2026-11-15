@@ -57,11 +57,11 @@ export function resolveAccess(me: QuerySnapshot<Me>, restaurant: QuerySnapshot<R
 
 /** Where each state lives. `null`: there is no route for it, so the guard shows the account screen where it stands. */
 export const ACCESS_HOME: Record<AccessKind, string | null> = {
-  'no-profile': null,
+  'no-profile': '/registro',
   diner: null,
   admin: null,
   'restaurant-required': '/onboarding',
-  pending: null,
-  rejected: null,
+  pending: '/solicitud',
+  rejected: '/solicitud',
   approved: '/mesas',
 }

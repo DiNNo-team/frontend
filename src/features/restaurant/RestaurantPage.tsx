@@ -9,8 +9,8 @@ import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { RestaurantForm } from './components/RestaurantForm'
 import { useRestaurantQuery, useUpdateRestaurant } from './hooks'
 import {
-  toRegisterRestaurantInput,
   toRestaurantFormValues,
+  toUpdateRestaurantInput,
   type RestaurantFormValues,
   type ValidRestaurantFormValues,
 } from './restaurant-form'
@@ -21,42 +21,6 @@ const INCOMPLETE = 'Sin completar'
 
 function displayValue(value: string | null | undefined): string {
   return value?.trim() || INCOMPLETE
-}
-
-function createUpdateInput(restaurant: RestaurantProfile, values: ValidRestaurantFormValues) {
-  const originalValues = toRestaurantFormValues({
-    ...restaurant,
-    name: restaurant.name ?? '',
-    schedules: Array.isArray(restaurant.schedules) ? restaurant.schedules : [],
-  })
-  const originalPayload = toRegisterRestaurantInput({ ...values, ...originalValues, category: values.category })
-  const updatedPayload = toRegisterRestaurantInput(values)
-  const update: {
-    name?: string
-    category?: ValidRestaurantFormValues['category']
-    address?: string
-    latitude?: number
-    longitude?: number
-    schedules?: typeof updatedPayload.schedules
-  } = {}
-
-  if (originalValues.name.trim() !== updatedPayload.name) update.name = updatedPayload.name
-  if ((restaurant.category ?? '') !== updatedPayload.category) update.category = updatedPayload.category
-  if (originalValues.address.trim() !== updatedPayload.address) update.address = updatedPayload.address
-  // Both coordinates or neither (Sprint 2 contract); they cannot be removed, so only a moved pin is sent.
-  const { latitude, longitude } = updatedPayload
-  if (
-    latitude !== undefined &&
-    longitude !== undefined &&
-    (latitude !== originalPayload.latitude || longitude !== originalPayload.longitude)
-  ) {
-    update.latitude = latitude
-    update.longitude = longitude
-  }
-  if (JSON.stringify(originalPayload.schedules) !== JSON.stringify(updatedPayload.schedules)) {
-    update.schedules = updatedPayload.schedules
-  }
-  return update
 }
 
 export default function RestaurantPage() {
@@ -109,7 +73,7 @@ export default function RestaurantPage() {
     const restaurant = restaurantQuery.data
     if (!restaurant) return
 
-    const update = createUpdateInput(restaurant, values)
+    const update = toUpdateRestaurantInput(restaurant, values)
     if (Object.keys(update).length === 0) {
       leaveEditing()
       return
@@ -199,6 +163,7 @@ export default function RestaurantPage() {
           onSubmit={saveChanges}
           onCancel={requestCancel}
           onDirtyChange={setDirty}
+          contactPhone="optional"
         />
       ) : (
         <div className="flex flex-col gap-6">
@@ -210,6 +175,7 @@ export default function RestaurantPage() {
                   label: 'Categoría',
                   value: restaurant.category ? RESTAURANT_CATEGORY_LABELS[restaurant.category] ?? INCOMPLETE : INCOMPLETE,
                 },
+                { label: 'Teléfono de contacto', value: displayValue(restaurant.contactPhone) },
               ]}
             />
           </Card>

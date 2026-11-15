@@ -31,6 +31,7 @@ const SESSION: AuthContextValue = {
   clearAccountEvent: vi.fn(),
   emailVerificationRetried: false,
   signIn: vi.fn(),
+  signUp: vi.fn(),
   signInWithGoogle: vi.fn(),
   sendPasswordReset: vi.fn(),
   signOut: vi.fn(),

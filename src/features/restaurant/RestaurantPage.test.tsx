@@ -93,7 +93,8 @@ describe('RestaurantPage', () => {
     } as unknown as RestaurantProfile
     renderPage(incomplete)
 
-    expect(await screen.findAllByText('Sin completar')).toHaveLength(10)
+    // Name, category, address, contact phone (no phone in the fixture) and the seven days.
+    expect(await screen.findAllByText('Sin completar')).toHaveLength(11)
   })
 
   it('shows a delayed skeleton while the restaurant is loading', async () => {

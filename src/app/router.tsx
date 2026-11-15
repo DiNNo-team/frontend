@@ -8,6 +8,9 @@ import { AccessGuard } from './AccessGuard'
 import { AuthEventHandler, LoginRoute, RequireSession } from './AuthRouteComponents'
 import { DashboardLayout, OnboardingLayout } from './layouts'
 
+/** Routes loaded on demand: the registration and the request screen are only for accounts that are not approved yet. */
+const lazyPage = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({ Component: (await load()).default })
+
 const KitPage = import.meta.env.DEV ? lazy(() => import('@/dev/kit/KitPage')) : null
 // Preview of the identity manual v2.0 (docs/DiNNo_Manual_Identidad_v2_0.md), development only.
 const SystemPage = import.meta.env.DEV ? lazy(() => import('@/dev/sistema/SystemPage')) : null
@@ -17,6 +20,7 @@ export const routes: RouteObject[] = [
     element: <AuthEventHandler />,
     children: [
       { path: '/login', element: <LoginRoute /> },
+      { path: '/registro', lazy: lazyPage(() => import('@/features/signup/SignupPage')) },
       {
         element: <RequireSession />,
         children: [
@@ -26,6 +30,15 @@ export const routes: RouteObject[] = [
               {
                 element: <OnboardingLayout />,
                 children: [{ path: '/onboarding', element: <OnboardingPage /> }],
+              },
+            ],
+          },
+          {
+            element: <AccessGuard allow={['pending', 'rejected']} />,
+            children: [
+              {
+                element: <OnboardingLayout />,
+                children: [{ path: '/solicitud', lazy: lazyPage(() => import('@/features/signup/RequestStatusPage')) }],
               },
             ],
           },

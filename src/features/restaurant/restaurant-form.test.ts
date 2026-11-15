@@ -9,8 +9,11 @@ import {
   SUGGESTED_HOURS,
   toRegisterRestaurantInput,
   toRestaurantFormValues,
+  toSignupRestaurantInput,
+  toUpdateRestaurantInput,
   validateAddress,
   validateCategory,
+  validateContactPhone,
   validateDay,
   validateHours,
   validateName,
@@ -36,6 +39,7 @@ const VALID: RestaurantFormValues = {
   address: ' Calle 72 # 10-34, Bogotá ',
   location: null,
   hours: withDays(openDay('mon', '12:00', '21:00'), { ...openDay('sat', '12:00', '21:00'), isOpen24h: true }, openDay('fri', '18:00', '02:00')),
+  contactPhone: '',
 }
 
 describe('restaurant form: initial values', () => {
@@ -248,5 +252,62 @@ describe('restaurant form: location in POST /restaurants', () => {
     const body = toRegisterRestaurantInput({ ...VALID, category: 'colombian' })
     expect(body).not.toHaveProperty('latitude')
     expect(body).not.toHaveProperty('longitude')
+  })
+})
+
+const PROFILE_WITH_PHONE = {
+  id: 'restaurant-1',
+  name: 'Casa 72',
+  category: 'grill' as const,
+  address: 'Calle 72 # 10-34, Bogotá',
+  latitude: 4.655671,
+  longitude: -74.057006,
+  schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '09:00', closesAt: '17:00' }],
+  activeReservationsCount: 0,
+  approvalStatus: 'approved' as const,
+  rejectionReason: null,
+  contactPhone: '+573001234567',
+}
+
+describe('restaurant form: contact phone (§12.12)', () => {
+  it.each(['3001234567', '+57 300 123 4567', '(601) 555-0101', '300.123.4567', '1234567', '+573001234567890'])('accepts %s', (phone) => {
+    expect(validateContactPhone(phone, 'required')).toBeUndefined()
+  })
+
+  it.each(['123456', '1234567890123456', 'abc', '300-123-45a7', '30 0+123 4567', '++573001234567'])('rejects %s with the 7 to 15 digits text', (phone) => {
+    expect(validateContactPhone(phone, 'required')).toBe('Escribe un teléfono válido, de 7 a 15 dígitos.')
+  })
+
+  it('an empty phone is an error only where it is required', () => {
+    expect(validateContactPhone('   ', 'required')).toBe('Escribe un teléfono de contacto.')
+    expect(validateContactPhone('   ', 'optional')).toBeUndefined()
+  })
+
+  it('the form asks for it only when the screen says so', () => {
+    expect(validateRestaurantForm(VALID).contactPhone).toBeUndefined()
+    expect(validateRestaurantForm(VALID, { contactPhone: 'required' }).contactPhone).toBe('Escribe un teléfono de contacto.')
+    expect(validateRestaurantForm({ ...VALID, contactPhone: '300 123 4567' }, { contactPhone: 'required' }).contactPhone).toBeUndefined()
+    expect(countRestaurantFormErrors({ contactPhone: 'x' })).toBe(1)
+  })
+
+  it('the registration body carries the phone as typed, trimmed; the backend normalizes it', () => {
+    const body = toSignupRestaurantInput({ ...VALID, category: 'colombian', contactPhone: '  +57 300 123 4567 ' })
+    expect(body.contactPhone).toBe('+57 300 123 4567')
+    expect(body.name).toBe('Casa 72')
+  })
+
+  it('the update sends the phone only when it was written or changed, and never empty', () => {
+    const profile = { ...PROFILE_WITH_PHONE }
+    const values = { ...toRestaurantFormValues(profile), category: 'grill' as const }
+    expect(toUpdateRestaurantInput(profile, values)).toEqual({})
+    expect(toUpdateRestaurantInput(profile, { ...values, contactPhone: '300 555 0101' })).toEqual({ contactPhone: '300 555 0101' })
+    expect(toUpdateRestaurantInput(profile, { ...values, contactPhone: '   ' })).toEqual({})
+  })
+
+  it('changing the phone is a change of the form', () => {
+    const initial = toRestaurantFormValues(PROFILE_WITH_PHONE)
+    expect(initial.contactPhone).toBe('+573001234567')
+    expect(hasRestaurantFormChanges(initial, { ...initial, contactPhone: ' +573001234567 ' })).toBe(false)
+    expect(hasRestaurantFormChanges(initial, { ...initial, contactPhone: '3105550101' })).toBe(true)
   })
 })

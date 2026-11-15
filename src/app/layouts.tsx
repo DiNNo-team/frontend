@@ -10,6 +10,7 @@ import { useRestaurantQuery } from '@/features/restaurant/hooks'
 import { useRestaurantStatusQuery } from '@/features/restaurant-status/hooks'
 import { useToast } from '@/components/ui'
 import { useRestaurantRealtime } from '@/features/realtime/use-restaurant-realtime'
+import { useWelcomeAfterApproval } from '@/features/signup/use-welcome'
 
 export function DashboardLayout() {
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ export function DashboardLayout() {
   const lit = statusQuery.data?.isOpen !== false
   // Live dashboard (Sprint 3): only with a registered restaurant (the server rejects an admin without one), never with
   // the sample data. Keyed by the restaurant: rooms are fixed on connect.
+  useWelcomeAfterApproval(restaurantQuery.data)
   // A pending or rejected restaurant is not let in either (§12.12): only an approved one connects.
   const approved = restaurantQuery.data?.approvalStatus === 'approved'
   const liveRestaurantId = import.meta.env.VITE_USE_MOCKS === 'true' || accountEvent || !user || !approved ? undefined : restaurantQuery.data?.id

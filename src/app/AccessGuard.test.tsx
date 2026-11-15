@@ -25,7 +25,7 @@ function Auth({ authEvent, children }: { authEvent: AuthEvent | null; children: 
     () => ({
       user: { uid: 'u1', email: 'a@b.co' } as User, loading: false, emailVerified: true, authEvent, accountEvent: null,
       emailVerificationRetried: false, clearAuthEvent: () => undefined, clearAccountEvent: () => undefined,
-      signIn: async () => undefined, signInWithGoogle: async () => true, sendPasswordReset: async () => undefined,
+      signIn: async () => undefined, signUp: async () => undefined, signInWithGoogle: async () => true, sendPasswordReset: async () => undefined,
       signOut: mocks.signOut, reenviarVerificacion: async () => undefined, refrescarSesion: async () => undefined,
     }),
     [authEvent],
@@ -39,6 +39,8 @@ function renderGuarded(allow: Parameters<typeof AccessGuard>[0]['allow'], authEv
       { element: <AccessGuard allow={allow} />, children: [{ path: '/aqui', element: <p>Contenido protegido</p> }] },
       { path: '/mesas', element: <p>Pantalla de mesas</p> },
       { path: '/onboarding', element: <p>Pantalla de registro</p> },
+      { path: '/solicitud', element: <p>Pantalla de solicitud</p> },
+      { path: '/registro', element: <p>Pantalla de inscripción</p> },
     ],
     { initialEntries: ['/aqui'] },
   )
@@ -84,16 +86,26 @@ describe('AccessGuard', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding'))
   })
 
-  it.each([
-    ['restaurant_admin', 'pending', 'Solicitud en revisión', 'Tu solicitud está en revisión. Te avisaremos cuando tu cuenta esté aprobada.'],
-    ['restaurant_admin', 'rejected', 'Solicitud no aprobada', 'Tu solicitud no fue aprobada. Revisa el motivo, corrige tus datos y vuelve a enviarla.'],
-  ] as const)('keeps a %s that is %s out of the dashboard and says why', async (role, state, title, text) => {
-    mocks.getMe.mockResolvedValue(me(role))
+  it.each(['pending', 'rejected'] as const)('sends a restaurant that is %s to its request, not to the dashboard', async (state) => {
+    mocks.getMe.mockResolvedValue(me('restaurant_admin'))
     mocks.getRestaurant.mockResolvedValue(restaurant(state))
-    renderGuarded(['approved'])
-    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
-    expect(screen.getByText(text)).toBeInTheDocument()
+    const router = renderGuarded(['approved'])
+    await waitFor(() => expect(router.state.location.pathname).toBe('/solicitud'))
     expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+  })
+
+  it('lets a pending or rejected restaurant into the request screen, and sends an approved one to its tables', async () => {
+    mocks.getMe.mockResolvedValue(me('restaurant_admin'))
+    mocks.getRestaurant.mockResolvedValue(restaurant('rejected'))
+    renderGuarded(['pending', 'rejected'])
+    expect(await screen.findByText('Contenido protegido')).toBeInTheDocument()
+  })
+
+  it('sends an approved restaurant that opens the request screen to its tables', async () => {
+    mocks.getMe.mockResolvedValue(me('restaurant_admin'))
+    mocks.getRestaurant.mockResolvedValue(restaurant('approved'))
+    const router = renderGuarded(['pending', 'rejected'])
+    await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
   })
 
   it('keeps the administrator out of the restaurant pages and says where to go', async () => {
@@ -109,10 +121,10 @@ describe('AccessGuard', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1)
   })
 
-  it('shows an account without a profile the not enabled text', async () => {
+  it('sends an account without a profile to the public registration', async () => {
     mocks.getMe.mockRejectedValue(new ApiError({ status: 403, code: 'PROFILE_REQUIRED' }))
-    renderGuarded(['approved'])
-    expect(await screen.findByText(/no está habilitada como restaurante/)).toBeInTheDocument()
+    const router = renderGuarded(['approved'])
+    await waitFor(() => expect(router.state.location.pathname).toBe('/registro'))
   })
 
   it('shows a clear error with a retry when the account cannot be checked, and retries', async () => {

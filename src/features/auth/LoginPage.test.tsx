@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { renderWithProviders } from '@/test/render'
 import LoginPage from './LoginPage'
 
@@ -13,7 +13,10 @@ vi.mock('./auth-context', () => ({
 function renderLoginPage() {
   return renderWithProviders(
     <MemoryRouter>
-      <LoginPage />
+      <Routes>
+        <Route path="*" element={<LoginPage />} />
+        <Route path="/registro" element={<p>Pantalla de registro</p>} />
+      </Routes>
     </MemoryRouter>,
   )
 }
@@ -59,12 +62,14 @@ describe('LoginPage', () => {
     expect(screen.getByRole('tab', { name: 'Iniciar sesión' })).toHaveAttribute('aria-selected', 'true')
   })
 
-  it('explains how to get a restaurant account without offering public sign-up', async () => {
+  it('explains the registration of a restaurant and offers the way to start it', async () => {
     const { user } = renderLoginPage()
     await user.click(signInForm().getByRole('button', { name: 'Crear cuenta' }))
 
     const panel = within(screen.getByRole('tabpanel', { name: 'Crear cuenta' }))
-    expect(panel.getByRole('heading', { name: 'Pide tu cuenta de restaurante' })).toHaveFocus()
+    expect(panel.getByRole('heading', { name: 'Registra tu restaurante' })).toHaveFocus()
+    expect(panel.getAllByRole('listitem')).toHaveLength(3)
+    expect(panel.getByRole('button', { name: 'Crear cuenta' })).toBeInTheDocument()
     expect(panel.queryByRole('textbox')).not.toBeInTheDocument()
     expect(panel.queryByRole('form')).not.toBeInTheDocument()
 
@@ -72,16 +77,12 @@ describe('LoginPage', () => {
     expect(signInForm().getByLabelText('Correo')).toHaveFocus()
   })
 
-  it('offers «¿Quieres tu restaurante en DiNNo? Escríbenos» as an email to the team (pending 2.2, option A)', async () => {
+  it('offers «¿Quieres tu restaurante en DiNNo? Regístralo» and takes to the registration', async () => {
     const { user } = renderLoginPage()
-    const link = signInForm().getByRole('link', { name: 'Escríbenos' })
-    expect(link.closest('p')).toHaveTextContent('¿Quieres tu restaurante en DiNNo? Escríbenos')
-    expect(link.getAttribute('href')).toMatch(/^mailto:dinnoteam2026@gmail\.com\?subject=Quiero%20mi%20restaurante%20en%20DiNNo&body=/)
-
-    await user.click(signInForm().getByRole('button', { name: 'Crear cuenta' }))
-    const panel = within(screen.getByRole('tabpanel', { name: 'Crear cuenta' }))
-    expect(panel.getByRole('link', { name: 'Escríbenos' })).toHaveAttribute('href', link.getAttribute('href'))
-    expect(panel.getByText('dinnoteam2026@gmail.com')).toBeInTheDocument()
+    const link = signInForm().getByRole('button', { name: 'Regístralo' })
+    expect(link.closest('p')).toHaveTextContent('¿Quieres tu restaurante en DiNNo? Regístralo')
+    await user.click(link)
+    expect(await screen.findByText('Pantalla de registro')).toBeInTheDocument()
   })
 
   it('validates email format and requires a password without calling signIn', async () => {

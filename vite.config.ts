@@ -12,6 +12,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // The forms tests type into many fields and open lists; with ~60 files in parallel, 5 s is not enough on a normal
+    // laptop. A real hang still fails, only later.
+    testTimeout: 20_000,
     // Fixed values, whatever each one has in .env.local: with a real Maps key and Map ID the forms would try to
     // load Google Maps, which jsdom cannot do (tests that need the map use LocationMap.fake).
     env: {

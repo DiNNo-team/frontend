@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Navigate, Outlet } from 'react-router'
 import { OnboardingShell } from '@/components/layout'
 import { Alert, Button } from '@/components/ui'
@@ -12,6 +13,8 @@ import { WrongAccountScreen } from './WrongAccountScreen'
 interface AccessGuardProps {
   /** The states that may open the routes under this guard. Any other goes to its own home. */
   allow: AccessKind[]
+  /** What to show to an allowed account; the nested routes (`<Outlet />`) when omitted. */
+  children?: ReactNode
 }
 
 /**
@@ -19,7 +22,7 @@ interface AccessGuardProps {
  * only where its state belongs. Loading shows the same skeleton as the session check, so nothing flashes. A state
  * without a route of its own (CLAUDE.md §12.12) shows its account screen right where the person stands.
  */
-export function AccessGuard({ allow }: AccessGuardProps) {
+export function AccessGuard({ allow, children }: AccessGuardProps) {
   const { authEvent } = useAuth()
   const access = useAccess()
 
@@ -44,7 +47,7 @@ export function AccessGuard({ allow }: AccessGuardProps) {
       </OnboardingShell>
     )
   }
-  if (allow.includes(access.kind)) return <Outlet />
+  if (allow.includes(access.kind)) return children ?? <Outlet />
   const home = ACCESS_HOME[access.kind]
   if (home) return <Navigate to={home} replace />
   return (

@@ -23,6 +23,7 @@ vi.mock('@/features/restaurant/components/LocationBanner', () => ({
 const mocks = vi.hoisted(() => ({
   restaurantGet: vi.fn(),
   signIn: vi.fn(),
+  signUp: vi.fn(),
   signInWithGoogle: vi.fn(),
   sendPasswordReset: vi.fn(),
   signOut: vi.fn(),
@@ -63,6 +64,10 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
     await mocks.signIn(email, password)
     setState({ ...SIGNED_IN, user: AUTH_USER })
   }, [])
+  const signUp = useCallback(async (email: string, password: string) => {
+    await mocks.signUp(email, password)
+    setState({ ...SIGNED_IN, user: AUTH_USER, emailVerified: false })
+  }, [])
   const signInWithGoogle = useCallback(async () => {
     const signedIn = await mocks.signInWithGoogle()
     if (signedIn) setState({ ...SIGNED_IN, user: AUTH_USER })
@@ -92,6 +97,7 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
       ...state,
       accountEvent: state.authEvent === 'account-not-enabled' || state.authEvent === 'diner-account' ? state.authEvent : null,
       signIn,
+      signUp,
       signInWithGoogle,
       sendPasswordReset: mocks.sendPasswordReset,
       signOut,
@@ -100,7 +106,7 @@ function MockAuthProvider({ initialState, children }: { initialState: AuthState;
       reenviarVerificacion,
       refrescarSesion,
     }),
-    [state, signIn, signInWithGoogle, signOut, clearAuthEvent, clearAccountEvent, reenviarVerificacion, refrescarSesion],
+    [state, signIn, signUp, signInWithGoogle, signOut, clearAuthEvent, clearAccountEvent, reenviarVerificacion, refrescarSesion],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -123,6 +129,7 @@ beforeEach(() => {
     activeReservationsCount: 0, approvalStatus: 'approved', rejectionReason: null, contactPhone: null,
   })
   mocks.signIn.mockResolvedValue(undefined)
+  mocks.signUp.mockResolvedValue(undefined)
   mocks.signInWithGoogle.mockResolvedValue(true)
   mocks.signOut.mockResolvedValue(undefined)
   mocks.reenviarVerificacion.mockResolvedValue(undefined)
