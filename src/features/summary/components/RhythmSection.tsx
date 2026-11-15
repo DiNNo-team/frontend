@@ -29,7 +29,7 @@ function PeakHours({ peakHours }: { peakHours: RestaurantSummary['peakHours'] })
                 </p>
                 <p className="text-sec text-fg">{SUMMARY_TEXT.peakValue(hour.reservations)}</p>
               </div>
-              <BarTrack value={hour.reservations} max={max} fillClassName={index === 0 ? 'fill-brand' : 'fill-fg-2'} />
+              <BarTrack value={hour.reservations} max={max} fillClassName={index === 0 ? 'fill-fg' : 'fill-fg-2'} />
             </li>
           ))}
         </ol>
@@ -63,7 +63,7 @@ function DaysOfWeek({ byDayOfWeek }: { byDayOfWeek: RestaurantSummary['byDayOfWe
                 <li key={day.dayOfWeek} className="flex items-center gap-3 text-sec text-fg tabular-nums">
                   <span className={cn('w-24 shrink-0', top && 'font-bold')}>{WEEKDAY_NAMES[day.dayOfWeek - 1]}</span>
                   <span className="min-w-0 flex-1">
-                    <BarTrack value={day.reservations} max={max} fillClassName={top ? 'fill-brand' : 'fill-fg-2'} />
+                    <BarTrack value={day.reservations} max={max} fillClassName={top ? 'fill-fg' : 'fill-fg-2'} />
                   </span>
                   <span className={cn('w-8 shrink-0 text-right', top && 'font-bold')}>{day.reservations}</span>
                 </li>

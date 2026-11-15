@@ -301,7 +301,7 @@ src/
 ```
 - Cada funcionalidad en su carpeta de `features/`; nada de lógica de negocio en `App.tsx`.
 - Código en inglés (nombres, archivos, props, tipos); interfaz en español con el glosario del manual (14.1): Mesa ("Mesa 04"), Comensal, Restaurante, Disponible, Reservada, Ocupada, Inactiva, Abierto, Cerrado, Capacidad ("4 personas"), Bitácora, Iniciar sesión / Cerrar sesión. **Nunca:** "Libre" como estado, cliente, local, negocio, log, historial, pax, OK, Enviar, Aceptar. Mayúscula inicial, botones = verbo + objeto, sin signos de exclamación.
-- **Router y datos:** React Router y TanStack Query están acordados e instalados; las rutas viven en `src/app/router.tsx` (Sebastián). Las rutas del Sprint 1 son `/login`, `/onboarding`, `/mesas`, `/restaurante` y `/bitacora`. No agregues otra librería de estado sin acordarlo con el equipo.
+- **Router y datos:** React Router y TanStack Query están acordados e instalados; las rutas viven en `src/app/router.tsx` (Sebastián). Las rutas son `/login`, `/registro`, `/onboarding`, `/solicitud`, `/mesas`, `/resumen`, `/restaurante`, `/bitacora` y `/admin` (las de Sprint 4, con carga diferida: `/registro`, `/solicitud`, `/resumen` y `/admin`). No agregues otra librería de estado sin acordarlo con el equipo.
 
 ### Conexión con el backend
 - **Toda llamada pasa por `src/lib/api.ts`** (`apiFetch('/ruta')` o `apiUrl('/ruta')`), que agrega el origen y el prefijo `/v1`. Nunca escribas la URL del backend ni `/v1` a mano.
@@ -360,6 +360,29 @@ src/
 - **Para la edición (`/restaurante`):** `<RestaurantForm initialValues={toRestaurantFormValues(restaurante)} submitLabel="Guardar cambios" onCancel={…} onDirtyChange={…} />` con los datos de `useRestaurantQuery()` (query key `restaurantQueryKey`). No dupliques el formulario ni sus validaciones.
 - **Horario inicial (decisión de Santiago):** los 7 días empiezan en Cerrado; al abrir uno trae 12:00 p. m. – 9:00 p. m. (`SUGGESTED_HOURS`), que la persona cambia.
 - Después del `201` (o de un `409`, que ya tiene restaurante) va a `/mesas` con `replace`; el registro refresca la caché de mesas y del estado del restaurante, que tenían el `403 RESTAURANT_REQUIRED` anterior.
+
+### Cuentas, aprobación, administrador y Resumen (Sprint 4)
+- **Quién es la cuenta y adónde va:** `features/account/` (`GET /v1/me`) y `useAccess()` resuelven el estado con `GET /restaurants/me` (`approvalStatus`). Un solo guardia, `AccessGuard` (`src/app/AccessGuard.tsx`, prop `allow`), decide por estado; la tabla de destinos es `ACCESS_HOME` (`access.ts`) y la prueba pura está en `access.test.ts`:
+
+| Estado | Destino |
+|---|---|
+| sin perfil (`PROFILE_REQUIRED` / `ACCOUNT_NOT_ENABLED`) | `/registro` |
+| correo sin verificar | pantalla de verificación (también dentro de `/registro`) |
+| restaurante habilitado sin restaurante (`RESTAURANT_REQUIRED`) | `/onboarding` |
+| restaurante `pending` o `rejected` | `/solicitud` |
+| restaurante `approved` | `/mesas` y el resto del dashboard |
+| `platform_admin` | `/admin` (no ve Mesas, Resumen, Restaurante ni Bitácora) |
+| comensal (`diner`) | pantalla «cuenta de comensal» con salida |
+
+- Un 403 con `ACCOUNT_PENDING_APPROVAL`, `ACCOUNT_REJECTED` o `ADMIN_ACCOUNT` dispara `ACCESS_CHANGED_EVENT` (`api-client.ts`) y el guardia vuelve a preguntar. Los textos de cuenta salen de `ACCOUNT_ERROR_TEXT`; el `message` del backend nunca se muestra. `retryUnlessAnswered` (en `api-client.ts`, usado por `createQueryClient`) no reintenta un 4xx.
+- **Registro público (`/registro`, `features/signup/`):** paso 1 crea la cuenta de Firebase (`signUp` en `useAuth()`, correo y clave o Google) y manda el correo de verificación; paso 2 es `RestaurantForm` con `contactPhone="required"` y `requireLocation`, que envía `POST /restaurants/signup` tras una confirmación. `RestaurantForm` tiene `contactPhone`: `hidden` (por defecto), `optional` (`/restaurante`) o `required`; reglas en `restaurant-form.ts` (`validateContactPhone`, 7 a 15 dígitos).
+- **Solicitud (`/solicitud`):** en revisión muestra lo enviado, `Editar mis datos` (PATCH, sigue en revisión) y consulta cada 30 s; rechazada, el motivo y el formulario precargado con «Reenviar solicitud» (PATCH si cambió algo y luego `POST /restaurants/me/resubmit`). Al aprobarse el guardia lleva a `/mesas` y el dashboard da la bienvenida una sola vez (`use-welcome.ts`, marca en `localStorage`). No hay correos: la pantalla es el aviso.
+- **Administrador (`/admin`, `features/admin/`):** lista con Pendientes · Aprobadas · Rechazadas (estado, página y solicitud abierta viven en la URL: `?estado=`, `?pagina=`, `?solicitud=`), detalle en panel lateral desde 1024 px y como página en el teléfono, `Aprobar restaurante` (confirmación) y `Rechazar solicitud` (motivo de 10 a 300 caracteres con `TextArea`, borradores editables). Un 409 `RESTAURANT_NOT_PENDING` vuelve a consultar y avisa; un 404 cierra el detalle. Dock propio: `NAV_ITEMS_ADMIN` con el contador de pendientes (`usePendingRestaurantsCount`).
+- **Resumen (`/resumen`, `features/summary/`):** periodo «Este mes», «Mes anterior» o «Personalizado» (máximo 366 días, `to` no futuro; `period.ts`, en la URL), «A cobrar» como cifra protagonista, una barra apilada SVG de las reservas creadas (sin librerías de gráficos), cada tasa en su propia frase con su denominador (`perTen` y `messages.ts`; `null` es «Sin datos»), horas pico (solo hay 3) y los 7 días, y el detalle de cobro de 50 en 50 en hora de Bogotá (`formatBogotaDateTime`). **Nunca** datos del comensal. Mock: `?mockEmpty`, `?mockError=summary-load` o `billing-load`.
+- **Socket:** solo conecta con `approvalStatus === 'approved'`; `ACCOUNT_PENDING_APPROVAL`, `ACCOUNT_REJECTED` y `ADMIN_ACCOUNT` no se reintentan (como todo código que no sea `SERVER_ERROR`).
+- **Kit (aviso a Sebastián):** `TextArea` nuevo; estados `review-pending` («En revisión»), `review-approved` («Aprobado») y `review-rejected` («No aprobada») en `STATUS_META` con `REVIEW_STATUS`; `NavDock` y `AppShell` aceptan `navItems` y `navBadges` (`NAV_ITEMS` se dividió en `NAV_ITEMS_RESTAURANT` y `NAV_ITEMS_ADMIN`); utilidad `animate-grow-x` en `globals.css` para las barras. Documentado en `components/ui/README.md` y `/kit`.
+- **Mocks de Sprint 4** (con `VITE_USE_MOCKS=true`, controles de `src/lib/mock-env.ts`): `?mockRole=admin|diner|none`, `?mockApproval=pending|rejected`, `?mockError=me-load|admin-list|admin-detail|admin-review|summary-load|billing-load|signup`, `?mockConflict` (otro administrador ya revisó) y `?mockEmpty`.
+- **Pruebas:** el `testTimeout` de Vitest sube a 20 s (`vite.config.ts`): con unos 60 archivos en paralelo, los 5 s por defecto fallaban al azar en pruebas que escriben en formularios.
 
 ### Despliegue
 - **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.

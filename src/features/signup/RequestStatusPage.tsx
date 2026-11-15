@@ -66,7 +66,8 @@ function PendingView({ restaurant }: { restaurant: RestaurantProfile }) {
           )
         }
       />
-      <Alert type="info" title={REQUEST_TEXT.pendingAlertTitle}>
+      <Alert type="info">
+        <span className="block font-bold">{REQUEST_TEXT.pendingAlertTitle}</span>
         {REQUEST_TEXT.pendingAlert}
       </Alert>
       {editing ? (
@@ -126,7 +127,8 @@ function RejectedView({ restaurant }: { restaurant: RestaurantProfile }) {
   return (
     <>
       <PageHeader title={REQUEST_TEXT.rejectedTitle} description={REQUEST_TEXT.rejectedDescription} />
-      <Alert type="warning" title={REQUEST_TEXT.rejectedReasonTitle}>
+      <Alert type="warning">
+        <span className="block font-bold">{REQUEST_TEXT.rejectedReasonTitle}</span>
         {restaurant.rejectionReason ?? ''}
       </Alert>
       <RestaurantForm

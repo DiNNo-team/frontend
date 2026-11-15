@@ -22,7 +22,7 @@ interface Segment {
 
 function segmentsOf({ completed, cancelled, expired, active }: Reservations): Segment[] {
   return [
-    { key: 'arrived', count: completed, status: 'reservation-completed', fill: 'fill-busy' },
+    { key: 'arrived', count: completed, status: 'reservation-completed', fill: 'fill-fg' },
     { key: 'cancelled', count: cancelled, status: 'reservation-cancelled', fill: 'fill-inactive' },
     { key: 'expired', count: expired, status: 'reservation-expired', fill: 'fill-line-strong' },
     { key: 'active', count: active, status: 'reservation-active', fill: 'fill-ok' },

@@ -5,6 +5,17 @@
 
 ---
 
+## 15 nov 2026 · Elizabeth · Registro, aprobación, panel de administrador y Resumen (Sprint 4, rama `feat/admin-resumen-front`)
+
+- **Qué hay:** `/registro` (crear cuenta y datos del restaurante), `/solicitud` (en revisión, o rechazada con el motivo y reenvío), `/admin` (aprobar y rechazar) y `/resumen` (cobro y KPIs). Todo lo explica CLAUDE.md §11, «Cuentas, aprobación, administrador y Resumen».
+- **Cambia el flujo de entrada:** ahora cada cuenta pasa por `AccessGuard` (rol de `GET /me` y `approvalStatus`). Un restaurante pendiente o rechazado ya no ve el dashboard; un `platform_admin` va a `/admin`. «Crear cuenta» del login ya no es un correo: lleva a `/registro`.
+- **Para Sebastián, kit y layout (revisa por favor):** `TextArea` nuevo; estados de revisión en `STATUS_META`; `NavDock` y `AppShell` con `navItems` y `navBadges`; `NAV_ITEMS` dividido (el ítem **Resumen** entra en el dock del restaurante); `animate-grow-x` en `globals.css`. Tocar `components/ui` y `components/layout` fue necesario para esta tarea.
+- **Sin dependencias nuevas.** Las gráficas son SVG propio.
+- **Pruebas:** `testTimeout` de Vitest en 20 s; antes, 3 pruebas de `OnboardingPage` y otras fallaban al azar por el límite de 5 s cuando corre todo en paralelo.
+- **Google Maps:** la llave de este equipo solo autoriza `http://localhost:5173`; en otro puerto el mapa muestra `RefererNotAllowedMapError` y el formulario sigue sin mapa.
+
+---
+
 ## 15 nov 2026 · Elizabeth · Administrador, cobro y KPIs: backend desplegado y contratos
 
 - **Qué quedó listo y desplegado (backend):** aprobación de restaurantes (`pending`, `approved`, `rejected`), rol `platform_admin` con su panel de API (`/v1/admin/restaurants*`), registro público (`POST /v1/restaurants/signup`), reenvío (`POST /v1/restaurants/me/resubmit`), cobro por check-in (`GET /v1/restaurants/me/billing/check-ins`, tarifa fija de COP 2.000) y resumen con KPIs (`GET /v1/restaurants/me/summary`).
