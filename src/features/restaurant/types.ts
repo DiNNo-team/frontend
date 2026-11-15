@@ -36,6 +36,9 @@ export const RESTAURANT_LIMITS = {
   addressMaxLength: 255,
 } as const
 
+/** Review state of the restaurant (CLAUDE.md §12.12). Only `approved` operates and shows up for diners. */
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+
 /** One open day as the API returns it. 1 = Monday … 7 = Sunday; hours are `"HH:MM"`, `null` when open 24 hours. */
 export interface RestaurantSchedule {
   dayOfWeek: number
@@ -60,6 +63,12 @@ export interface RestaurantProfile {
    * warning before closing uses this, never the count of `reserved` tables (a table Reservada by hand is not one).
    */
   activeReservationsCount: number
+  /** Sprint 4: `pending` (in review), `approved` or `rejected`. */
+  approvalStatus: ApprovalStatus
+  /** The administrator's reason, only while `rejected`; `null` otherwise. */
+  rejectionReason: string | null
+  /** Digits only (a leading `+` allowed); `null` if the restaurant never gave one. */
+  contactPhone: string | null
 }
 
 /** 200 of GET /geocode: always inside Bogotá, 6 decimals. */

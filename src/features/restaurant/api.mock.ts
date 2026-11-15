@@ -1,8 +1,10 @@
+import { ApiError } from '@/lib/api-client'
 import type { RestaurantApi, UpdateRestaurantInput } from './api'
-import type { RegisterScheduleInput, RestaurantProfile, RestaurantSchedule } from './types'
+import type { ApprovalStatus, RegisterScheduleInput, RestaurantProfile, RestaurantSchedule } from './types'
 
 // In-memory stand-in for GET and PATCH /restaurants/me with VITE_USE_MOCKS=true, so the dashboard shows a real-looking
 // restaurant name next to the mocked tables. Registration and geocoding still go to the backend: they have no sample.
+// Review state (Sprint 4): ?mockApproval=pending | rejected (approved by default); the reason of a rejection is fixed.
 // DiNNo reservations in course (asked before closing): /mesas?mockActiveReservations=2 (0 by default).
 
 function toSchedule(input: RegisterScheduleInput): RestaurantSchedule {
@@ -25,7 +27,18 @@ let restaurant: RestaurantProfile = {
     closesAt: dayOfWeek >= 5 ? '01:00' : '22:00',
   })),
   activeReservationsCount: initialActiveReservations(),
+  approvalStatus: initialApproval(),
+  rejectionReason: null,
+  contactPhone: '+573001234567',
 }
+
+function initialApproval(): ApprovalStatus {
+  const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('mockApproval')
+  return value === 'pending' || value === 'rejected' ? value : 'approved'
+}
+
+const MOCK_REJECTION_REASON = 'La dirección no coincide con la ubicación del mapa. Corrígela y vuelve a enviar la solicitud.'
+if (restaurant.approvalStatus === 'rejected') restaurant = { ...restaurant, rejectionReason: MOCK_REJECTION_REASON }
 
 function initialActiveReservations(): number {
   const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('mockActiveReservations')
@@ -45,10 +58,16 @@ export const mockRestaurantControl = {
 let latencyMs = 300
 const wait = () => new Promise((resolve) => setTimeout(resolve, latencyMs))
 
-export const mockRestaurantApi: Pick<RestaurantApi, 'get' | 'update'> = {
+export const mockRestaurantApi: Pick<RestaurantApi, 'get' | 'update' | 'resubmit'> = {
   async get() {
     await wait()
     return { ...restaurant, schedules: restaurant.schedules.map((day) => ({ ...day })) }
+  },
+  async resubmit() {
+    await wait()
+    if (restaurant.approvalStatus !== 'rejected') throw new ApiError({ status: 409, code: 'RESTAURANT_NOT_REJECTED' })
+    restaurant = { ...restaurant, approvalStatus: 'pending', rejectionReason: null }
+    return { ...restaurant }
   },
   async update(input: UpdateRestaurantInput) {
     await wait()

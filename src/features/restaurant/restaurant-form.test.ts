@@ -179,6 +179,9 @@ describe('restaurant form: edition (GET /restaurants/me → form)', () => {
       { dayOfWeek: 6, isOpen24h: true, opensAt: null, closesAt: null },
     ],
     activeReservationsCount: 0,
+    approvalStatus: 'approved' as const,
+    rejectionReason: null,
+    contactPhone: null,
   }
 
   it('opens the days with schedule, closes the rest and keeps the suggestion where there are no hours', () => {

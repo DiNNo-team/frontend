@@ -21,6 +21,9 @@ const WITHOUT_LOCATION: RestaurantProfile = {
   longitude: null,
   schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }],
   activeReservationsCount: 0,
+  approvalStatus: 'approved',
+  rejectionReason: null,
+  contactPhone: null,
 }
 const WITH_LOCATION: RestaurantProfile = { ...WITHOUT_LOCATION, latitude: 4.655671, longitude: -74.057006 }
 

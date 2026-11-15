@@ -4,6 +4,7 @@ import ActivityLogPage from '@/features/activity-log/ActivityLogPage'
 import OnboardingPage from '@/features/restaurant/OnboardingPage'
 import RestaurantPage from '@/features/restaurant/RestaurantPage'
 import TablesPage from '@/features/tables/TablesPage'
+import { AccessGuard } from './AccessGuard'
 import { AuthEventHandler, LoginRoute, RequireSession } from './AuthRouteComponents'
 import { DashboardLayout, OnboardingLayout } from './layouts'
 
@@ -20,15 +21,25 @@ export const routes: RouteObject[] = [
         element: <RequireSession />,
         children: [
           {
-            element: <OnboardingLayout />,
-            children: [{ path: '/onboarding', element: <OnboardingPage /> }],
+            element: <AccessGuard allow={['restaurant-required']} />,
+            children: [
+              {
+                element: <OnboardingLayout />,
+                children: [{ path: '/onboarding', element: <OnboardingPage /> }],
+              },
+            ],
           },
           {
-            element: <DashboardLayout />,
+            element: <AccessGuard allow={['approved']} />,
             children: [
-              { path: '/mesas', element: <TablesPage /> },
-              { path: '/restaurante', element: <RestaurantPage /> },
-              { path: '/bitacora', element: <ActivityLogPage /> },
+              {
+                element: <DashboardLayout />,
+                children: [
+                  { path: '/mesas', element: <TablesPage /> },
+                  { path: '/restaurante', element: <RestaurantPage /> },
+                  { path: '/bitacora', element: <ActivityLogPage /> },
+                ],
+              },
             ],
           },
         ],

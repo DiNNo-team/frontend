@@ -23,7 +23,9 @@ export function DashboardLayout() {
   const lit = statusQuery.data?.isOpen !== false
   // Live dashboard (Sprint 3): only with a registered restaurant (the server rejects an admin without one), never with
   // the sample data. Keyed by the restaurant: rooms are fixed on connect.
-  const liveRestaurantId = import.meta.env.VITE_USE_MOCKS === 'true' || accountEvent || !user ? undefined : restaurantQuery.data?.id
+  // A pending or rejected restaurant is not let in either (§12.12): only an approved one connects.
+  const approved = restaurantQuery.data?.approvalStatus === 'approved'
+  const liveRestaurantId = import.meta.env.VITE_USE_MOCKS === 'true' || accountEvent || !user || !approved ? undefined : restaurantQuery.data?.id
   useRestaurantRealtime(liveRestaurantId)
 
   function handleSignOut() {

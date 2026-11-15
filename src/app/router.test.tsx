@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import type { User } from 'firebase/auth'
+import { ApiError } from '@/lib/api-client'
 import { renderWithProviders } from '@/test/render'
 import { AuthContext, type AuthContextValue, type AuthEvent } from '@/features/auth/auth-context'
 import { routes } from './router'
@@ -14,16 +15,13 @@ vi.mock('@/features/restaurant-status/components/RestaurantStatusControl', () =>
   RestaurantStatusControl: () => <div data-testid="restaurant-status-control" />,
 }))
 // The topbar shows the restaurant's name from GET /restaurants/me (manual 12.2), not the session's displayName.
-vi.mock('@/features/restaurant/api', () => ({
-  restaurantApi: {
-    get: async () => ({ id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [] }),
-  },
-}))
+vi.mock('@/features/restaurant/api', () => ({ restaurantApi: { get: () => mocks.restaurantGet() } }))
 vi.mock('@/features/restaurant/components/LocationBanner', () => ({
   LocationBanner: () => <div data-testid="location-banner" />,
 }))
 
 const mocks = vi.hoisted(() => ({
+  restaurantGet: vi.fn(),
   signIn: vi.fn(),
   signInWithGoogle: vi.fn(),
   sendPasswordReset: vi.fn(),
@@ -120,6 +118,10 @@ function renderAt(path: string, authState = SIGNED_OUT) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.restaurantGet.mockResolvedValue({
+    id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [],
+    activeReservationsCount: 0, approvalStatus: 'approved', rejectionReason: null, contactPhone: null,
+  })
   mocks.signIn.mockResolvedValue(undefined)
   mocks.signInWithGoogle.mockResolvedValue(true)
   mocks.signOut.mockResolvedValue(undefined)
@@ -312,6 +314,7 @@ describe('authentication routes', () => {
   })
 
   it('shows the account screen inside OnboardingShell', async () => {
+    mocks.restaurantGet.mockRejectedValue(new ApiError({ status: 403, code: 'RESTAURANT_REQUIRED' }))
     const { router } = renderAt('/onboarding', { ...SIGNED_IN, authEvent: 'diner-account' })
 
     expect(await screen.findByText('Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.')).toBeInTheDocument()
@@ -322,6 +325,7 @@ describe('authentication routes', () => {
   })
 
   it('routes RESTAURANT_REQUIRED to onboarding without requiring restaurant data there', async () => {
+    mocks.restaurantGet.mockRejectedValue(new ApiError({ status: 403, code: 'RESTAURANT_REQUIRED' }))
     const { router } = renderAt('/mesas', { ...SIGNED_IN, authEvent: 'restaurant-required' })
 
     expect(await screen.findByRole('heading', { name: 'Configura tu restaurante' })).toBeInTheDocument()

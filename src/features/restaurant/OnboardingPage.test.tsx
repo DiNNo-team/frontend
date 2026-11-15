@@ -7,6 +7,9 @@ import { restaurantApi } from './api'
 import OnboardingPage from './OnboardingPage'
 import type { RestaurantProfile } from './types'
 
+// The form tests type into many fields; with the whole suite running in parallel the 5 s default is not enough.
+vi.setConfig({ testTimeout: 30_000 })
+
 vi.mock('./api', () => ({ restaurantApi: { register: vi.fn() } }))
 
 const register = vi.mocked(restaurantApi.register)
@@ -20,6 +23,9 @@ const CREATED: RestaurantProfile = {
   longitude: null,
   schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }],
   activeReservationsCount: 0,
+  approvalStatus: 'approved',
+  rejectionReason: null,
+  contactPhone: null,
 }
 
 beforeEach(() => {
