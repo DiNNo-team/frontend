@@ -4,7 +4,8 @@ import { Alert, Button, ConfirmDialog, EmptyState, PageHeader, useToast } from '
 import { formatTableName } from '@/lib/format'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { useMediaQuery } from '@/lib/use-media-query'
-import { CheckInDialog } from '@/features/reservations/components/CheckInDialog'
+import { CheckInDialog, type ScannedCode } from '@/features/reservations/components/CheckInDialog'
+import { useCodeScanner } from '@/features/reservations/scanner'
 import { ReservationsPanel } from '@/features/reservations/components/ReservationsPanel'
 import { useDinnoTableIds } from '@/features/reservations/hooks'
 import { RESERVATION_TEXT } from '@/features/reservations/messages'
@@ -131,6 +132,12 @@ export default function TablesPage() {
   const highlights = useRemoteHighlights()
   const dinnoTableIds = useDinnoTableIds()
   const [checkInOpen, setCheckInOpen] = useState(false)
+  const [scanned, setScanned] = useState<ScannedCode | null>(null)
+  // QR check-in (Sprint 4): a USB scanner reading the app's QR anywhere on this screen opens «Validar código» with it.
+  useCodeScanner((code) => {
+    setScanned((last) => ({ id: (last?.id ?? 0) + 1, code }))
+    setCheckInOpen(true)
+  }, !checkInOpen)
   const canEditPlan = !useMediaQuery('(max-width: 767px)')
   const [storedView, setStoredView] = useState(readStoredView)
   const hasPlan = tables.some((table) => placementOf(table) !== null)
@@ -251,7 +258,7 @@ export default function TablesPage() {
         error={deactivateError}
         onConfirm={() => void confirmDeactivate()}
       />
-      <CheckInDialog open={checkInOpen} onOpenChange={setCheckInOpen} />
+      <CheckInDialog open={checkInOpen} onOpenChange={setCheckInOpen} scanned={scanned} />
       <AreasDialog open={areasOpen} onOpenChange={setAreasOpen} areas={areas} tables={tables} />
     </>
   )

@@ -1,17 +1,20 @@
-import { RESTAURANT_REQUEST_MAILTO, RESTAURANT_REQUEST_TEXT, TEAM_EMAIL } from '../restaurant-request'
-import { AuthAnchor, AuthLink } from './AuthLink'
+import { useNavigate } from 'react-router'
+import { Button } from '@/components/ui'
+import { AuthLink } from './AuthLink'
 
 const STEPS = [
-  'Escríbele al equipo de DiNNo con el nombre de tu restaurante y el correo con el que vas a entrar.',
-  'Te avisamos cuando tu cuenta esté habilitada.',
-  'Inicia sesión con ese correo o con Google y registra tu restaurante.',
+  'Crea tu cuenta con tu correo o con Google.',
+  'Cuéntanos de tu restaurante: nombre, dirección, horarios y teléfono de contacto.',
+  'Revisamos tu solicitud y, cuando la aprobemos, administras tus mesas.',
 ]
 
 /**
- * "Crear cuenta" tab. Restaurant accounts are enabled by the team (contract, section 10: no public sign-up),
- * so this panel explains how to get one instead of creating it.
+ * "Crear cuenta" tab (CLAUDE.md §12.12): restaurants register themselves now, and the team reviews each request.
+ * The tab explains the three steps and takes the person to the real registration (`/registro`).
  */
 export function AccountRequestPanel({ onSwitch }: { onSwitch: () => void }) {
+  const navigate = useNavigate()
+
   return (
     <section aria-labelledby="signup-title" className="flex flex-col gap-5">
       <p className="order-last text-center text-sec text-fg md:order-first">
@@ -21,11 +24,9 @@ export function AccountRequestPanel({ onSwitch }: { onSwitch: () => void }) {
       <header className="flex flex-col gap-2">
         {/* Focus target when switching from the inline link: this panel has no fields. */}
         <h1 id="signup-title" tabIndex={-1} className="text-h2">
-          Pide tu cuenta de restaurante
+          Registra tu restaurante
         </h1>
-        <p className="text-sec text-fg">
-          En DiNNo, el equipo habilita cada cuenta de restaurante, así solo tú administras tus mesas.
-        </p>
+        <p className="text-sec text-fg">En DiNNo revisamos cada restaurante antes de mostrarlo a los comensales.</p>
       </header>
 
       <ol className="flex list-decimal flex-col gap-3 pl-5 text-sec text-fg marker:font-bold marker:text-accent-text">
@@ -34,10 +35,9 @@ export function AccountRequestPanel({ onSwitch }: { onSwitch: () => void }) {
         ))}
       </ol>
 
-      <p className="text-sec text-fg">
-        {RESTAURANT_REQUEST_TEXT.question} <AuthAnchor href={RESTAURANT_REQUEST_MAILTO}>{RESTAURANT_REQUEST_TEXT.action}</AuthAnchor>{' '}
-        a <span className="font-bold break-all">{TEAM_EMAIL}</span>.
-      </p>
+      <Button fullWidth onClick={() => navigate('/registro')}>
+        Crear cuenta
+      </Button>
 
       <p className="text-sec text-fg">¿Eres comensal? Encuentra mesa desde la app DiNNo.</p>
     </section>

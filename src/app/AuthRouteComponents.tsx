@@ -5,7 +5,7 @@ import { useAuth } from '@/features/auth/auth-context'
 import { getSafeCurrentPath, getSafeReturnTo, requiresFreshSignIn } from '@/features/auth/auth-navigation'
 import LoginPage from '@/features/auth/LoginPage'
 
-function AuthLoading() {
+export function AuthLoading() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-4">
       <section aria-busy="true" className="flex w-full max-w-100 flex-col gap-6">

@@ -4,7 +4,7 @@ import { SLIDE_CLASSES, type AuthView } from '../auth-view'
 
 const HERO_TEXT: Record<AuthView, { title: string; subtitle: string }> = {
   signin: { title: 'Hola de nuevo', subtitle: 'Ingresa tus datos para continuar' },
-  signup: { title: 'Únete a DiNNo', subtitle: 'Pide tu cuenta de restaurante' },
+  signup: { title: 'Únete a DiNNo', subtitle: 'Registra tu restaurante' },
 }
 
 /**

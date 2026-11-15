@@ -16,6 +16,10 @@ export type Status =
   | 'reservation-completed'
   | 'reservation-expired'
   | 'reservation-cancelled'
+  // Sprint 4: review of a restaurant by the DiNNo administrator (CLAUDE.md §12.12).
+  | 'review-pending'
+  | 'review-approved'
+  | 'review-rejected'
 
 export type StatusTone = 'ok' | 'reserved' | 'busy' | 'inactive' | 'limited' | 'error'
 
@@ -48,6 +52,17 @@ export const STATUS_META: Record<Status, StatusMeta> = {
   'reservation-completed': { tone: 'busy', shape: 'striped-square', label: 'Cumplida' },
   'reservation-expired': { tone: 'inactive', shape: 'dash', label: 'Vencida' },
   'reservation-cancelled': { tone: 'inactive', shape: 'dash', label: 'Cancelada' },
+  // Review states of a restaurant (Sprint 4). Never orange; "No aprobada" uses the error tone, not a table state.
+  'review-pending': { tone: 'limited', shape: 'diamond', label: 'En revisión' },
+  'review-approved': { tone: 'ok', shape: 'dot', label: 'Aprobado' },
+  'review-rejected': { tone: 'error', shape: 'dot-alert', label: 'No aprobada' },
+}
+
+/** Kit status of each approval state of a restaurant (`pending` · `approved` · `rejected`). */
+export const REVIEW_STATUS: Record<'pending' | 'approved' | 'rejected', Status> = {
+  pending: 'review-pending',
+  approved: 'review-approved',
+  rejected: 'review-rejected',
 }
 
 /** Kit status of each reservation status of the API (`active` · `completed` · `expired` · `cancelled`). */

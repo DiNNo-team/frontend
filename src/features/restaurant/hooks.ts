@@ -30,6 +30,15 @@ export function useRegisterRestaurant() {
   })
 }
 
+/** Sends a rejected request again (POST /restaurants/me/resubmit): it goes back to review. */
+export function useResubmitRestaurant() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => restaurantApi.resubmit(),
+    onSuccess: (updated) => queryClient.setQueryData<RestaurantProfile>(restaurantQueryKey, updated),
+  })
+}
+
 /** Address → point (GET /geocode). A mutation: it runs when the person asks, and nothing is cached. */
 export function useGeocodeAddress() {
   return useMutation({ mutationFn: (address: string) => restaurantApi.geocode(address) })

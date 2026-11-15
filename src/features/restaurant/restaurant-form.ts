@@ -1,5 +1,7 @@
 import { DAY_LABELS, DAYS_OF_WEEK, type DayHours, type DayOfWeek, type WeeklyHours } from '@/components/ui'
 import { ApiError, getApiErrorMessage, isAccessError } from '@/lib/api-client'
+import type { UpdateRestaurantInput } from './api'
+import type { SignupRestaurantInput } from '@/features/signup/types'
 import { isInsideBogota, roundCoordinate, type Coordinates } from './location'
 import {
   RESTAURANT_CATEGORIES,
@@ -21,7 +23,12 @@ export interface RestaurantFormValues {
   location: Coordinates | null
   /** Seven entries, Monday to Sunday (HoursEditor value). */
   hours: WeeklyHours
+  /** Contact phone as typed; `''` while empty. Required by the public registration (§12.12), optional elsewhere. */
+  contactPhone: string
 }
+
+/** Whether the form shows the contact phone: the registration requires it, the edition may leave it, others hide it. */
+export type ContactPhoneMode = 'hidden' | 'optional' | 'required'
 
 /** What the form hands over once it is valid: trimmed texts and a chosen category. */
 export interface ValidRestaurantFormValues extends Omit<RestaurantFormValues, 'category'> {
@@ -37,6 +44,7 @@ export interface RestaurantFormErrors {
   hours?: string
   /** One message per day row. */
   days?: Partial<Record<DayOfWeek, string>>
+  contactPhone?: string
 }
 
 /** "El lunes", "El miércoles"… like the backend messages. */
@@ -52,6 +60,8 @@ export const RESTAURANT_FORM_MESSAGES = {
   addressTooLong: `La dirección es muy larga. Usa máximo ${RESTAURANT_LIMITS.addressMaxLength} caracteres.`,
   locationRequired: 'Ubica tu restaurante en el mapa.',
   locationOutsideBogota: 'Ubica tu restaurante dentro de Bogotá.',
+  phoneRequired: 'Escribe un teléfono de contacto.',
+  phoneInvalid: 'Escribe un teléfono válido, de 7 a 15 dígitos.',
   noOpenDay: 'Indica al menos un día en que abre tu restaurante.',
   // Backend: "escribe la hora … en formato HH:MM". Here the hours come from a list, so the text says to choose one.
   openingRequired: (day: DayOfWeek) => `${dayLabel(day)}: elige la hora de apertura.`,
@@ -87,7 +97,19 @@ export function emptyRestaurantFormValues(): RestaurantFormValues {
     address: '',
     location: null,
     hours: DAYS_OF_WEEK.map((day) => ({ day, isOpen: false, isOpen24h: false, ...SUGGESTED_HOURS })),
+    contactPhone: '',
   }
+}
+
+// Same rule as the backend: 7 to 15 digits, with spaces, dashes, dots, parentheses and a leading + allowed.
+const PHONE_CHARACTERS = /^\+?[\d\s\-.()]+$/
+
+/** `undefined` when valid. An empty phone is only an error where it is required. */
+export function validateContactPhone(phone: string, mode: ContactPhoneMode): string | undefined {
+  const trimmed = phone.trim()
+  if (!trimmed) return mode === 'required' ? RESTAURANT_FORM_MESSAGES.phoneRequired : undefined
+  const digits = trimmed.replace(/\D/g, '').length
+  return PHONE_CHARACTERS.test(trimmed) && digits >= 7 && digits <= 15 ? undefined : RESTAURANT_FORM_MESSAGES.phoneInvalid
 }
 
 export function validateName(name: string): string | undefined {
@@ -137,7 +159,10 @@ export function validateHours(hours: WeeklyHours): Pick<RestaurantFormErrors, 'h
   return Object.keys(days).length > 0 ? { days } : {}
 }
 
-export function validateRestaurantForm(values: RestaurantFormValues, { requireLocation = false } = {}): RestaurantFormErrors {
+export function validateRestaurantForm(
+  values: RestaurantFormValues,
+  { requireLocation = false, contactPhone = 'hidden' }: { requireLocation?: boolean; contactPhone?: ContactPhoneMode } = {},
+): RestaurantFormErrors {
   const errors: RestaurantFormErrors = validateHours(values.hours)
   const name = validateName(values.name)
   const category = validateCategory(values.category)
@@ -147,12 +172,14 @@ export function validateRestaurantForm(values: RestaurantFormValues, { requireLo
   if (category) errors.category = category
   if (address) errors.address = address
   if (location) errors.location = location
+  const phone = contactPhone === 'hidden' ? undefined : validateContactPhone(values.contactPhone, contactPhone)
+  if (phone) errors.contactPhone = phone
   return errors
 }
 
 /** Fields with an error: each day row counts as one field. */
 export function countRestaurantFormErrors(errors: RestaurantFormErrors): number {
-  const fields = [errors.name, errors.category, errors.address, errors.location, errors.hours].filter(Boolean).length
+  const fields = [errors.name, errors.category, errors.address, errors.location, errors.hours, errors.contactPhone].filter(Boolean).length
   return fields + Object.keys(errors.days ?? {}).length
 }
 
@@ -192,6 +219,7 @@ export function toRestaurantFormValues(profile: RestaurantProfile): RestaurantFo
     category: profile.category ?? '',
     address: profile.address ?? '',
     location: latitude !== null && longitude !== null ? { latitude, longitude } : null,
+    contactPhone: profile.contactPhone ?? '',
     hours: DAYS_OF_WEEK.map((day, index) => {
       const schedule = profile.schedules.find((entry) => entry.dayOfWeek === index + 1)
       if (!schedule) return { day, isOpen: false, isOpen24h: false, ...SUGGESTED_HOURS }
@@ -227,6 +255,7 @@ function isSameLocation(before: Coordinates | null, after: Coordinates | null): 
 export function hasRestaurantFormChanges(initial: RestaurantFormValues, values: RestaurantFormValues): boolean {
   if (initial.name.trim() !== values.name.trim() || initial.address.trim() !== values.address.trim()) return true
   if (initial.category !== values.category) return true
+  if (initial.contactPhone.trim() !== values.contactPhone.trim()) return true
   if (!isSameLocation(initial.location, values.location)) return true
   return values.hours.some((entry) => {
     const before = initial.hours.find((day) => day.day === entry.day)
@@ -254,4 +283,50 @@ export function toRegisterRestaurantInput(values: ValidRestaurantFormValues): Re
           : { dayOfWeek, isOpen24h: false, opensAt: entry.opensAt, closesAt: entry.closesAt }
       }),
   }
+}
+
+/** Body of POST /restaurants/signup: the registration body plus the contact phone as typed (the backend normalizes it). */
+export function toSignupRestaurantInput(values: ValidRestaurantFormValues): SignupRestaurantInput {
+  return { ...toRegisterRestaurantInput(values), contactPhone: values.contactPhone.trim() }
+}
+
+/** Body of PATCH /restaurants/me: only what changed against the restaurant the form started from (empty = nothing to save). */
+export function toUpdateRestaurantInput(restaurant: RestaurantProfile, values: ValidRestaurantFormValues): UpdateRestaurantInput {
+  const originalValues = toRestaurantFormValues({
+    ...restaurant,
+    name: restaurant.name ?? '',
+    schedules: Array.isArray(restaurant.schedules) ? restaurant.schedules : [],
+  })
+  const originalPayload = toRegisterRestaurantInput({ ...values, ...originalValues, category: values.category })
+  const updatedPayload = toRegisterRestaurantInput(values)
+  const update: {
+    name?: string
+    category?: ValidRestaurantFormValues['category']
+    address?: string
+    latitude?: number
+    longitude?: number
+    schedules?: typeof updatedPayload.schedules
+    contactPhone?: string
+  } = {}
+
+  if (originalValues.name.trim() !== updatedPayload.name) update.name = updatedPayload.name
+  if ((restaurant.category ?? '') !== updatedPayload.category) update.category = updatedPayload.category
+  if (originalValues.address.trim() !== updatedPayload.address) update.address = updatedPayload.address
+  // Both coordinates or neither (Sprint 2 contract); they cannot be removed, so only a moved pin is sent.
+  const { latitude, longitude } = updatedPayload
+  if (
+    latitude !== undefined &&
+    longitude !== undefined &&
+    (latitude !== originalPayload.latitude || longitude !== originalPayload.longitude)
+  ) {
+    update.latitude = latitude
+    update.longitude = longitude
+  }
+  // Optional and never `null` (§12.12): only a phone that was written or changed is sent.
+  const phone = values.contactPhone.trim()
+  if (phone && phone !== originalValues.contactPhone.trim()) update.contactPhone = phone
+  if (JSON.stringify(originalPayload.schedules) !== JSON.stringify(updatedPayload.schedules)) {
+    update.schedules = updatedPayload.schedules
+  }
+  return update
 }

@@ -1,6 +1,7 @@
 export { AmbientGround, type AmbientGroundProps } from './AmbientGround'
 export { AppShell, type AppShellProps } from './AppShell'
-export { NavDock } from './NavDock'
+export { NavDock, type NavDockProps } from './NavDock'
+export { NAV_ITEMS_ADMIN, NAV_ITEMS_RESTAURANT, type NavItem } from './nav-items'
 export { OnboardingShell } from './OnboardingShell'
 export { Topbar, type TopbarProps } from './Topbar'
 export { UserMenu, type UserMenuProps } from './UserMenu'

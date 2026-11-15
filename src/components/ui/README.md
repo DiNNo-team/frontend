@@ -82,6 +82,20 @@ Campo de texto con label arriba, ayuda o error abajo. El `ref` y las props nativ
 
 Valida al salir del campo y al enviar, **nunca en cada tecla** (manual 10).
 
+## TextArea
+
+Campo de texto de varias líneas (Sprint 4: el motivo de un rechazo). Mismo label, ayuda y error que `TextField`; el `ref` y las props nativas van al `<textarea>`. `counter={{ count, max }}` muestra «42 de 300 caracteres» debajo (en rojo al pasarse) **sin bloquear la escritura**: el error dice qué hacer.
+
+```tsx
+<TextArea
+  label="Motivo"
+  value={reason}
+  onChange={(event) => setReason(event.target.value)}
+  counter={{ count: reason.trim().length, max: 300 }}
+  error={error}
+/>
+```
+
 ## Card
 
 Tarjeta de contenido de vidrio (`glass-card`, v2.1): radio 20, borde de vidrio y plana en reposo, padding 24 (16 en móvil). **Nunca pongas otra `Card` dentro de una `Card`** (la hoja de contenido no cuenta).
@@ -115,8 +129,11 @@ Estado = **color + forma + palabra**, siempre los tres. La palabra es texto real
 | `reservation-completed` | Cumplida | `busy` | cuadrado rayado |
 | `reservation-expired` | Vencida | `inactive` | raya |
 | `reservation-cancelled` | Cancelada | `inactive` | raya |
+| `review-pending` | En revisión | `limited` | rombo (revisión de un restaurante por el administrador de DiNNo, Sprint 4) |
+| `review-approved` | Aprobado | `ok` | punto |
+| `review-rejected` | No aprobada | `error` | punto + ícono de alerta |
 
-Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
+Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `REVIEW_STATUS` hace lo mismo con el estado de aprobación de un restaurante (`pending`, `approved`, `rejected`). `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
 
 ```tsx
 <StatusChip status="occupied" />
@@ -450,6 +467,6 @@ Páginas de una lista larga: «16–30 de 74 cambios», «Anterior», «Página 
 
 ## Layout (`@/components/layout`)
 
-- **`AppShell`** (v2.1): la luz del salón (`AmbientGround`) detrás de todo; la barra superior en píldora (`Topbar`, con el nombre del restaurante y la cuenta) y la hoja de vidrio con el contenido, centradas; y el dock de navegación `NavDock` abajo, como el de macOS, en todos los tamaños (su vidrio sigue al tema). Ya está montado en el router para `/mesas`, `/restaurante` y `/bitacora`: **tu pantalla solo renderiza su contenido** (empieza con `PageHeader`). Props: `restaurantName`, `userEmail`, `onSignOut`, `statusSlot` (switch de Sergio), `banner` (aviso de cerrado arriba del contenido) y `lit` (restaurante abierto: luz cálida; cerrado: apagada).
+- **`AppShell`** (v2.1): la luz del salón (`AmbientGround`) detrás de todo; la barra superior en píldora (`Topbar`, con el nombre del restaurante y la cuenta) y la hoja de vidrio con el contenido, centradas; y el dock de navegación `NavDock` abajo, como el de macOS, en todos los tamaños (su vidrio sigue al tema). Ya está montado en el router para `/mesas`, `/restaurante` y `/bitacora`: **tu pantalla solo renderiza su contenido** (empieza con `PageHeader`). Props: `restaurantName`, `userEmail`, `onSignOut`, `statusSlot` (switch de Sergio), `banner` (aviso de cerrado arriba del contenido), `lit` (restaurante abierto: luz cálida; cerrado: apagada) y, desde el Sprint 4, `navItems` y `navBadges` (el dock del administrador de DiNNo: `NAV_ITEMS_ADMIN`, con el contador de pendientes sobre «Solicitudes»; por defecto el del restaurante, `NAV_ITEMS_RESTAURANT`).
 - **`OnboardingShell`**: la misma luz, el logo en una píldora y el formulario en la hoja, centrado de 560 máx. Ya envuelve `/onboarding`.
 - Los datos de sesión de ejemplo ("Casa 72" · "admin@casa72.co") están en un solo lugar: `src/app/layouts.tsx`.

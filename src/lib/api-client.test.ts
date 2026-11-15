@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  ACCESS_CHANGED_EVENT,
+  ACCOUNT_ERROR_TEXT,
+  retryUnlessAnswered,
   ApiError,
   apiRequest,
   ACCOUNT_NOT_ENABLED_EVENT,
@@ -160,5 +163,45 @@ describe('isAccessError', () => {
     expect(isAccessError(new ApiError({ status: 500 }))).toBe(false)
     expect(isAccessError(new Error('403'))).toBe(false)
     expect(isAccessError(undefined)).toBe(false)
+  })
+})
+
+describe('account codes of Sprint 4 (§10)', () => {
+  it.each(['ACCOUNT_PENDING_APPROVAL', 'ACCOUNT_REJECTED', 'ADMIN_ACCOUNT'])('%s announces that the account state changed', async (code) => {
+    mockFetch({ ok: false, status: 403, jsonBody: { statusCode: 403, errorCode: code } })
+    const listener = vi.fn()
+    window.addEventListener(ACCESS_CHANGED_EVENT, listener)
+    await expect(apiRequest('/tables')).rejects.toMatchObject({ status: 403, code })
+    window.removeEventListener(ACCESS_CHANGED_EVENT, listener)
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('does not announce a state change for other 403s', async () => {
+    mockFetch({ ok: false, status: 403, jsonBody: { statusCode: 403, errorCode: 'RESTAURANT_REQUIRED' } })
+    const listener = vi.fn()
+    window.addEventListener(ACCESS_CHANGED_EVENT, listener)
+    await expect(apiRequest('/tables')).rejects.toBeInstanceOf(ApiError)
+    window.removeEventListener(ACCESS_CHANGED_EVENT, listener)
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('shows the contract text for each code, never the backend message', () => {
+    expect(getApiErrorMessage(new ApiError({ status: 403, code: 'ACCOUNT_PENDING_APPROVAL', message: 'x' }))).toBe(ACCOUNT_ERROR_TEXT.pending)
+    expect(getApiErrorMessage(new ApiError({ status: 403, code: 'ACCOUNT_REJECTED' }))).toBe(
+      'Tu solicitud no fue aprobada. Revisa el motivo, corrige tus datos y vuelve a enviarla.',
+    )
+    expect(getApiErrorMessage(new ApiError({ status: 403, code: 'ADMIN_ACCOUNT' }))).toBe(
+      'Esta es una cuenta de administrador de DiNNo. Usa el panel de administración en la web.',
+    )
+  })
+})
+
+describe('retryUnlessAnswered', () => {
+  it('retries a network or server failure once and never an answer of the server (4xx)', () => {
+    expect(retryUnlessAnswered(0, new ApiError({ status: 0, isNetworkError: true }))).toBe(true)
+    expect(retryUnlessAnswered(1, new ApiError({ status: 0, isNetworkError: true }))).toBe(false)
+    expect(retryUnlessAnswered(0, new ApiError({ status: 500 }))).toBe(true)
+    expect(retryUnlessAnswered(0, new ApiError({ status: 403, code: 'ACCOUNT_REJECTED' }))).toBe(false)
+    expect(retryUnlessAnswered(0, new ApiError({ status: 404 }))).toBe(false)
   })
 })

@@ -4,8 +4,12 @@ import ActivityLogPage from '@/features/activity-log/ActivityLogPage'
 import OnboardingPage from '@/features/restaurant/OnboardingPage'
 import RestaurantPage from '@/features/restaurant/RestaurantPage'
 import TablesPage from '@/features/tables/TablesPage'
+import { AccessGuard } from './AccessGuard'
 import { AuthEventHandler, LoginRoute, RequireSession } from './AuthRouteComponents'
-import { DashboardLayout, OnboardingLayout } from './layouts'
+import { AdminLayout, DashboardLayout, OnboardingLayout } from './layouts'
+
+/** Routes loaded on demand: the registration and the request screen are only for accounts that are not approved yet. */
+const lazyPage = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({ Component: (await load()).default })
 
 const KitPage = import.meta.env.DEV ? lazy(() => import('@/dev/kit/KitPage')) : null
 // Preview of the identity manual v2.0 (docs/DiNNo_Manual_Identidad_v2_0.md), development only.
@@ -16,19 +20,49 @@ export const routes: RouteObject[] = [
     element: <AuthEventHandler />,
     children: [
       { path: '/login', element: <LoginRoute /> },
+      { path: '/registro', lazy: lazyPage(() => import('@/features/signup/SignupPage')) },
       {
         element: <RequireSession />,
         children: [
           {
-            element: <OnboardingLayout />,
-            children: [{ path: '/onboarding', element: <OnboardingPage /> }],
+            element: <AccessGuard allow={['restaurant-required']} />,
+            children: [
+              {
+                element: <OnboardingLayout />,
+                children: [{ path: '/onboarding', element: <OnboardingPage /> }],
+              },
+            ],
           },
           {
-            element: <DashboardLayout />,
+            element: <AccessGuard allow={['pending', 'rejected']} />,
             children: [
-              { path: '/mesas', element: <TablesPage /> },
-              { path: '/restaurante', element: <RestaurantPage /> },
-              { path: '/bitacora', element: <ActivityLogPage /> },
+              {
+                element: <OnboardingLayout />,
+                children: [{ path: '/solicitud', lazy: lazyPage(() => import('@/features/signup/RequestStatusPage')) }],
+              },
+            ],
+          },
+          {
+            element: <AccessGuard allow={['admin']} />,
+            children: [
+              {
+                element: <AdminLayout />,
+                children: [{ path: '/admin', lazy: lazyPage(() => import('@/features/admin/AdminPage')) }],
+              },
+            ],
+          },
+          {
+            element: <AccessGuard allow={['approved']} />,
+            children: [
+              {
+                element: <DashboardLayout />,
+                children: [
+                  { path: '/mesas', element: <TablesPage /> },
+                  { path: '/resumen', lazy: lazyPage(() => import('@/features/summary/SummaryPage')) },
+                  { path: '/restaurante', element: <RestaurantPage /> },
+                  { path: '/bitacora', element: <ActivityLogPage /> },
+                ],
+              },
             ],
           },
         ],

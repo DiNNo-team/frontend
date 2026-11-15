@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged,
   reload,
@@ -25,6 +26,7 @@ import {
   getFirebaseAuthErrorMessage,
   getFirebaseErrorCode,
   getFirebaseGoogleAuthErrorMessage,
+  getFirebaseSignUpErrorMessage,
 } from './auth-errors'
 import { auth } from './firebase'
 
@@ -92,6 +94,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setEmailVerificationRetried(false)
     } catch (error) {
       throw new Error(getFirebaseAuthErrorMessage(error))
+    }
+  }
+
+  async function signUp(email: string, password: string): Promise<void> {
+    let created: User
+    try {
+      created = (await createUserWithEmailAndPassword(auth, email, password)).user
+      setEmailVerificationRetried(false)
+    } catch (error) {
+      throw new Error(getFirebaseSignUpErrorMessage(error))
+    }
+    // The account exists even if the email fails: the verification screen can send it again.
+    try {
+      await sendEmailVerification(created)
+    } catch (error) {
+      throw new Error(getFirebaseActionErrorMessage(error, 'Creamos tu cuenta, pero no pudimos enviar el correo de verificación. Reenvíalo desde la siguiente pantalla.'))
     }
   }
 
@@ -168,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearAuthEvent: () => setAuthEvent(null),
         clearAccountEvent,
         signIn,
+        signUp,
         signInWithGoogle,
         sendPasswordReset,
         signOut,

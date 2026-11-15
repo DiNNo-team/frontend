@@ -20,6 +20,9 @@ const CREATED: RestaurantProfile = {
   longitude: null,
   schedules: [{ dayOfWeek: 1, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }],
   activeReservationsCount: 0,
+  approvalStatus: 'approved',
+  rejectionReason: null,
+  contactPhone: null,
 }
 
 beforeEach(() => {

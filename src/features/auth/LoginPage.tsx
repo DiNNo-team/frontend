@@ -9,7 +9,7 @@ import { SignInForm } from './components/SignInForm'
 /**
  * `/login`: glass card over the room light of the dashboard (`AmbientGround`), with "Iniciar sesión" and
  * "Crear cuenta" tabs in the same card.
- * Restaurant access is invitation-only, so "Crear cuenta" explains how to get an account. Switching slides the
+ * "Crear cuenta" explains the registration of a restaurant and takes to `/registro`. Switching slides the
  * panels and the brand panel; the hidden panel is `inert`.
  */
 export default function LoginPage() {

@@ -4,6 +4,8 @@ import { Alert, Button, Card, HoursEditor, Select, TextField, type WeeklyHours }
 import type { Coordinates } from '../location'
 import {
   countRestaurantFormErrors,
+  validateContactPhone,
+  type ContactPhoneMode,
   describeRestaurantSaveError,
   hasRestaurantFormChanges,
   isRestaurantCategory,
@@ -37,6 +39,8 @@ export interface RestaurantFormProps {
   onDirtyChange?: (dirty: boolean) => void
   /** The registration asks for the location on the map (Sprint 2); the edition does not. */
   requireLocation?: boolean
+  /** Contact phone (§12.12): required by the public registration and the request screen, optional in the edition. Hidden by default. */
+  contactPhone?: ContactPhoneMode
 }
 
 /**
@@ -64,12 +68,14 @@ export function RestaurantForm({
   onCancel,
   onDirtyChange,
   requireLocation = false,
+  contactPhone: phoneMode = 'hidden',
 }: RestaurantFormProps) {
   const formId = useId()
   const nameId = `${formId}-name`
   const categoryId = `${formId}-category`
   const addressId = `${formId}-address`
   const locateId = `${formId}-locate`
+  const phoneId = `${formId}-phone`
   const hoursRef = useRef<HTMLDivElement>(null)
   const [mapUnavailable, setMapUnavailable] = useState(false)
   const handleMapUnavailable = useCallback(() => setMapUnavailable(true), [])
@@ -102,7 +108,9 @@ export function RestaurantForm({
           ? addressId
           : next.location
             ? locateId
-            : undefined
+            : next.contactPhone
+              ? phoneId
+              : undefined
     if (fieldId) {
       document.getElementById(fieldId)?.focus()
       return
@@ -136,7 +144,7 @@ export function RestaurantForm({
     if (saving || submittingRef.current) return
     setFormError(undefined)
 
-    const nextErrors = validateRestaurantForm(values, { requireLocation: locationRequired })
+    const nextErrors = validateRestaurantForm(values, { requireLocation: locationRequired, contactPhone: phoneMode })
     if (countRestaurantFormErrors(nextErrors) > 0 || !isRestaurantCategory(values.category)) {
       showErrors(nextErrors)
       return
@@ -189,6 +197,26 @@ export function RestaurantForm({
               setErrors((current) => ({ ...current, category: validateCategory(category) }))
             }}
           />
+          {phoneMode !== 'hidden' && (
+            <TextField
+              id={phoneId}
+              type="tel"
+              inputMode="tel"
+              label="Teléfono de contacto"
+              optional={phoneMode === 'optional'}
+              placeholder="Ej.: 300 123 4567"
+              autoComplete="tel"
+              helperText="Solo lo usa el equipo de DiNNo para confirmar tus datos. Los comensales no lo ven."
+              value={values.contactPhone}
+              error={errors.contactPhone}
+              onChange={(event) => {
+                const contactPhone = event.target.value
+                setValues((current) => ({ ...current, contactPhone }))
+                if (errors.contactPhone) setErrors((current) => ({ ...current, contactPhone: validateContactPhone(contactPhone, phoneMode) }))
+              }}
+              onBlur={() => setErrors((current) => ({ ...current, contactPhone: validateContactPhone(values.contactPhone, phoneMode) }))}
+            />
+          )}
         </div>
       </Card>
 
