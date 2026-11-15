@@ -47,7 +47,7 @@
   /* Reducir movimiento (manual 11.5): los keyframes leen --motion-rise/--motion-scale, que valen 0 y 1; aquí se
      detienen los bucles y lo que recorre la pantalla entera pasa a un fundido. Los fundidos se conservan. */
   @media (prefers-reduced-motion: reduce) {
-    .animate-live-pulse, .animate-skeleton { animation: none !important; }
+    .animate-live-pulse, .animate-skeleton, .animate-grow-x { animation: none !important; }
     .animate-drawer-in, .animate-sheet-in { animation-name: fade-in !important; }
     ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   }
@@ -201,6 +201,10 @@
 @theme { --animate-rise-in: rise-in var(--dur-slow) var(--ease-enter); }          /* diálogos */
 @theme { --animate-rise-in-fast: rise-in var(--dur-base) var(--ease-enter); }     /* toasts y barras entrando */
 @keyframes rise-in { from { opacity: 0; transform: translateY(var(--motion-rise)) scale(var(--motion-scale)); } to { opacity: 1; transform: none; } }
+/* Barras del Resumen (Sprint 4): crecen una vez desde la izquierda al aparecer; con movimiento reducido no se animan. */
+@theme { --animate-grow-x: grow-x var(--dur-slow) var(--ease-enter); }
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: none; } }
+@utility animate-grow-origin { transform-box: fill-box; transform-origin: left center; }
 @theme { --animate-drop-in: drop-in var(--dur-base) var(--ease-enter); }          /* toasts, que llegan desde arriba (v2.1) */
 @keyframes drop-in { from { opacity: 0; transform: translateY(calc(var(--motion-rise) * -1)) scale(var(--motion-scale)); } to { opacity: 1; transform: none; } }
 @theme { --animate-lift-out: lift-out var(--dur-fast) var(--ease-enter) forwards; }

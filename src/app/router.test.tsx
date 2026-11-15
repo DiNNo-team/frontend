@@ -306,6 +306,13 @@ describe('authentication routes', () => {
     expect(screen.queryByTestId('restaurant-status-control')).not.toBeInTheDocument()
   })
 
+  it('loads «Resumen» on demand for an approved restaurant and shows it in the dock', async () => {
+    renderAt('/resumen', SIGNED_IN)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Resumen' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Resumen' })).toHaveAttribute('aria-current', 'page')
+  })
+
   it('keeps the restaurant status banner and switch without an account event', async () => {
     renderAt('/mesas', SIGNED_IN)
 

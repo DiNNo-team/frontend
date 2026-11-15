@@ -58,6 +58,7 @@ export const routes: RouteObject[] = [
                 element: <DashboardLayout />,
                 children: [
                   { path: '/mesas', element: <TablesPage /> },
+                  { path: '/resumen', lazy: lazyPage(() => import('@/features/summary/SummaryPage')) },
                   { path: '/restaurante', element: <RestaurantPage /> },
                   { path: '/bitacora', element: <ActivityLogPage /> },
                 ],

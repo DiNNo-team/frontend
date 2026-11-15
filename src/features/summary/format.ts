@@ -17,3 +17,28 @@ export function formatHour(hour: number): string {
   const twelve = hour % 12 === 0 ? 12 : hour % 12
   return `${twelve}:00 ${suffix}`
 }
+
+const SHORT_MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic'] as const
+
+/**
+ * A moment (ISO 8601 UTC) as Bogotá shows it, whatever the device's time zone: «30 sept · 7:30 p. m.». The reports are
+ * counted in Bogotá days, so the table of check-ins has to be read in that clock too.
+ */
+export function formatBogotaDateTime(iso: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Bogota',
+    day: 'numeric',
+    month: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(iso))
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value)
+  const hour = get('hour')
+  const suffix = hour < 12 ? 'a. m.' : 'p. m.'
+  const twelve = hour % 12 === 0 ? 12 : hour % 12
+  return `${get('day')} ${SHORT_MONTHS[get('month') - 1]} · ${twelve}:${String(get('minute')).padStart(2, '0')} ${suffix}`
+}
+
+/** Days of the week as the API numbers them: 1 = Monday … 7 = Sunday. */
+export const WEEKDAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as const

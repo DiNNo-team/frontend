@@ -66,3 +66,13 @@ describe('number texts', () => {
     expect(formatHour(19)).toBe('7:00 p. m.')
   })
 })
+
+describe('Bogotá clock', () => {
+  it('writes a moment as Bogotá shows it, not as the device does', async () => {
+    const { formatBogotaDateTime } = await import('./format')
+    // 02:30 UTC of the 16th is 9:30 p. m. of the 15th in Bogotá.
+    expect(formatBogotaDateTime('2026-11-16T02:30:00Z')).toBe('15 nov · 9:30 p. m.')
+    expect(formatBogotaDateTime('2026-11-15T05:00:00Z')).toBe('15 nov · 12:00 a. m.')
+    expect(formatBogotaDateTime('2026-09-30T17:05:00Z')).toBe('30 sept · 12:05 p. m.')
+  })
+})

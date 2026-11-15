@@ -1,4 +1,4 @@
-import { ClipboardCheck, History, LayoutGrid, Store, type LucideIcon } from 'lucide-react'
+import { ChartNoAxesColumn, ClipboardCheck, History, LayoutGrid, Store, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -11,6 +11,7 @@ export interface NavItem {
 /** Sections of the restaurant's navigation dock (manual 12.2, v2.1). */
 export const NAV_ITEMS_RESTAURANT: NavItem[] = [
   { to: '/mesas', label: 'Mesas', icon: LayoutGrid },
+  { to: '/resumen', label: 'Resumen', icon: ChartNoAxesColumn },
   { to: '/restaurante', label: 'Restaurante', icon: Store },
   { to: '/bitacora', label: 'Bitácora', icon: History },
 ]
