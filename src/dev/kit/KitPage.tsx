@@ -9,6 +9,7 @@ import {
   STATUS_META,
   StatusChip,
   StatusShape,
+  TextArea,
   TextField,
   type ButtonVariant,
   type Status,
@@ -144,6 +145,8 @@ export default function KitPage() {
             <TextField label="Contraseña" type="password" defaultValue="casa72casa72" />
             <TextField label="Restaurante" value="Casa 72" readOnly />
             <ValidationDemo />
+            <TextArea label="Motivo del rechazo" placeholder="Cuéntale al restaurante qué debe corregir" counter={{ count: 12, max: 300 }} helperText="Lo verá el restaurante." />
+            <TextArea label="Motivo del rechazo" defaultValue="Corto" counter={{ count: 5, max: 300 }} error="El motivo es muy corto. Usa al menos 10 caracteres." />
           </div>
         </KitSection>
 

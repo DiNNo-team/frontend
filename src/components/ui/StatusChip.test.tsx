@@ -17,6 +17,9 @@ const EXPECTED: Record<Status, string> = {
   'reservation-completed': 'Cumplida',
   'reservation-expired': 'Vencida',
   'reservation-cancelled': 'Cancelada',
+  'review-pending': 'En revisión',
+  'review-approved': 'Aprobado',
+  'review-rejected': 'No aprobada',
 }
 
 describe('StatusChip', () => {

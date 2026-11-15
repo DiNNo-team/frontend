@@ -59,7 +59,7 @@ export function resolveAccess(me: QuerySnapshot<Me>, restaurant: QuerySnapshot<R
 export const ACCESS_HOME: Record<AccessKind, string | null> = {
   'no-profile': '/registro',
   diner: null,
-  admin: null,
+  admin: '/admin',
   'restaurant-required': '/onboarding',
   pending: '/solicitud',
   rejected: '/solicitud',

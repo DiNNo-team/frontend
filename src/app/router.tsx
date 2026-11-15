@@ -6,7 +6,7 @@ import RestaurantPage from '@/features/restaurant/RestaurantPage'
 import TablesPage from '@/features/tables/TablesPage'
 import { AccessGuard } from './AccessGuard'
 import { AuthEventHandler, LoginRoute, RequireSession } from './AuthRouteComponents'
-import { DashboardLayout, OnboardingLayout } from './layouts'
+import { AdminLayout, DashboardLayout, OnboardingLayout } from './layouts'
 
 /** Routes loaded on demand: the registration and the request screen are only for accounts that are not approved yet. */
 const lazyPage = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({ Component: (await load()).default })
@@ -39,6 +39,15 @@ export const routes: RouteObject[] = [
               {
                 element: <OnboardingLayout />,
                 children: [{ path: '/solicitud', lazy: lazyPage(() => import('@/features/signup/RequestStatusPage')) }],
+              },
+            ],
+          },
+          {
+            element: <AccessGuard allow={['admin']} />,
+            children: [
+              {
+                element: <AdminLayout />,
+                children: [{ path: '/admin', lazy: lazyPage(() => import('@/features/admin/AdminPage')) }],
               },
             ],
           },

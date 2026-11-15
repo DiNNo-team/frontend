@@ -41,6 +41,7 @@ function renderGuarded(allow: Parameters<typeof AccessGuard>[0]['allow'], authEv
       { path: '/onboarding', element: <p>Pantalla de registro</p> },
       { path: '/solicitud', element: <p>Pantalla de solicitud</p> },
       { path: '/registro', element: <p>Pantalla de inscripción</p> },
+      { path: '/admin', element: <p>Panel de administración</p> },
     ],
     { initialEntries: ['/aqui'] },
   )
@@ -108,10 +109,24 @@ describe('AccessGuard', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
   })
 
-  it('keeps the administrator out of the restaurant pages and says where to go', async () => {
+  it('keeps the administrator out of the restaurant pages and takes it to its panel', async () => {
     mocks.getMe.mockResolvedValue(me('platform_admin'))
-    renderGuarded(['approved'])
-    expect(await screen.findByText('Esta es una cuenta de administrador de DiNNo. Usa el panel de administración en la web.')).toBeInTheDocument()
+    const router = renderGuarded(['approved'])
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'))
+    expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+  })
+
+  it('lets the administrator into the panel, and sends a restaurant that is not one away from it', async () => {
+    mocks.getMe.mockResolvedValue(me('platform_admin'))
+    renderGuarded(['admin'])
+    expect(await screen.findByText('Contenido protegido')).toBeInTheDocument()
+  })
+
+  it('an approved restaurant that opens the administrator panel goes to its tables', async () => {
+    mocks.getMe.mockResolvedValue(me('restaurant_admin'))
+    mocks.getRestaurant.mockResolvedValue(restaurant('approved'))
+    const router = renderGuarded(['admin'])
+    await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
   })
 
   it('shows the diner account screen with only the sign out action', async () => {
