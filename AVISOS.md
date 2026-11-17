@@ -5,6 +5,18 @@
 
 ---
 
+## 17 nov 2026 · Elizabeth · Nueva pantalla Resumen del restaurante y revisión de textos del administrador (Sprint 4) · rama `feat/sprint4-admin-panel`
+
+- **Qué cambia:** `/resumen` del restaurante se rediseñó con el diseño de `docs/design/restaurant-summary/` (capturas de lo implementado en `implementado/`). Los bloques, el calendario accesible y los estados están en el CLAUDE.md, «Resumen del restaurante». Sin datos de comensales. Sin recomendaciones automáticas (eso es de la IA).
+- **Backend:** `GET /v1/restaurants/me/summary` agrega (aditivo) `billing.guests`, `previousComparable`, `byDate`, `byDayHour`, `monthly` y `payment`. Contrato en `docs/restaurant-summary-contract.md` (copia idéntica del backend). El detalle de un día reutiliza `GET /billing/check-ins`. **Hay que fusionar y desplegar el backend primero:** sin él, la pantalla muestra el error del resumen.
+- **Kit (aviso a Sebastián):** estados nuevos `payment-in-progress`, `payment-pending` y `payment-paid` (`STATUS_META`, `PAYMENT_STATUS`), misma forma y color que `billing-*`, palabra «Pagado»; documentados en `components/ui/README.md`. Utilidades nuevas en `globals.css`: `grid-cols-hero`, `grid-cols-calendar`, `grid-cols-demand` y `grid-weekday-bar-row`.
+- **Componentes compartidos con el admin:** `HeatGrid` y `heat.ts` salen de «Pulso por hora»; `MonthBars` recibe `value` en vez de `revenueCop` y acepta `formatValue`, `describe` y `groupLabel`. Los valores por defecto son los de antes: el admin se ve y se comporta igual. Además, las etiquetas de los días del mapa de calor ya quedan alineadas con su fila (estaban corridas una fila).
+- **Textos del administrador, revisados** (solo texto, sin tocar lógica): «Lo que DiNNo ha cobrado, cómo se mueven las reservas y qué restaurantes aportan más.» → «Cobros, reservas y restaurantes del mes.» · «Todo al día» → «Sin saldos pendientes» · «Toca un mes para ver su detalle» → «Selecciona un mes para ver su detalle» · «De la reserva a la mesa» → «Resultado de las reservas» · «Pulso por hora» → «Reservas por hora» · «Por qué se cobra» → «Cómo se calcula el cobro» · «Cuéntale al restaurante qué debe corregir» → «Indica qué debe corregir el restaurante» · «Cuéntale al restaurante por qué se suspende» → «Indica por qué se suspende el restaurante» · «Revisa los restaurantes que quieren estar en DiNNo.» → «Revisa las solicitudes de los restaurantes que piden entrar a DiNNo.»
+- **Texto del restaurante suspendido:** «Resumen y cobro» → «Resumen y pago»; «cuánto se te cobra» → «cuánto pagas a DiNNo».
+- **Formato de pesos:** el Resumen del restaurante sigue escribiendo «$12.000» (como el diseño); el panel del administrador, «$ 12.000».
+
+---
+
 ## 17 nov 2026 · Santiago · Matriz de pruebas del Sprint 4
 
 - **Qué hay:** `docs/qa/matriz-sprint4.md`, con el mismo formato de la del Sprint 3. Casos de notificaciones, informe de IA (API y pantalla), estado de cuenta, flujos completos, humo y regresión en Azure, concurrencia, red, carga, seguridad y la revisión final.
