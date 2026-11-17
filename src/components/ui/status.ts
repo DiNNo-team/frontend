@@ -20,6 +20,12 @@ export type Status =
   | 'review-pending'
   | 'review-approved'
   | 'review-rejected'
+  | 'review-suspended'
+  // Sprint 4 (admin panel): a restaurant that is part of DiNNo, and the monthly billing state (docs/admin-panel-contract.md §3).
+  | 'restaurant-active'
+  | 'billing-in-progress'
+  | 'billing-pending'
+  | 'billing-paid'
 
 export type StatusTone = 'ok' | 'reserved' | 'busy' | 'inactive' | 'limited' | 'error'
 
@@ -56,13 +62,28 @@ export const STATUS_META: Record<Status, StatusMeta> = {
   'review-pending': { tone: 'limited', shape: 'diamond', label: 'En revisión' },
   'review-approved': { tone: 'ok', shape: 'dot', label: 'Aprobado' },
   'review-rejected': { tone: 'error', shape: 'dot-alert', label: 'No aprobada' },
+  // Suspended: the same dash as Cerrado/Inactiva (paused, not an alarm), told apart by the word.
+  'review-suspended': { tone: 'inactive', shape: 'dash', label: 'Suspendido' },
+  'restaurant-active': { tone: 'ok', shape: 'dot', label: 'Activo' },
+  // Billing of a month: in progress (square, like Reservada: still moving), pending (diamond, like Pocas mesas) and paid (dot).
+  'billing-in-progress': { tone: 'reserved', shape: 'square', label: 'En curso' },
+  'billing-pending': { tone: 'limited', shape: 'diamond', label: 'Pendiente' },
+  'billing-paid': { tone: 'ok', shape: 'dot', label: 'Cobrado' },
 }
 
 /** Kit status of each approval state of a restaurant (`pending` · `approved` · `rejected`). */
-export const REVIEW_STATUS: Record<'pending' | 'approved' | 'rejected', Status> = {
+export const REVIEW_STATUS: Record<'pending' | 'approved' | 'rejected' | 'suspended', Status> = {
   pending: 'review-pending',
   approved: 'review-approved',
   rejected: 'review-rejected',
+  suspended: 'review-suspended',
+}
+
+/** Billing state of a month by the API's  (docs/admin-panel-contract.md §3). */
+export const BILLING_STATUS: Record<'in_progress' | 'pending' | 'paid', Status> = {
+  in_progress: 'billing-in-progress',
+  pending: 'billing-pending',
+  paid: 'billing-paid',
 }
 
 /** Kit status of each reservation status of the API (`active` · `completed` · `expired` · `cancelled`). */

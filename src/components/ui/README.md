@@ -132,8 +132,13 @@ Estado = **color + forma + palabra**, siempre los tres. La palabra es texto real
 | `review-pending` | En revisión | `limited` | rombo (revisión de un restaurante por el administrador de DiNNo, Sprint 4) |
 | `review-approved` | Aprobado | `ok` | punto |
 | `review-rejected` | No aprobada | `error` | punto + ícono de alerta |
+| `review-suspended` | Suspendido | `inactive` | raya (restaurante aprobado que el administrador pausó, §12.15) |
+| `restaurant-active` | Activo | `ok` | punto (restaurante que opera, en el directorio del administrador) |
+| `billing-in-progress` | En curso | `reserved` | cuadrado (mes de cobro que todavía no termina) |
+| `billing-pending` | Pendiente | `limited` | rombo (mes cerrado sin cobrar) |
+| `billing-paid` | Cobrado | `ok` | punto (mes cerrado marcado como cobrado) |
 
-Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `REVIEW_STATUS` hace lo mismo con el estado de aprobación de un restaurante (`pending`, `approved`, `rejected`). `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
+Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `REVIEW_STATUS` hace lo mismo con el estado de aprobación de un restaurante (`pending`, `approved`, `rejected`, `suspended`); `BILLING_STATUS` lo hace con el cobro de un mes (`in_progress`, `pending`, `paid`). `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
 
 ```tsx
 <StatusChip status="occupied" />
