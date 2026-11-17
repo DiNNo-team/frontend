@@ -5,6 +5,15 @@
 
 ---
 
+## 16 nov 2026 · Sebastián · Límite de peticiones: texto del 429 y reintento con RATE_LIMITED (Sprint 4, §12.14)
+
+- **El backend ahora limita las peticiones** (backend PR #65). Al pasar un límite responde `429` sin `errorCode`; el WebSocket rechaza una conexión de más con `connect_error` `RATE_LIMITED`.
+- **`getApiErrorMessage`** muestra con un `429` el texto «Hiciste muchas solicitudes seguidas. Espera un momento e intenta de nuevo.» (`RATE_LIMITED_TEXT`, en `lib/api-client.ts`). No se reintenta solo (`retryUnlessAnswered` ya no reintenta un 4xx).
+- **Tiempo real:** `RATE_LIMITED` se reintenta como `SERVER_ERROR` (5 s, 15 s, 30 s). Está en `RETRYABLE_REJECTIONS` (`features/realtime/events.ts`). Los códigos de sesión siguen sin reintentarse.
+- **Contrato:** nueva §12.14 en `CLAUDE.md`, igual en los tres repos.
+
+---
+
 ## 15 nov 2026 · Elizabeth · Registro, aprobación, panel de administrador y Resumen (Sprint 4, rama `feat/admin-resumen-front`)
 
 - **Qué hay:** `/registro` (crear cuenta y datos del restaurante), `/solicitud` (en revisión, o rechazada con el motivo y reenvío), `/admin` (aprobar y rechazar) y `/resumen` (cobro y KPIs). Todo lo explica CLAUDE.md §11, «Cuentas, aprobación, administrador y Resumen».
