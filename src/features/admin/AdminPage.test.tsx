@@ -265,3 +265,22 @@ describe('AdminPage · rechazar', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 })
+
+describe('AdminPage · suspendidas', () => {
+  it('does not use the date the request was sent as the review date of a restaurant that was never reviewed', async () => {
+    renderAdmin('/admin?estado=suspendidas')
+    await waitFor(() => expect(rowsOf()).toHaveLength(1))
+    const row = rowsOf()[0]
+    expect(within(row).getByText('Tranquilo')).toBeInTheDocument()
+    expect(within(row).getByText('Sin revisar')).toBeInTheDocument()
+    expect(within(row).queryByText(/^hace /)).not.toBeInTheDocument()
+  })
+
+  it('says «Sin revisar» in its detail too, and keeps the date it was sent under «Recibida»', async () => {
+    const { user } = renderAdmin('/admin?estado=suspendidas')
+    await openRequest(user, 'Tranquilo')
+    const dialog = await screen.findByText('Revisada')
+    expect(dialog.nextElementSibling).toHaveTextContent('Sin revisar')
+    expect(screen.getByText('Recibida').nextElementSibling).toHaveTextContent(/hace /)
+  })
+})
