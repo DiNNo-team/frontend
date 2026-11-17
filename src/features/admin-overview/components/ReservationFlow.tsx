@@ -5,7 +5,7 @@ import type { PlatformMetrics } from '../../admin/panel-types'
 import { OVERVIEW_TEXT } from '../messages'
 
 /**
- * «De la reserva a la mesa»: the reservations created, and how they ended: arrived (green, the ones that are charged),
+ * «Resultado de las reservas»: the reservations created, and how they ended: arrived (green, the ones that are charged),
  * expired (striped) and cancelled (plain). The widths follow the counts. A missing rate reads «Sin datos», never 0 %.
  */
 export function ReservationFlow({ metrics }: { metrics: Pick<PlatformMetrics, 'reservations' | 'rates'> }) {

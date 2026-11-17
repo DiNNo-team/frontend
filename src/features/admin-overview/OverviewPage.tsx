@@ -19,7 +19,7 @@ const MONTHS_SHOWN = 6
 /** The bars: the last six months up to the current one; if an old month's overview was asked, the six that end at it. */
 function barsOf(overview: AdminOverview, shown: string[]) {
   const inWindow = overview.monthly.filter((entry) => shown.includes(entry.month))
-  return inWindow.length === MONTHS_SHOWN ? inWindow : overview.monthly.slice(-MONTHS_SHOWN)
+  return (inWindow.length === MONTHS_SHOWN ? inWindow : overview.monthly.slice(-MONTHS_SHOWN)).map((entry) => ({ month: entry.month, value: entry.revenueCop }))
 }
 
 function summaryOf(page: AdminBillingPage | undefined): BillingSummary | null {

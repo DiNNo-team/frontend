@@ -137,8 +137,11 @@ Estado = **color + forma + palabra**, siempre los tres. La palabra es texto real
 | `billing-in-progress` | En curso | `reserved` | cuadrado (mes de cobro que todavía no termina) |
 | `billing-pending` | Pendiente | `limited` | rombo (mes cerrado sin cobrar) |
 | `billing-paid` | Cobrado | `ok` | punto (mes cerrado marcado como cobrado) |
+| `payment-in-progress` | En curso | `reserved` | cuadrado (igual que `billing-in-progress`; el Resumen del restaurante) |
+| `payment-pending` | Pendiente | `limited` | rombo (igual que `billing-pending`) |
+| `payment-paid` | Pagado | `ok` | punto (igual que `billing-paid`) |
 
-Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `REVIEW_STATUS` hace lo mismo con el estado de aprobación de un restaurante (`pending`, `approved`, `rejected`, `suspended`); `BILLING_STATUS` lo hace con el cobro de un mes (`in_progress`, `pending`, `paid`). `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
+Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `REVIEW_STATUS` hace lo mismo con el estado de aprobación de un restaurante (`pending`, `approved`, `rejected`, `suspended`); `BILLING_STATUS` lo hace con el cobro de un mes (`in_progress`, `pending`, `paid`) en el panel del administrador, que cobra; `PAYMENT_STATUS` es el mismo estado visto por el restaurante, que paga (misma forma y color, la palabra es «Pagado»). Quien paga nunca lee «Cobrado» ni «A cobrar». `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
 
 ```tsx
 <StatusChip status="occupied" />

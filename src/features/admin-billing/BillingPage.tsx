@@ -129,7 +129,7 @@ export default function BillingPage() {
           <Card as="section" aria-label={BILLING_TEXT.monthPicker}>
             <MonthBars
               compact
-              bars={overview.data.monthly.filter((entry) => lastMonths(current, 6).includes(entry.month))}
+              bars={overview.data.monthly.filter((entry) => lastMonths(current, 6).includes(entry.month)).map((entry) => ({ month: entry.month, value: entry.revenueCop }))}
               selected={month}
               current={current}
               onSelect={(next) => update({ mes: next })}

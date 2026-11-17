@@ -48,7 +48,7 @@ describe('OverviewPage', () => {
 
   it('gives each chart its text for a screen reader, and reads «Sin datos» for a missing rate', async () => {
     renderOverview()
-    expect(await screen.findByRole('table', { name: 'De la reserva a la mesa' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Resultado de las reservas' })).toBeInTheDocument()
     expect(await screen.findByRole('table', { name: 'Días de la semana' })).toBeInTheDocument()
   })
 

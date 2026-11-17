@@ -42,3 +42,26 @@ export function formatBogotaDateTime(iso: string): string {
 
 /** Days of the week as the API numbers them: 1 = Monday … 7 = Sunday. */
 export const WEEKDAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as const
+
+const LONG_MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] as const
+
+/** `'2026-11-08'` → «8 de noviembre». */
+export function formatDayMonth(day: string): string {
+  const [, month, date] = day.split('-').map(Number)
+  return `${date} de ${LONG_MONTHS[month - 1]}`
+}
+
+/** `'2026-11-08'` → «Domingo 8 de noviembre» (the weekday of that Bogotá day, whatever the device's zone). */
+export function formatLongDay(day: string): string {
+  const [year, month, date] = day.split('-').map(Number)
+  const weekday = WEEKDAY_NAMES[(new Date(Date.UTC(year, month - 1, date)).getUTCDay() + 6) % 7]
+  return `${weekday} ${formatDayMonth(day)}`
+}
+
+/** A moment (ISO 8601 UTC) as Bogotá clock: «11:56 a. m.». */
+export function formatBogotaTime(iso: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(iso))
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value)
+  const hour = get('hour')
+  return `${hour % 12 === 0 ? 12 : hour % 12}:${String(get('minute')).padStart(2, '0')} ${hour < 12 ? 'a. m.' : 'p. m.'}`
+}

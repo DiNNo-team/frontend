@@ -37,7 +37,7 @@ export const BILLING_TEXT = {
   // Detail
   chargeFormula: (count: number, fee: string) => `${count} ${count === 1 ? 'check-in' : 'check-ins'} × ${fee}`,
   chargeMixed: (count: number) => `${count} ${count === 1 ? 'check-in' : 'check-ins'}, cada uno con la tarifa que tenía ese día`,
-  whyTitle: 'Por qué se cobra',
+  whyTitle: 'Cómo se calcula el cobro',
   why: 'Cada check-in es un comensal que llegó con su reserva de DiNNo. Las reservas canceladas o vencidas no se cobran.',
   checkInsTitle: 'Check-ins del mes',
   checkInsCaption: 'Check-ins del mes',

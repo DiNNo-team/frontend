@@ -1,13 +1,15 @@
 import { useSearchParams } from 'react-router'
-import { Button, EmptyState, PageHeader, Skeleton } from '@/components/ui'
-import { useDelayedFlag } from '@/lib/use-delayed-flag'
-import { BillingDetail } from './components/BillingDetail'
-import { BillingHero } from './components/BillingHero'
+import { EmptyState, PageHeader } from '@/components/ui'
+import { BlockState } from '@/features/admin-overview/components/BlockState'
+import { CalendarSection } from './components/CalendarSection'
+import { DemandBlock } from './components/DemandBlock'
+import { GuestsAndPayment } from './components/GuestsAndPayment'
+import { GuestsByMonth } from './components/GuestsByMonth'
+import { PaymentDetail } from './components/PaymentDetail'
 import { PeriodSelector, type PeriodPreset } from './components/PeriodSelector'
-import { ReservationsStory } from './components/ReservationsStory'
-import { RhythmSection } from './components/RhythmSection'
+import { ReservationStatus } from './components/ReservationStatus'
 import { useSummaryQuery } from './hooks'
-import { describeReportError, SUMMARY_TEXT } from './messages'
+import { SUMMARY_TEXT } from './messages'
 import { bogotaToday, previousMonth, thisMonth, validatePeriod } from './period'
 import type { PeriodRange } from './types'
 
@@ -21,27 +23,12 @@ function resolveRange(preset: PeriodPreset, today: string, params: URLSearchPara
   return { from: params.get('desde') ?? '', to: params.get('hasta') ?? '' }
 }
 
-function SummarySkeleton() {
-  return (
-    <div aria-busy="true" className="flex flex-col gap-8">
-      <span role="status" className="sr-only">
-        Cargando el resumen
-      </span>
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-14 w-72" />
-        <Skeleton className="h-5 w-64" />
-      </div>
-      <Skeleton className="h-3 w-full" />
-      <Skeleton radius="card" className="h-32" />
-    </div>
-  )
-}
-
 /**
- * `/resumen` (CLAUDE.md §12.12): what DiNNo brings the restaurant and what is owed for it, by period. One big figure
- * («A cobrar»), the story of the period's reservations in a bar and a few lines, the rhythm (peak hours, busiest days) and
- * the check-ins behind the figure. Sections are told apart by space and hairlines, not by a grid of cards.
+ * `/resumen` (CLAUDE.md §12.12 and docs/restaurant-summary-contract.md): what DiNNo brought the restaurant, how the reservations
+ * went and what it pays, by period. Five blocks in this order: guests and payment · calendar and the day · guests by month and
+ * the state of the reservations · hours of most demand · detail of the payment. The first four read the same answer
+ * (`/summary`), so they load and fail together; the detail of the payment and the check-ins of a day ask on their own and fail
+ * on their own. Sections are cards on the sheet, as in the rest of the dashboard.
  */
 export default function SummaryPage() {
   const [params, setParams] = useSearchParams()
@@ -51,7 +38,6 @@ export default function SummaryPage() {
   const rangeProblem = preset === 'custom' ? validatePeriod(range, today) : undefined
   const period = rangeProblem ? null : range
   const summary = useSummaryQuery(period)
-  const showSkeleton = useDelayedFlag(summary.isPending && period !== null)
   const data = summary.data
 
   function changePreset(next: PeriodPreset) {
@@ -67,36 +53,26 @@ export default function SummaryPage() {
 
   let body
   if (period === null) {
+    body = <EmptyState variant="error" title={SUMMARY_TEXT.invalidPeriod} description={rangeProblem} />
+  } else {
     body = (
-      <EmptyState
-        variant="error"
-        title={SUMMARY_TEXT.invalidPeriod}
-        description={rangeProblem}
-      />
-    )
-  } else if (data) {
-    body = (
-      <div className="flex flex-col gap-10 divide-y divide-line *:pt-10 first:*:pt-0">
-        <BillingHero billing={data.billing} />
-        <ReservationsStory summary={data} />
-        <RhythmSection summary={data} />
-        <BillingDetail key={`${period.from}-${period.to}`} period={period} />
+      <div className="flex flex-col gap-5">
+        <BlockState query={summary} skeleton="h-96" loadingLabel={SUMMARY_TEXT.loading}>
+          {data && (
+            <>
+              <GuestsAndPayment summary={data} />
+              <CalendarSection summary={data} />
+              <div className="grid items-start gap-5 lg:grid-cols-2">
+                <GuestsByMonth months={data.monthly} />
+                <ReservationStatus reservations={data.reservations} />
+              </div>
+              <DemandBlock summary={data} />
+            </>
+          )}
+        </BlockState>
+        <PaymentDetail key={`${period.from}-${period.to}`} period={period} />
       </div>
     )
-  } else if (summary.isError) {
-    body = (
-      <EmptyState
-        variant="error"
-        title={describeReportError(summary.error, SUMMARY_TEXT.loadError)}
-        action={
-          <Button variant="secondary" onClick={() => void summary.refetch()}>
-            {SUMMARY_TEXT.retry}
-          </Button>
-        }
-      />
-    )
-  } else {
-    body = showSkeleton ? <SummarySkeleton /> : <div aria-busy="true" className="min-h-64" />
   }
 
   return (
