@@ -25,6 +25,9 @@ const EXPECTED: Record<Status, string> = {
   'billing-in-progress': 'En curso',
   'billing-pending': 'Pendiente',
   'billing-paid': 'Cobrado',
+  'payment-in-progress': 'En curso',
+  'payment-pending': 'Pendiente',
+  'payment-paid': 'Pagado',
 }
 
 describe('StatusChip', () => {

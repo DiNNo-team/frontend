@@ -4,7 +4,7 @@ import { ApiError, getApiErrorMessage } from '@/lib/api-client'
 
 export const OVERVIEW_TEXT = {
   title: 'Resumen',
-  description: 'Lo que DiNNo ha cobrado, cómo se mueven las reservas y qué restaurantes aportan más.',
+  description: 'Cobros, reservas y restaurantes del mes.',
   retry: 'Intentar de nuevo',
   loadError: 'No pudimos cargar esta información. Revisa tu conexión e intenta de nuevo.',
   loadingFirst: 'Cargando el resumen. La primera vez puede tardar un poco.',
@@ -23,12 +23,12 @@ export const OVERVIEW_TEXT = {
   inProgressNote: 'se cobra al cerrar el mes',
   pendingClosedLabel: 'Pendiente de meses cerrados',
   restaurantsCount: (count: number) => `${count} ${count === 1 ? 'restaurante' : 'restaurantes'}`,
-  allPaid: 'Todo al día',
+  allPaid: 'Sin saldos pendientes',
   nothingToBill: 'Sin check-ins este mes',
   billingBarLabel: (paid: string, pending: string) => `Cobrado ${paid}, pendiente ${pending}`,
   // Monthly bars
   monthsTitle: 'Ingresos por mes',
-  monthsHint: 'Toca un mes para ver su detalle',
+  monthsHint: 'Selecciona un mes para ver su detalle',
   monthButton: (month: string, amount: string, inProgress: boolean) => `${month}: ${amount}${inProgress ? ', en curso' : ''}`,
   monthsGroup: 'Meses',
   emptyMonths: 'Aún no hay check-ins en estos meses',
@@ -49,7 +49,7 @@ export const OVERVIEW_TEXT = {
   weekdaysDescription: (month: string) => `Reservas de ${month}, de más a menos`,
   average: (value: string) => `prom. ${value}`,
   // Flow
-  flowTitle: 'De la reserva a la mesa',
+  flowTitle: 'Resultado de las reservas',
   conversion: 'Conversión',
   created: (count: number) => `${count} ${count === 1 ? 'reserva creada' : 'reservas creadas'}`,
   arrived: (count: number) => `${count} ${count === 1 ? 'llegó' : 'llegaron'}`,
@@ -59,7 +59,7 @@ export const OVERVIEW_TEXT = {
   flowNoData: 'Sin datos',
   flowEmpty: 'Aún no hay reservas este mes',
   // Pulse
-  pulseTitle: 'Pulso por hora',
+  pulseTitle: 'Reservas por hora',
   pulseHint: 'Reservas creadas, por día de la semana y hora (de 7 a. m. a 10 p. m.)',
   pulseKeys: 'Usa las flechas para recorrer las horas.',
   pulseCell: (day: string, hour: string, count: number) => `${day}, ${hour} · ${count} ${count === 1 ? 'reserva' : 'reservas'}`,

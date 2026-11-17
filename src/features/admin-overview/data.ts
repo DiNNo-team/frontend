@@ -101,34 +101,8 @@ export function dailySeries(byDate: PlatformMetrics['byDate'], month: string): D
   return { bars, average, best: bars.find((bar) => bar.kind === 'best') ?? null }
 }
 
-export const HEAT_HOURS = { from: 7, to: 22 } as const
-export const HEAT_LEVELS = 5
-
-/** The position of a weekday (1 = Monday) and hour in `byDayHour`. */
-export function heatIndex(dayOfWeek: number, hour: number): number {
-  return (dayOfWeek - 1) * 24 + hour
-}
-
-export interface HeatCell {
-  dayOfWeek: number
-  hour: number
-  reservations: number
-  /** 0 = none; 1 to 5 from the quietest to the busiest of the grid shown. */
-  level: number
-}
-
-/** The grid of the pulse: 7 days × the hours from 7 a. m. to 10 p. m., each with its tone (0 to 5). */
-export function heatGrid(byDayHour: PlatformMetrics['byDayHour']): HeatCell[][] {
-  const hours = Array.from({ length: HEAT_HOURS.to - HEAT_HOURS.from + 1 }, (_, offset) => HEAT_HOURS.from + offset)
-  const max = Math.max(0, ...hours.flatMap((hour) => Array.from({ length: 7 }, (_, day) => byDayHour[heatIndex(day + 1, hour)]?.reservations ?? 0)))
-  return Array.from({ length: 7 }, (_, day) =>
-    hours.map((hour) => {
-      const reservations = byDayHour[heatIndex(day + 1, hour)]?.reservations ?? 0
-      const level = reservations === 0 || max === 0 ? 0 : Math.max(1, Math.ceil((reservations / max) * HEAT_LEVELS))
-      return { dayOfWeek: day + 1, hour, reservations, level }
-    }),
-  )
-}
+// The grid itself is shared with the restaurant's summary (features/summary/heat.ts).
+export { HEAT_HOURS, HEAT_LEVELS, heatGrid, heatIndex, type HeatCell } from '../summary/heat'
 
 /** One phrase for the pulse: lunch and dinner when the busiest hours are those, otherwise the busiest hour. */
 export function pulseSummary(peakHours: PlatformMetrics['peakHours']): string | null {
