@@ -5,6 +5,15 @@
 
 ---
 
+## 17 nov 2026 · Santiago · Matriz de pruebas del Sprint 4
+
+- **Qué hay:** `docs/qa/matriz-sprint4.md`, con el mismo formato de la del Sprint 3. Casos de notificaciones, informe de IA (API y pantalla), estado de cuenta, flujos completos, humo y regresión en Azure, concurrencia, red, carga, seguridad y la revisión final.
+- **Cada quien llena solo sus filas:** Santiago (N, IA, F), Sergio (IW, E), Jacobo (H, C, R, L, S), Elizabeth y Sebastián (D, después de que Jacobo avise). Evidencias con el prefijo `s4-` en `docs/qa/evidencias/img/`.
+- **Por confirmar** (sección 10 de la matriz): URLs de Azure, ruta de la pantalla de IA, llave del modelo en Key Vault, vigencia corta en Azure, cuentas de comensal extra, adaptador de Redis y datos para la IA después de `demo:reset`.
+- Sin cambios de código, dependencias ni variables.
+
+---
+
 ## 17 nov 2026 · Elizabeth · Panel del administrador en la web: Resumen, Solicitudes, Restaurantes y Cobros, y restaurante suspendido (Sprint 4, rama `feat/sprint4-admin-panel`)
 
 - **Pantallas nuevas** (solo `platform_admin`, protegidas por `AccessGuard`): `/admin` es ahora el **Resumen** (ingresos por mes como selector, reservas por día, días de la semana, de la reserva a la mesa, pulso por hora y restaurantes del mes); **Solicitudes** pasó a `/admin/solicitudes` y gana el segmento «Suspendidas» y las acciones `Suspender restaurante` / `Reactivar restaurante`; **Restaurantes** (`/admin/restaurantes`) y **Cobros** (`/admin/cobros` y `/admin/cobros/:restaurantId?mes=`, con `Marcar como cobrado` y `Deshacer cobro`). Un enlace viejo `/admin?estado=…` se redirige a `/admin/solicitudes`.
