@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiNNo · Referencia de diseño · Panel del administrador (Resumen)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<!--
+  REFERENCIA VISUAL, NO CÓDIGO DE PRODUCCIÓN.
+  Datos de ejemplo. Los colores van en hex solo para que este archivo funcione solo;
+  en el repo se usan los tokens del manual (bg, surface, surface-2, fg, fg-2, line, accent, accent-text, ok, limited, info...).
+  Abre con ?theme=dark para el modo oscuro.
+-->
+<style>
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+button{font-family:inherit}
+a{text-decoration:none}
+button:focus-visible,a:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(244,105,53,.5)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+var state = { theme: new URLSearchParams(location.search).get('theme') === 'dark' ? 'dark' : 'light', sel: 5, dd: null, hd: null };
+var fmt = function (n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+var T = {
+  light: { bg:'#FAF7F1', card:'#FFFFFF', card2:'#F2EFE8', text:'#10252B', text2:'#5E6B70', border:'#E2E6E3', border2:'#8A9699',
+    accent:'#F46935', accentText:'#B83F14', ok:'#2B8F62', onOk:'#FFFFFF', limited:'#B7801F', info:'#1D5661', onInfo:'#FAF7F1',
+    barMuted:'#CBD5D3', barStrong:'#1D5661', hatchA:'#1D5661', hatchB:'#5C8790',
+    hatch:'repeating-linear-gradient(135deg,#6E7C80 0 6px,#9AA5A7 6px 12px)', onHatch:'#FFFFFF', cancel:'#E2E6E3',
+    navActiveBg:'#103B46', navActiveText:'#FAF7F1', shadow:'0 1px 2px rgba(16,37,43,.05),0 10px 28px -12px rgba(16,37,43,.18)',
+    ramp:['#F2EFE8','#DCE4E2','#A9C0BF','#F2C3A4','#F79A6C','#F46935'], ring:'#10252B', muted:'#8FA2A5' },
+  dark: { bg:'#0B2D36', card:'#103B46', card2:'#164853', text:'#FAF7F1', text2:'#A9BDC0', border:'#24525D', border2:'#5E8A93',
+    accent:'#FF8456', accentText:'#FF8456', ok:'#3FBF86', onOk:'#0B2D36', limited:'#E0A93B', info:'#1D5661', onInfo:'#FAF7F1',
+    barMuted:'#2C5862', barStrong:'#7FC1CB', hatchA:'#7FC1CB', hatchB:'#3E6E77',
+    hatch:'repeating-linear-gradient(135deg,#8DA0A4 0 6px,#5C7177 6px 12px)', onHatch:'#0B2D36', cancel:'#2C5862',
+    navActiveBg:'#1D5661', navActiveText:'#FAF7F1', shadow:'none',
+    ramp:['#0F3540','#1A5662','#2F7174','#8E7A55','#D57744','#FF8456'], ring:'#FAF7F1', muted:'#5E8A93' }
+};
+var months = [
+  { s:'Jun', l:'junio', c:18, conv:.62, days:30, js:5 }, { s:'Jul', l:'julio', c:42, conv:.66, days:31, js:6 },
+  { s:'Ago', l:'agosto', c:96, conv:.68, days:31, js:7 }, { s:'Sep', l:'septiembre', c:151, conv:.70, days:30, js:8 },
+  { s:'Oct', l:'octubre', c:238, conv:.72, days:31, js:9 }, { s:'Nov', l:'noviembre', c:187, res:262, days:30, js:10, live:true, upto:17 }
+];
+months.forEach(function (m) { if (!m.res) m.res = Math.round(m.c / m.conv); });
+var dayNames = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+var short = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+var hourly = [1,3,6,6,8,15,34,40,29,9,6,8,14,25,29,19];
+function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function hourTxt(h){ var hh = h % 12 === 0 ? 12 : h % 12; return hh + (h < 12 ? ' a. m.' : ' p. m.'); }
+
+function render() {
+  var t = T[state.theme], isDark = state.theme === 'dark', sel = state.sel, m = months[sel], FEE = 2000, total = m.c * FEE;
+  var card = 'background:'+t.card+';border:1px solid '+t.border+';border-radius:24px;padding:28px;box-shadow:'+t.shadow+';display:flex;flex-direction:column;gap:16px;box-sizing:border-box;min-width:0';
+  var label = 'font-size:11px;line-height:14px;letter-spacing:.08em;font-weight:700;text-transform:uppercase;color:'+t.text2;
+  var h2 = 'margin:0;font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.02em';
+  var chip = {
+    paid:{ label:'Cobrado', bg:isDark?'rgba(63,191,134,.18)':'rgba(43,143,98,.15)', shape:'width:8px;height:8px;border-radius:999px;background:'+t.ok+';display:inline-block' },
+    pend:{ label:'Pendiente', bg:isDark?'rgba(224,169,59,.18)':'rgba(183,128,31,.15)', shape:'width:7px;height:7px;transform:rotate(45deg);background:'+t.limited+';display:inline-block' },
+    live:{ label:'En curso', bg:isDark?'rgba(127,193,203,.16)':'rgba(29,86,97,.12)', shape:'width:8px;height:8px;border-radius:999px;border:2px solid '+t.barStrong+';box-sizing:border-box;display:inline-block' }
+  };
+  var hatchBg = 'repeating-linear-gradient(135deg,'+t.hatchA+' 0 6px,'+t.hatchB+' 6px 12px)';
+
+  // Barras de meses
+  var barsHtml = months.map(function (x, i) {
+    var on = i === sel, bg = on ? t.accent : (x.live ? hatchBg : t.barMuted);
+    return '<button type="button" data-sel="'+i+'" aria-pressed="'+on+'" aria-label="'+x.l+': $ '+fmt(x.c*FEE)+'" style="background:none;border:none;padding:0;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:100%;color:inherit">'+
+      '<span style="font-size:12px;font-weight:700;color:'+(on?t.accentText:t.text2)+';font-variant-numeric:tabular-nums">$ '+fmt(x.c*FEE)+'</span>'+
+      '<span style="display:block;height:'+Math.round(x.c/238*190)+'px;background:'+bg+';border-radius:10px 10px 0 0"></span></button>';
+  }).join('');
+  var barLabels = months.map(function (x, i) { var on = i === sel;
+    return '<span style="font-size:14px;font-weight:700;color:'+(on?t.text:t.text2)+'">'+x.s+(x.live?' <span style="font-weight:500;font-size:12px;color:'+t.text2+'">· en curso</span>':'')+'</span>'; }).join('');
+
+  var compare = m.live ? 'día 17 de 30 · octubre cerró en $ '+fmt(months[4].c*FEE) : (sel===0 ? 'primer mes del piloto' : '+'+Math.round((m.c-months[sel-1].c)/months[sel-1].c*100)+' % frente a '+months[sel-1].l);
+
+  // Restaurantes y cobro
+  var shares = [['Abasto Usaquén',.22],['Casa 72',.19],['Al Alma Parque 93',.175],['Sipote Burrito Andino',.155],['Casa 45',.145]];
+  var used = 0, raw = shares.map(function (s) { var c = Math.round(m.c*s[1]); used += c; return { name:s[0], c:c, share:s[1] }; });
+  raw.push({ name:'Otros 9 restaurantes', c:m.c-used, share:null });
+  var paid = 0, pend = 0, pendCount = 0;
+  var rowsHtml = raw.map(function (r, i) {
+    var k = m.live ? 'live' : (sel===4 && i>=4 ? 'pend' : 'paid');
+    if (k==='paid') paid += r.c*FEE; if (k==='pend') { pend += r.c*FEE; pendCount++; }
+    var serie = months.map(function (x) { return r.share==null ? Math.round(x.c*.115) : Math.round(x.c*r.share*[1,1.08,.92,1.04,.96][i]); });
+    serie[sel] = r.c;
+    var mx = Math.max.apply(null, serie) || 1;
+    var pts = serie.map(function (v, k2) { return [6+k2*25.6, 32-v/mx*26]; });
+    return '<a href="#" style="display:grid;grid-template-columns:52px 2fr 150px 1fr 1fr 1fr 110px;gap:16px;align-items:center;min-height:64px;border-top:1px solid '+t.border+';color:'+t.text+'">'+
+      '<span style="font-size:24px;font-weight:800;color:'+(i===0?t.accentText:t.muted)+';font-variant-numeric:tabular-nums">'+String(i+1).padStart(2,'0')+'</span>'+
+      '<span style="font-size:16px;font-weight:700">'+r.name+'</span>'+
+      '<svg width="140" height="36" viewBox="0 0 140 36" role="img" aria-label="Check-ins de junio a noviembre: '+serie.join(', ')+'"><polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="'+t.barStrong+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[sel][0].toFixed(1)+'" cy="'+pts[sel][1].toFixed(1)+'" r="4" fill="'+t.accent+'"/></svg>'+
+      '<span style="font-size:14px;color:'+t.text2+';font-variant-numeric:tabular-nums;text-align:right">'+r.c+' check-ins</span>'+
+      '<span style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;text-align:right">$ '+fmt(r.c*FEE)+'</span>'+
+      '<span><span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:'+chip[k].bg+';font-size:12px;font-weight:700"><span style="'+chip[k].shape+'"></span>'+chip[k].label+'</span></span>'+
+      '<span style="text-align:right;font-size:14px;font-weight:700;color:'+t.accentText+'">Ver detalle →</span></a>';
+  }).join('');
+  var segments = m.live ? [
+    { label:'En curso', amount:fmt(total), sub:'se cobra al cerrar el mes', w:'100%', bg:hatchBg, shape:chip.live.shape, color:t.text },
+    { label:'Pendiente de meses cerrados', amount:'124.000', sub:'2 restaurantes', w:'0%', bg:'transparent', shape:chip.pend.shape, color:t.limited }
+  ] : [
+    { label:'Cobrado', amount:fmt(paid), sub:(raw.length-pendCount)+' restaurantes', w:(paid/total*100)+'%', bg:t.ok, shape:chip.paid.shape, color:t.text },
+    { label:'Pendiente', amount:fmt(pend), sub:pendCount?pendCount+' restaurantes':'nada pendiente', w:(pend/total*100)+'%', bg:t.limited, shape:chip.pend.shape, color:pend?t.limited:t.text }
+  ];
+  var segBar = segments.map(function (s) { return '<span style="width:'+s.w+';background:'+s.bg+'"></span>'; }).join('');
+  var segText = segments.map(function (s) {
+    return '<div style="flex:1 1 120px;padding:14px 16px 0 0;display:flex;flex-direction:column;gap:4px">'+
+      '<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:'+t.text2+';font-weight:700"><span style="'+s.shape+'"></span>'+s.label+'</span>'+
+      '<span style="font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;color:'+s.color+'">$ '+s.amount+'</span>'+
+      '<span style="font-size:12px;color:'+t.text2+'">'+s.sub+'</span></div>';
+  }).join('');
+
+  // Reservas por día
+  var dowW = [29,28,31,35,40,52,47], upto = m.live ? m.upto : m.days, weights = [];
+  for (var d = 1; d <= upto; d++) { var wd = new Date(2026, m.js, d).getDay(); weights.push(dowW[wd]*(1+0.25*d/m.days)*(1+(((d*37)%11)-5)/40)); }
+  var sumW = weights.reduce(function(a,b){return a+b;},0), exact = weights.map(function(w){return w/sumW*m.res;}), vals = exact.map(Math.floor);
+  var rem = m.res - vals.reduce(function(a,b){return a+b;},0);
+  exact.map(function(e,i){return [e-Math.floor(e),i];}).sort(function(a,b){return b[0]-a[0];}).slice(0,rem).forEach(function(p){vals[p[1]]++;});
+  var maxV = Math.max.apply(null, vals), topIdx = vals.indexOf(maxV), avg = m.res/upto;
+  var dd = state.dd != null && state.dd < upto ? state.dd : topIdx;
+  var dailyBars = '', dailyLabels = '';
+  for (var j = 0; j < m.days; j++) {
+    var future = j >= upto, v = future ? 0 : vals[j], wdj = new Date(2026, m.js, j+1).getDay();
+    var bg = future ? 'transparent' : (j===topIdx ? t.accent : (v>=avg ? t.barStrong : t.barMuted));
+    dailyBars += '<span '+(future?'':'data-dd="'+j+'"')+' title="'+(future?(j+1)+' '+m.l+': aún no llega':dayNames[wdj]+' '+(j+1)+': '+v+' reservas')+'" style="height:'+(future?8:Math.max(4,Math.round(v/maxV*150)))+'px;background:'+bg+';border:'+(future?'1.5px dashed '+t.border2:'none')+';box-sizing:border-box;border-radius:4px 4px 0 0;outline:'+(!future&&j===dd?'2px solid '+t.ring:'none')+';outline-offset:1px"></span>';
+    dailyLabels += '<span style="text-align:center">'+((j===0||(j+1)%5===0)?(j+1):'')+'</span>';
+  }
+  var ddWd = new Date(2026, m.js, dd+1).getDay();
+  var dayReadout = cap(dayNames[ddWd])+' '+(dd+1)+' · '+vals[dd]+' reservas'+(dd===topIdx?' · mejor día':'');
+
+  // Días de la semana
+  var wkTot=[0,0,0,0,0,0,0], wkCnt=[0,0,0,0,0,0,0];
+  for (var q = 0; q < upto; q++) { var wq = new Date(2026, m.js, q+1).getDay(); wkTot[wq]+=vals[q]; wkCnt[wq]++; }
+  var order = [1,2,3,4,5,6,0], wkMax = Math.max.apply(null, wkTot);
+  var weekHtml = order.map(function (w) { return { w:w, v:wkTot[w], avg:wkCnt[w]?Math.round(wkTot[w]/wkCnt[w]):0 }; })
+    .sort(function(a,b){return b.v-a.v;}).map(function (x) { var top = x.v===wkMax;
+      return '<div style="display:grid;grid-template-columns:82px 1fr 64px;gap:12px;align-items:center">'+
+        '<span style="font-size:14px;font-weight:700;color:'+(top?t.accentText:t.text)+'">'+cap(dayNames[x.w])+'</span>'+
+        '<span style="display:block;height:16px;border-radius:999px;background:'+t.card2+';overflow:hidden"><span style="display:block;height:100%;width:'+Math.round(x.v/wkMax*100)+'%;background:'+(top?t.accent:t.barStrong)+';border-radius:999px"></span></span>'+
+        '<span style="text-align:right;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums">'+x.v+'<span style="display:block;font-size:11px;font-weight:500;color:'+t.text2+'">prom. '+x.avg+'</span></span></div>'; }).join('');
+
+  // Embudo
+  var expired = m.live ? 44 : Math.round((m.res-m.c)*.58), cancelled = m.res-m.c-expired;
+
+  // Pulso por hora
+  var hSum = hourly.reduce(function(a,b){return a+b;},0), hMax = wkMax*40/hSum, hd = state.hd;
+  var heatHtml = order.map(function (w, r) {
+    return '<div style="display:grid;grid-template-columns:34px repeat(16,minmax(0,1fr));gap:3px;align-items:center"><span style="font-size:11px;font-weight:700;color:'+t.text2+'">'+short[w]+'</span>'+
+      hourly.map(function (hv, k) { var v = wkTot[w]*hv/hSum, idx = v<0.3?0:Math.min(5,Math.ceil(v/hMax*5)), on = hd && hd[0]===r && hd[1]===k;
+        return '<span data-hd="'+r+','+k+'" title="'+dayNames[w]+', '+hourTxt(k+6)+': ~'+Math.round(v)+'" style="height:16px;border-radius:3px;background:'+t.ramp[idx]+';outline:'+(on?'2px solid '+t.ring:'none')+';outline-offset:1px"></span>'; }).join('')+'</div>';
+  }).join('');
+  var heatReadout = hd ? short[order[hd[0]]]+' · '+hourTxt(hd[1]+6)+' · ~'+Math.round(wkTot[order[hd[0]]]*hourly[hd[1]]/hSum)+' reservas' : 'Almuerzo y cena, como se espera';
+
+  var statusDot = m.live ? 'width:8px;height:8px;border-radius:999px;background:'+t.ok+';box-shadow:0 0 0 4px '+(isDark?'rgba(63,191,134,.2)':'rgba(43,143,98,.18)')+';display:inline-block' : 'width:10px;height:2px;background:'+t.text2+';display:inline-block';
+  var navA = function (txt, active, extra) { return '<a href="#" '+(active?'aria-current="page" ':'')+'style="display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:700;'+(active?'background:'+t.navActiveBg+';color:'+t.navActiveText:'color:'+t.text2)+'">'+txt+(extra||'')+'</a>'; };
+  var sun = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var moon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>';
+
+  document.body.style.background = t.bg;
+  document.getElementById('app').innerHTML =
+  '<div style="background:'+t.bg+';color:'+t.text+';min-height:100vh"><div style="max-width:1320px;margin:0 auto;padding:28px 40px 80px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box">'+
+  '<header style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px">'+
+    '<span style="font-size:20px;font-weight:800;letter-spacing:-.02em">Di<span style="color:'+t.accentText+'">NNo</span> <span style="font-size:14px;font-weight:500;color:'+t.text2+';margin-left:8px">Administración</span></span>'+
+    '<nav aria-label="Secciones" style="display:flex;flex-wrap:wrap;gap:4px;background:'+t.card+';border:1px solid '+t.border+';border-radius:999px;padding:4px">'+
+      navA('Resumen',true)+navA('Solicitudes',false,' <span style="background:'+t.accent+';color:#10252B;border-radius:999px;padding:0 7px;font-size:12px">2</span>')+navA('Restaurantes')+navA('Cobros')+'</nav>'+
+    '<div style="display:flex;gap:8px"><button type="button" data-toggle aria-label="'+(isDark?'Cambiar a modo claro':'Cambiar a modo oscuro')+'" style="width:44px;height:44px;border-radius:12px;border:1px solid '+t.border+';background:'+t.card+';color:'+t.text+';cursor:pointer;display:inline-flex;align-items:center;justify-content:center">'+(isDark?sun:moon)+'</button>'+
+    '<button type="button" aria-label="Menú de la cuenta" style="width:44px;height:44px;border-radius:999px;border:none;background:'+t.navActiveBg+';color:'+t.navActiveText+';font-weight:800;font-size:15px">A</button></div>'+
+  '</header>'+
+
+  '<div style="display:flex;flex-wrap:wrap;gap:20px">'+
+    '<section style="'+card+';flex:5 1 400px;justify-content:space-between;gap:24px"><div style="display:flex;flex-direction:column;gap:8px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="'+label+'">Ingresos de '+m.l+'</span><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:'+t.text2+'"><span style="'+statusDot+'"></span>'+(m.live?'En curso':'Mes cerrado')+'</span></div>'+
+      '<span style="font-size:84px;line-height:1;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums"><span style="color:'+t.accent+'">$</span>'+fmt(total)+'</span>'+
+      '<span style="font-size:15px;color:'+t.text2+'"><strong style="color:'+t.text+'">'+m.c+' check-ins</strong> · '+compare+'</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:10px"><div role="img" style="display:flex;height:10px;border-radius:999px;overflow:hidden;background:'+t.card2+'">'+segBar+'</div><div style="display:flex;flex-wrap:wrap;border-top:1px solid '+t.border+'">'+segText+'</div></div></section>'+
+    '<section style="'+card+';flex:7 1 520px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px"><h2 style="'+h2+'">Ingresos por mes</h2><span style="font-size:13px;color:'+t.text2+'">Toca un mes para ver su detalle</span></div>'+
+      '<div role="group" aria-label="Elige un mes" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;align-items:end;height:250px;border-bottom:1px solid '+t.border+'">'+barsHtml+'</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-top:-6px">'+barLabels+'</div></section>'+
+  '</div>'+
+
+  '<div style="display:flex;flex-wrap:wrap;gap:20px">'+
+    '<section style="'+card+';flex:8 1 560px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px"><h2 style="'+h2+'">Reservas por día · '+m.l+'</h2><span aria-live="polite" style="font-size:14px;font-weight:700;color:'+t.accentText+'">'+dayReadout+'</span></div>'+
+      '<div style="display:grid;grid-template-columns:repeat('+m.days+',minmax(0,1fr));gap:3px;align-items:end;height:170px;border-bottom:1px solid '+t.border+'">'+dailyBars+'</div>'+
+      '<div style="display:grid;grid-template-columns:repeat('+m.days+',minmax(0,1fr));gap:3px;font-size:11px;font-weight:700;color:'+t.text2+';margin-top:-8px">'+dailyLabels+'</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;color:'+t.text2+';font-weight:700">'+
+        '<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:'+t.accent+'"></span>Mejor día</span>'+
+        '<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:'+t.barStrong+'"></span>Sobre el promedio ('+(Math.round(avg*10)/10).toString().replace('.',',')+' por día)</span>'+
+        '<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:'+t.barMuted+'"></span>Bajo el promedio</span>'+
+        (m.live?'<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;border:1.5px dashed '+t.border2+';box-sizing:border-box"></span>Días que faltan</span>':'')+
+      '</div></section>'+
+    '<section style="'+card+';flex:4 1 300px"><h2 style="'+h2+'">Días de la semana</h2><span style="font-size:13px;color:'+t.text2+';margin-top:-10px">Reservas de '+m.l+', de más a menos</span><div style="display:flex;flex-direction:column;gap:12px">'+weekHtml+'</div></section>'+
+  '</div>'+
+
+  '<div style="display:flex;flex-wrap:wrap;gap:20px">'+
+    '<section style="'+card+';flex:6 1 460px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px"><h2 style="'+h2+'">De la reserva a la mesa</h2><span style="font-size:14px;color:'+t.text2+'">Conversión <strong style="color:'+t.text+';font-size:20px">'+Math.round(m.c/m.res*100)+' %</strong></span></div>'+
+      '<div role="img" aria-label="'+m.res+' reservas: '+m.c+' llegaron, '+expired+' se vencieron, '+cancelled+' se cancelaron" style="display:flex;flex-direction:column;gap:6px">'+
+        '<div style="height:44px;border-radius:10px;background:'+t.info+';color:'+t.onInfo+';display:flex;align-items:center;padding:0 16px;font-weight:800;font-size:15px">'+m.res+' reservas creadas</div>'+
+        '<div style="display:flex;gap:6px;height:44px"><span style="flex:'+m.c+' 1 0;border-radius:10px;background:'+t.ok+';color:'+t.onOk+';display:flex;align-items:center;padding:0 16px;font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden">'+m.c+' llegaron</span>'+
+        '<span style="flex:'+expired+' 1 0;border-radius:10px;background:'+t.hatch+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:'+t.onHatch+'">'+expired+'</span>'+
+        '<span style="flex:'+cancelled+' 1 0;border-radius:10px;background:'+t.cancel+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:'+t.text+'">'+cancelled+'</span></div></div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;color:'+t.text2+';font-weight:700"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:999px;background:'+t.ok+'"></span>Llegaron (se cobra)</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:'+t.hatch+'"></span>Se vencieron</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:12px;height:3px;background:'+t.text2+'"></span>Se cancelaron</span></div></section>'+
+    '<section style="'+card+';flex:6 1 460px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px"><h2 style="'+h2+'">Pulso por hora</h2><span aria-live="polite" style="font-size:13px;font-weight:700;color:'+t.accentText+'">'+heatReadout+'</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:3px">'+heatHtml+
+      '<div style="display:grid;grid-template-columns:34px repeat(16,minmax(0,1fr));gap:3px;font-size:11px;color:'+t.text2+';font-weight:700;margin-top:4px"><span></span><span style="grid-column:2 / span 4">7 a. m.</span><span style="grid-column:6 / span 4">11 a. m.</span><span style="grid-column:10 / span 4">3 p. m.</span><span style="grid-column:14 / span 4">7 p. m.</span></div></div></section>'+
+  '</div>'+
+
+  '<section style="'+card+';gap:4px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px"><h2 style="'+h2+'">Restaurantes en '+m.l+'</h2><span style="font-size:13px;color:'+t.text2+'">Línea: check-ins de los últimos 6 meses · el punto es el mes elegido</span></div>'+
+    '<div style="overflow-x:auto"><div style="min-width:780px;display:flex;flex-direction:column">'+rowsHtml+'</div></div></section>'+
+  '<footer style="font-size:12px;color:'+t.text2+'">Referencia de diseño con datos de ejemplo. Tarifa de referencia: $ 2.000 por check-in.</footer>'+
+  '</div></div>';
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sel]'); if (b) { state.sel = +b.getAttribute('data-sel'); state.dd = null; state.hd = null; render(); return; }
+  if (e.target.closest('[data-toggle]')) { state.theme = state.theme === 'dark' ? 'light' : 'dark'; render(); return; }
+  if (e.target.closest('a[href="#"]')) e.preventDefault();
+});
+document.addEventListener('mouseover', function (e) {
+  var d = e.target.closest('[data-dd]'); if (d) { var v = +d.getAttribute('data-dd'); if (state.dd !== v) { state.dd = v; render(); } return; }
+  var h = e.target.closest('[data-hd]'); if (h) { var p = h.getAttribute('data-hd').split(',').map(Number); if (!state.hd || state.hd[0] !== p[0] || state.hd[1] !== p[1]) { state.hd = p; render(); } }
+});
+render();
+</script>
+</body>
+</html>

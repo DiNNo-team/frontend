@@ -20,6 +20,12 @@ const EMPTY_TITLE: Record<ReviewStatus, string> = {
   pending: ADMIN_TEXT.emptyPending,
   approved: ADMIN_TEXT.emptyApproved,
   rejected: ADMIN_TEXT.emptyRejected,
+  suspended: ADMIN_TEXT.emptySuspended,
+}
+
+const EMPTY_DESCRIPTION: Partial<Record<ReviewStatus, string>> = {
+  pending: ADMIN_TEXT.emptyPendingDescription,
+  suspended: ADMIN_TEXT.emptySuspendedDescription,
 }
 
 /** When it happened, in words: a pending request counts from when it arrived, a reviewed one from its review. */
@@ -91,7 +97,7 @@ export function RequestsTable({ status, rows, total, page, loading, selectedId, 
         emptyState={
           <EmptyState
             title={EMPTY_TITLE[status]}
-            description={status === 'pending' ? ADMIN_TEXT.emptyPendingDescription : undefined}
+            description={EMPTY_DESCRIPTION[status]}
           />
         }
       />

@@ -1,6 +1,8 @@
 import { ApiError } from '@/lib/api-client'
 import { mockFailIfAsked, mockParams, mockWait } from '@/lib/mock-env'
+import type { ApprovalStatus } from '@/features/restaurant/types'
 import type { AdminApi } from './api'
+import { MOCK_PANEL_ROWS, MOCK_SUSPENDED_INDEX, mockRestaurantId } from './mock-restaurants'
 import type { AdminListParams, AdminRestaurantDetail, AdminRestaurantItem, AdminRestaurantPage } from './types'
 
 // Stand-in for the review endpoints with VITE_USE_MOCKS=true. Empty: ?mockEmpty · errors: ?mockError=admin-list,
@@ -11,7 +13,7 @@ const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISO
 const SCHEDULE = [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({ dayOfWeek, isOpen24h: false, opensAt: '12:00', closesAt: '21:00' }))
 
 function seed(): AdminRestaurantDetail[] {
-  const base = { latitude: 4.6533, longitude: -74.0836, schedules: SCHEDULE, rejectionReason: null, reviewedByEmail: null, reviewedAt: null }
+  const base = { latitude: 4.6533, longitude: -74.0836, schedules: SCHEDULE, rejectionReason: null, reviewedByEmail: null, reviewedAt: null, suspensionReason: null, suspendedAt: null, suspendedByEmail: null }
   const pending = [
     ['Casa Tamarindo', 'colombian', 'Carrera 7 # 72-41, Bogotá', '+573001234567', 'tamarindo@correo.test', 6],
     ['Trattoria Nonna Pía', 'italian', 'Calle 85 # 12-30, Bogotá', '+573105550101', 'pia@correo.test', 3],
@@ -23,7 +25,28 @@ function seed(): AdminRestaurantDetail[] {
     ['Café Quinta', 'cafe', 'Calle 70A # 5-22, Bogotá', '+573125550505', 'cafe@correo.test', 'approved', 9, null],
     ['Mar y Sol', 'seafood', 'Carrera 11 # 93-40, Bogotá', '+573135550606', 'mar@correo.test', 'rejected', 5, 'La dirección no coincide con la ubicación del mapa. Corrígela y vuelve a enviar la solicitud.'],
   ] as const
+  const operating = MOCK_PANEL_ROWS.map(([name, category], index) => {
+    const suspended = index === MOCK_SUSPENDED_INDEX
+    return {
+      ...base,
+      id: mockRestaurantId(index),
+      name,
+      category,
+      address: 'Carrera 7 # 72-41, Bogotá',
+      contactPhone: `+57300555${String(index).padStart(4, '0')}`,
+      ownerEmail: `dueno${index + 1}@correo.test`,
+      approvalStatus: suspended ? ('suspended' as const) : ('approved' as const),
+      submittedAt: daysAgo(95),
+      createdAt: daysAgo(100),
+      reviewedAt: daysAgo(90),
+      reviewedByEmail: 'admin@dinno.test',
+      suspensionReason: suspended ? 'Varios comensales reportaron que las mesas reservadas no estaban disponibles.' : null,
+      suspendedAt: suspended ? daysAgo(2) : null,
+      suspendedByEmail: suspended ? 'admin@dinno.test' : null,
+    }
+  })
   return [
+    ...operating,
     ...pending.map(([name, category, address, contactPhone, ownerEmail, ago], index) => ({
       ...base, id: `mock-pending-${index + 1}`, name, category, address, contactPhone, ownerEmail, approvalStatus: 'pending' as const, submittedAt: daysAgo(ago), createdAt: daysAgo(ago + 1),
     })),
@@ -49,8 +72,8 @@ async function simulate(operation: 'admin-list' | 'admin-detail' | 'admin-review
 }
 
 function toItem(detail: AdminRestaurantDetail): AdminRestaurantItem {
-  const { latitude, longitude, schedules, rejectionReason, reviewedByEmail, createdAt, ...item } = detail
-  void [latitude, longitude, schedules, rejectionReason, reviewedByEmail, createdAt]
+  const { latitude, longitude, schedules, rejectionReason, reviewedByEmail, createdAt, suspensionReason, suspendedAt, suspendedByEmail, ...item } = detail
+  void [latitude, longitude, schedules, rejectionReason, reviewedByEmail, createdAt, suspensionReason, suspendedAt, suspendedByEmail]
   return item
 }
 
@@ -68,11 +91,27 @@ function review(id: string, changes: Partial<AdminRestaurantDetail>): AdminResta
   return updated
 }
 
+/** The restaurants of the directory (billing and activity mocks) are listed only as suspended: «Aprobadas» keeps the sample requests. */
+const isDirectory = (item: AdminRestaurantDetail) => item.id.startsWith('mock-restaurant-')
+
 function sorted({ status }: Pick<AdminListParams, 'status'>): AdminRestaurantDetail[] {
-  const rows = restaurants.filter((item) => item.approvalStatus === status)
+  const rows = restaurants.filter((item) => item.approvalStatus === status && (status === 'suspended' || !isDirectory(item)))
   return status === 'pending'
     ? rows.sort((a, b) => Date.parse(a.submittedAt) - Date.parse(b.submittedAt))
-    : rows.sort((a, b) => Date.parse(b.reviewedAt ?? '0') - Date.parse(a.reviewedAt ?? '0'))
+    : rows.sort((a, b) => Date.parse(b.suspendedAt ?? b.reviewedAt ?? '0') - Date.parse(a.suspendedAt ?? a.reviewedAt ?? '0'))
+}
+
+/** The approval state of a restaurant of the sample data, for the billing mock (a suspended one is shown as such there). */
+export function mockApprovalOf(id: string): ApprovalStatus | undefined {
+  return restaurants.find((item) => item.id === id)?.approvalStatus
+}
+
+function changeState(id: string, from: ApprovalStatus, changes: Partial<AdminRestaurantDetail>, code: string): AdminRestaurantDetail {
+  const current = find(id)
+  if (current.approvalStatus !== from || mockParams().has('mockConflict')) throw new ApiError({ status: 409, code })
+  const updated = { ...current, ...changes }
+  restaurants = restaurants.map((item) => (item.id === id ? updated : item))
+  return updated
 }
 
 export const mockAdminApi: AdminApi = {
@@ -93,5 +132,18 @@ export const mockAdminApi: AdminApi = {
   async reject(id, reason) {
     await simulate('admin-review')
     return review(id, { approvalStatus: 'rejected', rejectionReason: reason.trim() })
+  },
+  async suspend(id, reason) {
+    await simulate('admin-review')
+    return changeState(
+      id,
+      'approved',
+      { approvalStatus: 'suspended', suspensionReason: reason.trim(), suspendedAt: new Date().toISOString(), suspendedByEmail: 'admin@dinno.test' },
+      'RESTAURANT_NOT_APPROVED',
+    )
+  },
+  async reactivate(id) {
+    await simulate('admin-review')
+    return changeState(id, 'suspended', { approvalStatus: 'approved' }, 'RESTAURANT_NOT_SUSPENDED')
   },
 }
