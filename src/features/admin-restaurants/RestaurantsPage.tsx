@@ -70,7 +70,7 @@ export default function RestaurantsPage() {
   const filtered = filterDirectory(query.data?.items ?? [], filter)
   const visible = filtered.slice((page - 1) * RESTAURANTS_PAGE_SIZE, page * RESTAURANTS_PAGE_SIZE)
 
-  const columns: DataTableColumn<AdminActivityItem>[] = [
+  const allColumns: DataTableColumn<AdminActivityItem>[] = [
     {
       key: 'restaurant',
       header: RESTAURANTS_TEXT.columnRestaurant,
@@ -106,6 +106,10 @@ export default function RestaurantsPage() {
     },
     { key: 'since', header: RESTAURANTS_TEXT.columnSince, mobileLine: 2, className: 'whitespace-nowrap', cell: (item) => formatDate(memberSince(item)) },
   ]
+
+  // With the detail open beside it the list is narrow: it keeps who, in what state and how much; the rest is in the detail.
+  const compact = selectedId !== null && wide
+  const columns = compact ? allColumns.filter((column) => ['restaurant', 'state', 'amount'].includes(column.key)) : allColumns
 
   const emptyTitle = filter === 'suspended' ? RESTAURANTS_TEXT.emptySuspended : filter === 'active' ? RESTAURANTS_TEXT.emptyActive : RESTAURANTS_TEXT.emptyAll
 

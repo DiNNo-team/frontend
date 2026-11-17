@@ -96,6 +96,7 @@ export default function AdminPage() {
   return (
     <>
       <PageHeader title={ADMIN_TEXT.title} description={ADMIN_TEXT.description} />
+      <div className="max-w-full overflow-x-auto">
       <SegmentedControl
         aria-label={ADMIN_TEXT.tabsLabel}
         value={status}
@@ -107,6 +108,7 @@ export default function AdminPage() {
           { value: 'suspended', label: ADMIN_TEXT.tabSuspended, status: REVIEW_STATUS.suspended },
         ]}
       />
+      </div>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">{table}</div>
         {selectedId && wide && (
