@@ -5,6 +5,15 @@
 
 ---
 
+## 16 nov 2026 · Sebastián · La web pasa a Azure Static Web Apps (Sprint 4) · todavía no está activa
+
+- **Qué hay:** `.github/workflows/web-ci-cd.yml` y `public/staticwebapp.config.json`. Todo el detalle está en CLAUDE.md §11, «Despliegue».
+- **Desde que se fusione,** cada PR a `develop` o `main` corre lint, typecheck y pruebas.
+- **El despliegue en Azure** queda listo, pero no funciona hasta que existan el recurso de Static Web Apps, la identidad de OIDC y las variables del repositorio. Lo configura Sebastián. Mientras tanto, Vercel sigue igual.
+- **Cuando cambie el dominio de la web:** hay que agregarlo en Firebase (*Authorized domains*), en la llave de Google Maps y en `CORS_ORIGINS` del backend.
+
+---
+
 ## 16 nov 2026 · Sebastián · Límite de peticiones: texto del 429 y reintento con RATE_LIMITED (Sprint 4, §12.14)
 
 - **El backend ahora limita las peticiones** (backend PR #65). Al pasar un límite responde `429` sin `errorCode`; el WebSocket rechaza una conexión de más con `connect_error` `RATE_LIMITED`.

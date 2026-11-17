@@ -388,6 +388,18 @@ src/
 - **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
 - `VITE_API_URL` se configura en Vercel (Production y Preview) y se incrusta al compilar: si cambia, hay que volver a desplegar.
 - Los PR generan despliegues de vista previa: úsalos para probar antes del merge.
+- **Azure Static Web Apps (Sprint 4, reemplaza a Vercel):** `.github/workflows/web-ci-cd.yml`. En cada PR a `develop` o `main` corre lint, typecheck y pruebas. En cada push a `main` (el PR `develop` → `main`) además compila y sube `dist` a Static Web Apps (plan Free).
+  - **Sin claves en GitHub:** entra a Azure con OIDC (credencial federada, entorno `production`). El token de despliegue se lee en ese momento con `az staticwebapp secrets list` y se oculta en el log.
+  - **Variables del repositorio** (GitHub → Settings → Variables, no secretos): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_STATIC_WEB_APP_NAME` y los `VITE_*` del build. `VITE_API_URL` debe ser `https://`; si no, el despliegue se detiene.
+  - **`public/staticwebapp.config.json`** (Vite lo copia a `dist`):
+    - cualquier ruta sirve `index.html`, igual que `vercel.json`;
+    - cabeceras de seguridad: HSTS, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Permissions-Policy` con la cámara solo para el propio sitio, para el QR;
+    - caché larga para `/assets/*`.
+  - **Al cambiar de dominio**, el dominio nuevo de la web se agrega en tres lugares:
+    - Firebase Authentication → *Authorized domains*;
+    - la restricción de referer de la llave de Google Maps;
+    - `CORS_ORIGINS` del backend.
+  - `vercel.json` se borra cuando Static Web Apps quede como la web oficial.
 
 ---
 
