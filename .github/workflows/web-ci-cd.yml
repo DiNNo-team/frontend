@@ -49,7 +49,9 @@ jobs:
 
   deploy:
     needs: checks
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Skipped (not failed) until the Azure variables exist, so main stays green
+    # while Vercel is still the official site.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
