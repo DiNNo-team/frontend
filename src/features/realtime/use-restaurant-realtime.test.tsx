@@ -133,6 +133,15 @@ describe('useRestaurantRealtime (§12.7)', () => {
     expect(socket.connectCalls).toBe(2)
   })
 
+  it('RATE_LIMITED (too many connections from one network) also retries after 5 s (§12.14)', () => {
+    vi.useFakeTimers()
+    setup()
+    const socket = lastSocket()!
+    act(() => socket.rejectConnection('RATE_LIMITED'))
+    act(() => vi.advanceTimersByTime(5_000))
+    expect(socket.connectCalls).toBe(2)
+  })
+
   it.each(['ACCOUNT_PENDING_APPROVAL', 'ACCOUNT_REJECTED', 'ADMIN_ACCOUNT', 'RESTAURANT_REQUIRED'])(
     '%s is final: it never retries (§10)',
     (code) => {

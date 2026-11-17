@@ -10,6 +10,7 @@ import {
   DINER_ACCOUNT_EVENT,
   getApiErrorMessage,
   isAccessError,
+  RATE_LIMITED_TEXT,
   RESTAURANT_REQUIRED_EVENT,
   SESSION_EXPIRED_EVENT,
   setAuthTokenProvider,
@@ -145,6 +146,12 @@ describe('getApiErrorMessage', () => {
       'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.',
     )
     expect(getApiErrorMessage(new ApiError({ status: 500, message: 'stack trace' }), 'Texto propio')).toBe('Texto propio')
+  })
+
+  it('explains the rate limit and does not retry it (§12.14)', () => {
+    const error = new ApiError({ status: 429 })
+    expect(getApiErrorMessage(error, 'Texto propio')).toBe(RATE_LIMITED_TEXT)
+    expect(retryUnlessAnswered(0, error)).toBe(false)
   })
 })
 
