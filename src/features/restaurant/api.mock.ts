@@ -4,7 +4,7 @@ import type { ApprovalStatus, RegisterScheduleInput, RestaurantProfile, Restaura
 
 // In-memory stand-in for GET and PATCH /restaurants/me with VITE_USE_MOCKS=true, so the dashboard shows a real-looking
 // restaurant name next to the mocked tables. Registration and geocoding still go to the backend: they have no sample.
-// Review state (Sprint 4): ?mockApproval=pending | rejected (approved by default); the reason of a rejection is fixed.
+// Review state (Sprint 4): ?mockApproval=pending | rejected | suspended (approved by default); the reason of a rejection is fixed.
 // DiNNo reservations in course (asked before closing): /mesas?mockActiveReservations=2 (0 by default).
 
 function toSchedule(input: RegisterScheduleInput): RestaurantSchedule {
@@ -34,11 +34,14 @@ let restaurant: RestaurantProfile = {
 
 function initialApproval(): ApprovalStatus {
   const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('mockApproval')
-  return value === 'pending' || value === 'rejected' ? value : 'approved'
+  return value === 'pending' || value === 'rejected' || value === 'suspended' ? value : 'approved'
 }
 
 const MOCK_REJECTION_REASON = 'La dirección no coincide con la ubicación del mapa. Corrígela y vuelve a enviar la solicitud.'
 if (restaurant.approvalStatus === 'rejected') restaurant = { ...restaurant, rejectionReason: MOCK_REJECTION_REASON }
+if (restaurant.approvalStatus === 'suspended') {
+  restaurant = { ...restaurant, suspensionReason: 'Varios comensales reportaron que las mesas reservadas no estaban disponibles.' }
+}
 
 function initialActiveReservations(): number {
   const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('mockActiveReservations')

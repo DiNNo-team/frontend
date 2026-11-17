@@ -27,6 +27,10 @@ export interface AdminRestaurantDetail extends AdminRestaurantItem {
   rejectionReason: string | null
   reviewedByEmail: string | null
   createdAt: string
+  /** §1 of docs/admin-panel-contract.md: the LAST suspension, also after reactivating; `null` if it never was suspended. */
+  suspensionReason: string | null
+  suspendedAt: string | null
+  suspendedByEmail: string | null
 }
 
 export interface AdminRestaurantPage {
@@ -42,4 +46,5 @@ export interface AdminListParams {
   pageSize: number
 }
 
+/** Same limits for the reason of a suspension (10 to 300 characters once trimmed). */
 export const REJECTION_REASON_LIMITS = { min: 10, max: 300 } as const

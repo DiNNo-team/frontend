@@ -36,8 +36,8 @@ export const RESTAURANT_LIMITS = {
   addressMaxLength: 255,
 } as const
 
-/** Review state of the restaurant (CLAUDE.md §12.12). Only `approved` operates and shows up for diners. */
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+/** Review state of the restaurant (CLAUDE.md §12.12, §12.15). Only `approved` operates and shows up for diners; `suspended` is an approved one the administrator paused. */
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'suspended'
 
 /** One open day as the API returns it. 1 = Monday … 7 = Sunday; hours are `"HH:MM"`, `null` when open 24 hours. */
 export interface RestaurantSchedule {
@@ -67,6 +67,8 @@ export interface RestaurantProfile {
   approvalStatus: ApprovalStatus
   /** The administrator's reason, only while `rejected`; `null` otherwise. */
   rejectionReason: string | null
+  /** §12.15: the administrator's reason, only while `suspended`; `null` otherwise. Absent in older answers. */
+  suspensionReason?: string | null
   /** Digits only (a leading `+` allowed); `null` if the restaurant never gave one. */
   contactPhone: string | null
 }

@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from './api'
+import { adminPanelQueryKey } from './panel-hooks'
 import type { AdminListParams, AdminRestaurantDetail } from './types'
 
 export const adminQueryKey = ['admin'] as const
@@ -43,6 +44,9 @@ function useReviewMutation(call: (id: string, reason?: string) => Promise<AdminR
     onSuccess: (detail) => {
       queryClient.setQueryData(adminRestaurantQueryKey(detail.id), detail)
       void queryClient.invalidateQueries({ queryKey: adminQueryKey })
+      // Suspending or reactivating changes who the directory and the billing list show as active.
+      void queryClient.invalidateQueries({ queryKey: [...adminPanelQueryKey, 'activity'] })
+      void queryClient.invalidateQueries({ queryKey: [...adminPanelQueryKey, 'billing'] })
     },
     // 409 RESTAURANT_NOT_PENDING: somebody else reviewed it; show what it is now.
     onError: () => void queryClient.invalidateQueries({ queryKey: adminQueryKey }),
@@ -55,4 +59,12 @@ export function useApproveRestaurant() {
 
 export function useRejectRestaurant() {
   return useReviewMutation((id, reason) => adminApi.reject(id, reason ?? ''))
+}
+
+export function useSuspendRestaurant() {
+  return useReviewMutation((id, reason) => adminApi.suspend(id, reason ?? ''))
+}
+
+export function useReactivateRestaurant() {
+  return useReviewMutation((id) => adminApi.reactivate(id))
 }

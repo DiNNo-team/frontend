@@ -41,6 +41,7 @@ export function NavDock({ items = NAV_ITEMS_RESTAURANT, badges = {} }: NavDockPr
               <li key={item.to}>
                 <NavLink
                   to={item.to}
+                  end={item.end}
                   className={cn(
                     'press flex w-20 flex-col items-center gap-0.5 rounded-tile py-1.5 text-label sm:w-24',
                     'hover:bg-(--dock-hover)',
