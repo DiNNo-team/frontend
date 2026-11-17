@@ -142,6 +142,9 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, signal
 }
 
 /** Manual 14.2 texts for the generic cases; `fallback` for everything else. */
+/** 429 of the rate limit (§12.14). Not retried: the person tries again after a moment. */
+export const RATE_LIMITED_TEXT = 'Hiciste muchas solicitudes seguidas. Espera un momento e intenta de nuevo.'
+
 export function getApiErrorMessage(error: unknown, fallback = 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'): string {
   if (error instanceof ApiError) {
     if (error.isNetworkError) return 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'
@@ -155,6 +158,7 @@ export function getApiErrorMessage(error: unknown, fallback = 'No pudimos conect
     if (error.code === ADMIN_ACCOUNT_CODE) return ACCOUNT_ERROR_TEXT.admin
     if (error.status === 401) return 'Tu sesión terminó. Inicia sesión de nuevo.'
     if (error.status === 403) return 'No tienes acceso a esta sección.'
+    if (error.status === 429) return RATE_LIMITED_TEXT
   }
   return fallback
 }

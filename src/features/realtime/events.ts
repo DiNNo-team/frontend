@@ -11,8 +11,10 @@ export const TABLE_STATUS_CHANGED = 'table.status_changed'
 
 export const RESERVATION_CLOSED_EVENTS = [RESERVATION_CANCELLED, RESERVATION_EXPIRED, RESERVATION_CHECKED_IN] as const
 
-/** `connect_error.message` codes (§10 "Tiempo real"). Only SERVER_ERROR deserves new tries from the client. */
+/** `connect_error.message` codes (§10 "Tiempo real", §12.14). Only these two deserve new tries from the client. */
 export const SERVER_ERROR = 'SERVER_ERROR'
+export const RATE_LIMITED = 'RATE_LIMITED'
+export const RETRYABLE_REJECTIONS: readonly string[] = [SERVER_ERROR, RATE_LIMITED]
 
 const STATUSES: readonly ReservationStatus[] = ['active', 'cancelled', 'expired', 'completed']
 const SOURCES = ['manual', 'reservation', 'system'] as const
