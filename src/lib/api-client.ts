@@ -54,6 +54,8 @@ export const DINER_ACCOUNT_EVENT = 'dinno:diner-account'
 export const ACCOUNT_PENDING_APPROVAL_CODE = 'ACCOUNT_PENDING_APPROVAL'
 export const ACCOUNT_REJECTED_CODE = 'ACCOUNT_REJECTED'
 export const ADMIN_ACCOUNT_CODE = 'ADMIN_ACCOUNT'
+/** §12.15: an approved restaurant the administrator suspended. */
+export const RESTAURANT_SUSPENDED_CODE = 'RESTAURANT_SUSPENDED'
 /** A 403 with any of those means the account's state changed: the session flow asks `/me` and the restaurant again. */
 export const ACCESS_CHANGED_EVENT = 'dinno:access-changed'
 
@@ -62,10 +64,17 @@ export const ACCOUNT_ERROR_TEXT = {
   pending: 'Tu solicitud está en revisión. Te avisaremos cuando tu cuenta esté aprobada.',
   rejected: 'Tu solicitud no fue aprobada. Revisa el motivo, corrige tus datos y vuelve a enviarla.',
   admin: 'Esta es una cuenta de administrador de DiNNo. Usa el panel de administración en la web.',
+  suspended:
+    'Tu restaurante está suspendido y no aparece para los comensales. Revisa el motivo en tu cuenta o escríbenos a dinnoteam2026@gmail.com para reactivarlo.',
 } as const
 
 function isAccessChangeCode(code: string | undefined): boolean {
-  return code === ACCOUNT_PENDING_APPROVAL_CODE || code === ACCOUNT_REJECTED_CODE || code === ADMIN_ACCOUNT_CODE
+  return (
+    code === ACCOUNT_PENDING_APPROVAL_CODE ||
+    code === ACCOUNT_REJECTED_CODE ||
+    code === ADMIN_ACCOUNT_CODE ||
+    code === RESTAURANT_SUSPENDED_CODE
+  )
 }
 
 /** `errorCode` of the 403 for a session user without a restaurant yet. */
@@ -145,22 +154,28 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, signal
 /** 429 of the rate limit (§12.14). Not retried: the person tries again after a moment. */
 export const RATE_LIMITED_TEXT = 'Hiciste muchas solicitudes seguidas. Espera un momento e intenta de nuevo.'
 
-export function getApiErrorMessage(error: unknown, fallback = 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'): string {
-  if (error instanceof ApiError) {
-    if (error.isNetworkError) return 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'
-    if (error.code === EMAIL_NOT_VERIFIED_CODE) return 'Verifica tu correo para continuar.'
-    if (error.code === ACCOUNT_NOT_ENABLED_CODE) {
-      return 'Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.'
-    }
-    if (error.code === DINER_ACCOUNT_CODE) return 'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.'
-    if (error.code === ACCOUNT_PENDING_APPROVAL_CODE) return ACCOUNT_ERROR_TEXT.pending
-    if (error.code === ACCOUNT_REJECTED_CODE) return ACCOUNT_ERROR_TEXT.rejected
-    if (error.code === ADMIN_ACCOUNT_CODE) return ACCOUNT_ERROR_TEXT.admin
-    if (error.status === 401) return 'Tu sesión terminó. Inicia sesión de nuevo.'
-    if (error.status === 403) return 'No tienes acceso a esta sección.'
-    if (error.status === 429) return RATE_LIMITED_TEXT
-  }
-  return fallback
+const NETWORK_ERROR_TEXT = 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.'
+
+/** The text of each account code and of each generic status (manual 14.2). The backend's `message` is never shown. */
+const TEXT_BY_CODE: Record<string, string> = {
+  [EMAIL_NOT_VERIFIED_CODE]: 'Verifica tu correo para continuar.',
+  [ACCOUNT_NOT_ENABLED_CODE]: 'Esta cuenta no está habilitada como restaurante. Si eres comensal, encuentra mesa desde la app DiNNo.',
+  [DINER_ACCOUNT_CODE]: 'Esta es una cuenta de comensal. Para buscar mesa, usa la app DiNNo.',
+  [ACCOUNT_PENDING_APPROVAL_CODE]: ACCOUNT_ERROR_TEXT.pending,
+  [ACCOUNT_REJECTED_CODE]: ACCOUNT_ERROR_TEXT.rejected,
+  [ADMIN_ACCOUNT_CODE]: ACCOUNT_ERROR_TEXT.admin,
+  [RESTAURANT_SUSPENDED_CODE]: ACCOUNT_ERROR_TEXT.suspended,
+}
+const TEXT_BY_STATUS: Record<number, string> = {
+  401: 'Tu sesión terminó. Inicia sesión de nuevo.',
+  403: 'No tienes acceso a esta sección.',
+  429: RATE_LIMITED_TEXT,
+}
+
+export function getApiErrorMessage(error: unknown, fallback = NETWORK_ERROR_TEXT): string {
+  if (!(error instanceof ApiError)) return fallback
+  if (error.isNetworkError) return NETWORK_ERROR_TEXT
+  return (error.code ? TEXT_BY_CODE[error.code] : undefined) ?? TEXT_BY_STATUS[error.status] ?? fallback
 }
 
 /** 401 (session ended, email not verified) or 403 (no access): show `getApiErrorMessage`, and retrying makes no sense. */
