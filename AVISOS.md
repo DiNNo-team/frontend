@@ -5,6 +5,25 @@
 
 ---
 
+## 17 nov 2026 · Elizabeth · Panel del administrador: suspensión, cobro mensual, actividad y métricas de plataforma (Sprint 4, backend `feat/sprint4-admin-panel`)
+
+- **Qué hay:** solo documentación; todavía no hay pantallas ni código de la web para esto. El contrato completo, con formas de respuesta, ejemplos, `errorCode` y textos sugeridos, está en [`docs/admin-panel-contract.md`](docs/admin-panel-contract.md) (copia idéntica del backend, commit `0c0cce2`). Las reglas están en CLAUDE.md §8, §10 y §12.15.
+- **Qué consume el front** (todas `platform_admin`, bajo `/v1/admin`):
+  - `POST /restaurants/:id/suspend` `{ reason }` (10 a 300 caracteres) y `POST /restaurants/:id/reactivate`; la lista acepta `?status=suspended` y el detalle agrega `suspensionReason`, `suspendedAt` y `suspendedByEmail`.
+  - `GET /overview?month`, `GET /billing?month&page&pageSize`, `GET /billing/:restaurantId`, `POST /billing/:restaurantId/:month/mark-paid` y `mark-pending`.
+  - `GET /activity?month&page&pageSize` y `GET /platform/metrics?from&to`. Esta última trae `byDate` (una entrada por cada día del periodo, con los días en 0) y `byDayHour` (siempre 168 entradas; índice del mapa de calor = (`dayOfWeek` − 1) × 24 + `hour`), además de lo de siempre. La suma de `byDate` = la de `byDayHour` = `reservations.created`.
+- **Estado nuevo `suspended` y código nuevo `RESTAURANT_SUSPENDED` (403):**
+  - `approvalStatus` ahora puede ser `suspended`. `GET /restaurants/me` y `GET /restaurants/me/status` traen `suspensionReason` (este último, además, `approvalStatus`; `isOpen` no cambia).
+  - La cuenta suspendida solo puede ver su cuenta, su restaurante, el Resumen, el cobro y las reservas, y hacer el check-in de sus reservas activas. Todo lo demás responde `403 RESTAURANT_SUSPENDED`.
+  - El socket la rechaza con `connect_error` `RESTAURANT_SUSPENDED`; **no se reintenta**.
+  - **Pendiente de adaptar** (no se hizo en esta rama): `AccessGuard` y `useAccess()` no conocen `suspended` (hoy caería en un estado no previsto); `ErrorCode` y `ACCOUNT_ERROR_TEXT` no tienen `RESTAURANT_SUSPENDED` ni los 409 nuevos (`RESTAURANT_NOT_APPROVED`, `RESTAURANT_NOT_SUSPENDED`, `PERIOD_NOT_CLOSED`, `NOTHING_TO_BILL`, `PERIOD_ALREADY_PAID`, `PERIOD_NOT_PAID`); y `ACCESS_CHANGED_EVENT` debe dispararse también con el 403 nuevo. El `NavDock` del administrador solo tiene «Solicitudes».
+- **Límite de peticiones:** las cinco lecturas pesadas (`overview`, `billing`, `billing/:restaurantId`, `activity`, `platform/metrics`) comparten **30 por minuto** por cuenta. Al pasarlo, `429` sin `errorCode` (el texto ya existe, `RATE_LIMITED_TEXT`); no se reintenta solo. Las pantallas no deberían consultar en bucle ni al escribir: una consulta por cambio de mes o periodo.
+- **Confidencialidad:** ninguna respuesta nueva trae correos de comensales, nombres, códigos de reserva ni la bitácora. Los únicos correos son `ownerEmail`, `reviewedByEmail` y `suspendedByEmail` del detalle de solicitudes, solo para el administrador.
+- **Backend todavía no desplegado:** las migraciones nuevas están pendientes en producción (Elizabeth las corre antes de fusionar a `develop`). Mientras tanto, estas rutas dan 404 o 500 en Render; usa mocks si hace falta probar pantallas.
+- **Para todos:** §8, §10 y §12 de CLAUDE.md cambiaron y deben quedar iguales en los tres repos (backend y este ya los tienen; falta mobile).
+
+---
+
 ## 16 nov 2026 · Sebastián · La web pasa a Azure Static Web Apps (Sprint 4) · todavía no está activa
 
 - **Qué hay:** `.github/workflows/web-ci-cd.yml` y `public/staticwebapp.config.json`. Todo el detalle está en CLAUDE.md §11, «Despliegue».
