@@ -1,0 +1,124 @@
+name: Web CI/CD
+
+# PRs to develop and main are checked before merging. A push to main (a merged
+# develop → main PR) is checked again and deployed to Azure Static Web Apps.
+# Azure is reached with OIDC (federated credentials): GitHub keeps only
+# identifiers, never a password or a key (Sprint 4, security).
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm run test
+
+  deploy:
+    needs: checks
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: read
+      # The OIDC token GitHub signs for azure/login. Only this job gets it.
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the API URL
+        env:
+          API_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          case "$API_URL" in
+            https://*) ;;
+            *) echo "VITE_API_URL (variable del repositorio) falta o no es https."; exit 1 ;;
+          esac
+
+      # VITE_* end up inside the site (public by design, CLAUDE.md §4): they are
+      # repository variables, not secrets. Never put a secret in a VITE_ value.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_USE_MOCKS: 'false'
+          VITE_GOOGLE_MAPS_API_KEY: ${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_MAPS_MAP_ID: ${{ vars.VITE_GOOGLE_MAPS_MAP_ID }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # The deployment token is read at deploy time with the OIDC identity and
+      # masked, so it is never stored in GitHub.
+      - name: Get the Static Web Apps deployment token
+        id: swa
+        env:
+          SWA_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          token=$(az staticwebapp secrets list \
+            --name "$SWA_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.apiKey -o tsv)
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}
+          action: upload
+          app_location: dist
+          skip_app_build: true
+          skip_api_build: true
