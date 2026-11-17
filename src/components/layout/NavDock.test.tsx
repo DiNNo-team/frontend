@@ -22,24 +22,25 @@ describe('NavDock', () => {
   })
 
   it("shows only the administrator's section, and none of the restaurant's", () => {
-    renderDock({ items: NAV_ITEMS_ADMIN }, '/admin')
-    expect(screen.getAllByRole('link')).toHaveLength(1)
+    renderDock({ items: NAV_ITEMS_ADMIN }, '/admin/solicitudes')
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Resumen', 'Solicitudes', 'Restaurantes', 'Cobros'])
     expect(screen.getByRole('link', { name: 'Solicitudes' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Resumen' })).not.toHaveAttribute('aria-current')
     expect(screen.queryByRole('link', { name: 'Mesas' })).not.toBeInTheDocument()
   })
 
   it('shows the pending count over the icon and says it in words to a screen reader', () => {
-    renderDock({ items: NAV_ITEMS_ADMIN, badges: { '/admin': 4 } }, '/admin')
+    renderDock({ items: NAV_ITEMS_ADMIN, badges: { '/admin/solicitudes': 4 } }, '/admin/solicitudes')
     const link = screen.getByRole('link', { name: /Solicitudes/ })
     expect(link).toHaveAccessibleName('Solicitudes, 4 solicitudes pendientes')
     expect(within(link).getByText('4')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('says «1 solicitud pendiente» in the singular and shows no count at zero', () => {
-    const { unmount } = renderDock({ items: NAV_ITEMS_ADMIN, badges: { '/admin': 1 } }, '/admin')
+    const { unmount } = renderDock({ items: NAV_ITEMS_ADMIN, badges: { '/admin/solicitudes': 1 } }, '/admin')
     expect(screen.getByRole('link', { name: /1 solicitud pendiente$/ })).toBeInTheDocument()
     unmount()
-    renderDock({ items: NAV_ITEMS_ADMIN, badges: { '/admin': 0 } }, '/admin')
+    renderDock({ items: NAV_ITEMS_ADMIN, badges: { '/admin/solicitudes': 0 } }, '/admin')
     expect(screen.getByRole('link', { name: 'Solicitudes' })).toBeInTheDocument()
   })
 })

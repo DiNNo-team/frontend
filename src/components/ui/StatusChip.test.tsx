@@ -20,6 +20,11 @@ const EXPECTED: Record<Status, string> = {
   'review-pending': 'En revisión',
   'review-approved': 'Aprobado',
   'review-rejected': 'No aprobada',
+  'review-suspended': 'Suspendido',
+  'restaurant-active': 'Activo',
+  'billing-in-progress': 'En curso',
+  'billing-pending': 'Pendiente',
+  'billing-paid': 'Cobrado',
 }
 
 describe('StatusChip', () => {

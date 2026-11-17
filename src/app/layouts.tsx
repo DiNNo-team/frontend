@@ -1,5 +1,5 @@
 import { Outlet, useNavigate } from 'react-router'
-import { AppShell, NAV_ITEMS_ADMIN, OnboardingShell } from '@/components/layout'
+import { AppShell, NAV_ITEMS_ADMIN, NAV_ITEMS_SUSPENDED, OnboardingShell } from '@/components/layout'
 import { useAuth } from '@/features/auth/auth-context'
 import { EmailVerificationScreen } from './EmailVerificationScreen'
 import { WrongAccountScreen } from './WrongAccountScreen'
@@ -28,6 +28,8 @@ export function DashboardLayout() {
   useWelcomeAfterApproval(restaurantQuery.data)
   // A pending or rejected restaurant is not let in either (§12.12): only an approved one connects.
   const approved = restaurantQuery.data?.approvalStatus === 'approved'
+  // A suspended one keeps a reduced frame (§12.15): no open/closed switch (the API answers 403), no tables banner.
+  const suspended = restaurantQuery.data?.approvalStatus === 'suspended'
   const liveRestaurantId = import.meta.env.VITE_USE_MOCKS === 'true' || accountEvent || !user || !approved ? undefined : restaurantQuery.data?.id
   useRestaurantRealtime(liveRestaurantId)
 
@@ -43,11 +45,10 @@ export function DashboardLayout() {
       userEmail={user?.email ?? ''}
       onSignOut={handleSignOut}
       lit={lit}
-      statusSlot={
-        accountEvent ? undefined : <RestaurantStatusControl />
-      }
+      navItems={suspended ? NAV_ITEMS_SUSPENDED : undefined}
+      statusSlot={accountEvent || suspended ? undefined : <RestaurantStatusControl />}
       banner={
-        accountEvent ? undefined : (
+        accountEvent || suspended ? undefined : (
           // empty:hidden: with no notice to show, the wrapper takes no gap in the page.
           <div className="flex flex-col gap-3 empty:hidden">
             <RestaurantStatusBanner />
@@ -86,7 +87,7 @@ export function AdminLayout() {
       userEmail={user?.email ?? ''}
       onSignOut={handleSignOut}
       navItems={NAV_ITEMS_ADMIN}
-      navBadges={{ '/admin': pending.data ?? 0 }}
+      navBadges={{ '/admin/solicitudes': pending.data ?? 0 }}
     >
       <Outlet />
     </AppShell>

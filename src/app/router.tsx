@@ -47,7 +47,31 @@ export const routes: RouteObject[] = [
             children: [
               {
                 element: <AdminLayout />,
-                children: [{ path: '/admin', lazy: lazyPage(() => import('@/features/admin/AdminPage')) }],
+                children: [
+                  { path: '/admin', lazy: lazyPage(() => import('@/features/admin-overview/OverviewPage')) },
+                  { path: '/admin/solicitudes', lazy: lazyPage(() => import('@/features/admin/AdminPage')) },
+                  { path: '/admin/restaurantes', lazy: lazyPage(() => import('@/features/admin-restaurants/RestaurantsPage')) },
+                  { path: '/admin/cobros', lazy: lazyPage(() => import('@/features/admin-billing/BillingPage')) },
+                  { path: '/admin/cobros/:restaurantId', lazy: lazyPage(() => import('@/features/admin-billing/BillingDetailPage')) },
+                ],
+              },
+            ],
+          },
+          {
+            element: <AccessGuard allow={['suspended']} />,
+            children: [
+              {
+                element: <DashboardLayout />,
+                children: [{ path: '/suspendido', lazy: lazyPage(() => import('@/features/suspended/SuspendedPage')) }],
+              },
+            ],
+          },
+          {
+            element: <AccessGuard allow={['approved', 'suspended']} />,
+            children: [
+              {
+                element: <DashboardLayout />,
+                children: [{ path: '/resumen', lazy: lazyPage(() => import('@/features/summary/SummaryPage')) }],
               },
             ],
           },
@@ -58,7 +82,6 @@ export const routes: RouteObject[] = [
                 element: <DashboardLayout />,
                 children: [
                   { path: '/mesas', element: <TablesPage /> },
-                  { path: '/resumen', lazy: lazyPage(() => import('@/features/summary/SummaryPage')) },
                   { path: '/restaurante', element: <RestaurantPage /> },
                   { path: '/bitacora', element: <ActivityLogPage /> },
                 ],

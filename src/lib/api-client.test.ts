@@ -10,6 +10,7 @@ import {
   DINER_ACCOUNT_EVENT,
   getApiErrorMessage,
   isAccessError,
+  RATE_LIMITED_TEXT,
   RESTAURANT_REQUIRED_EVENT,
   SESSION_EXPIRED_EVENT,
   setAuthTokenProvider,
@@ -146,6 +147,12 @@ describe('getApiErrorMessage', () => {
     )
     expect(getApiErrorMessage(new ApiError({ status: 500, message: 'stack trace' }), 'Texto propio')).toBe('Texto propio')
   })
+
+  it('explains the rate limit and does not retry it (§12.14)', () => {
+    const error = new ApiError({ status: 429 })
+    expect(getApiErrorMessage(error, 'Texto propio')).toBe(RATE_LIMITED_TEXT)
+    expect(retryUnlessAnswered(0, error)).toBe(false)
+  })
 })
 
 describe('isAccessError', () => {
@@ -167,7 +174,7 @@ describe('isAccessError', () => {
 })
 
 describe('account codes of Sprint 4 (§10)', () => {
-  it.each(['ACCOUNT_PENDING_APPROVAL', 'ACCOUNT_REJECTED', 'ADMIN_ACCOUNT'])('%s announces that the account state changed', async (code) => {
+  it.each(['ACCOUNT_PENDING_APPROVAL', 'ACCOUNT_REJECTED', 'ADMIN_ACCOUNT', 'RESTAURANT_SUSPENDED'])('%s announces that the account state changed', async (code) => {
     mockFetch({ ok: false, status: 403, jsonBody: { statusCode: 403, errorCode: code } })
     const listener = vi.fn()
     window.addEventListener(ACCESS_CHANGED_EVENT, listener)
@@ -187,6 +194,7 @@ describe('account codes of Sprint 4 (§10)', () => {
 
   it('shows the contract text for each code, never the backend message', () => {
     expect(getApiErrorMessage(new ApiError({ status: 403, code: 'ACCOUNT_PENDING_APPROVAL', message: 'x' }))).toBe(ACCOUNT_ERROR_TEXT.pending)
+    expect(getApiErrorMessage(new ApiError({ status: 403, code: 'RESTAURANT_SUSPENDED', message: 'x' }))).toBe(ACCOUNT_ERROR_TEXT.suspended)
     expect(getApiErrorMessage(new ApiError({ status: 403, code: 'ACCOUNT_REJECTED' }))).toBe(
       'Tu solicitud no fue aprobada. Revisa el motivo, corrige tus datos y vuelve a enviarla.',
     )

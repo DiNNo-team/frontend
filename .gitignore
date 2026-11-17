@@ -31,3 +31,6 @@ dist-ssr
 
 # Prompts personales de Claude Code (no se versionan)
 docs/claude/
+
+# Capturas y registros de la herramienta de navegador de Claude Code (no se versionan)
+.playwright-mcp/

@@ -40,7 +40,7 @@ describe('resolveAccess · the table of the account states', () => {
 
   it('a restaurant account waits for its restaurant, then follows its review state', () => {
     expect(resolveAccess({ ...idle, data: me('restaurant_admin') }, loading)).toEqual({ status: 'loading' })
-    for (const state of ['pending', 'rejected', 'approved'] as const) {
+    for (const state of ['pending', 'rejected', 'approved', 'suspended'] as const) {
       expect(resolveAccess({ ...idle, data: me('restaurant_admin') }, { ...idle, data: restaurant(state) })).toEqual({ status: 'ready', kind: state })
     }
   })

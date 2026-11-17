@@ -14,6 +14,7 @@ export type AccessKind =
   | 'pending' // Restaurant under review
   | 'rejected' // Restaurant not approved: sees the reason and can correct and resend
   | 'approved' // Operates
+  | 'suspended' // Was approved and the administrator paused it: only its account, summary, billing and check-in (§12.15)
 
 export type Access =
   | { status: 'loading' }
@@ -64,4 +65,5 @@ export const ACCESS_HOME: Record<AccessKind, string | null> = {
   pending: '/solicitud',
   rejected: '/solicitud',
   approved: '/mesas',
+  suspended: '/suspendido',
 }

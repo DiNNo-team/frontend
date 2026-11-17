@@ -17,12 +17,12 @@ import {
   isTableStatusChangedEvent,
   RESERVATION_CLOSED_EVENTS,
   RESERVATION_CREATED,
-  SERVER_ERROR,
+  RETRYABLE_REJECTIONS,
   TABLE_STATUS_CHANGED,
 } from './events'
 import { addReservation, removeReservation } from './reservation-cache'
 
-/** Waits before a new try after a SERVER_ERROR rejection (§10: the client retries it by itself). */
+/** Waits before a new try after a SERVER_ERROR or RATE_LIMITED rejection (§10, §12.14: the client retries it by itself). */
 const RETRY_DELAYS_MS = [5_000, 15_000, 30_000]
 /** «Reconectando…» turns into «Sin conexión» if the cut lasts this long (manual 13.7). */
 const OFFLINE_AFTER_MS = 30_000
@@ -107,7 +107,7 @@ export function useRestaurantRealtime(restaurantId: string | undefined) {
       startOfflineCountdown()
     })
 
-    // Network problems: Socket.IO retries by itself (`socket.active`). A rejected handshake is final; only SERVER_ERROR
+    // Network problems: Socket.IO retries by itself (`socket.active`). A rejected handshake is final; only SERVER_ERROR and RATE_LIMITED
     // deserves new tries. Session codes (UNAUTHORIZED, RESTAURANT_REQUIRED…) are handled by the session flow over HTTP.
     socket.on('connect_error', (error) => {
       if (socket.active) {
@@ -115,7 +115,7 @@ export function useRestaurantRealtime(restaurantId: string | undefined) {
         startOfflineCountdown()
         return
       }
-      if (error.message === SERVER_ERROR) {
+      if (RETRYABLE_REJECTIONS.includes(error.message)) {
         liveConnection.set('reconnecting')
         startOfflineCountdown()
         window.clearTimeout(retryTimer)

@@ -9,8 +9,8 @@ import { ADMIN_PAGE_SIZE, ADMIN_TEXT } from './messages'
 import type { ReviewStatus } from './types'
 
 // The state of the screen lives in the URL, so «back», a reload and a shared link keep the tab, the page and the open request.
-const STATUS_BY_PARAM: Record<string, ReviewStatus> = { pendientes: 'pending', aprobadas: 'approved', rechazadas: 'rejected' }
-const PARAM_BY_STATUS: Record<ReviewStatus, string> = { pending: 'pendientes', approved: 'aprobadas', rejected: 'rechazadas' }
+const STATUS_BY_PARAM: Record<string, ReviewStatus> = { pendientes: 'pending', aprobadas: 'approved', rechazadas: 'rejected', suspendidas: 'suspended' }
+const PARAM_BY_STATUS: Record<ReviewStatus, string> = { pending: 'pendientes', approved: 'aprobadas', rejected: 'rechazadas', suspended: 'suspendidas' }
 
 /** From 1024 px the detail opens beside the list; below, it takes the page. */
 const WIDE_QUERY = '(min-width: 1024px)'
@@ -21,7 +21,7 @@ function toPage(value: string | null): number {
 }
 
 /**
- * `/admin` (CLAUDE.md §12.12): the requests of restaurants that want to be in DiNNo. Pendientes · Aprobadas · Rechazadas
+ * `/admin/solicitudes` (CLAUDE.md §12.12 and §12.15): the requests of restaurants that want to be in DiNNo. Pendientes · Aprobadas · Rechazadas · Suspendidas
  * are views of one list; picking a request opens its detail (beside the list on a desktop, as a page on a phone) with
  * «Aprobar restaurante» and «Rechazar solicitud». Only a `platform_admin` gets here.
  */
@@ -96,6 +96,7 @@ export default function AdminPage() {
   return (
     <>
       <PageHeader title={ADMIN_TEXT.title} description={ADMIN_TEXT.description} />
+      <div className="max-w-full overflow-x-auto">
       <SegmentedControl
         aria-label={ADMIN_TEXT.tabsLabel}
         value={status}
@@ -104,8 +105,10 @@ export default function AdminPage() {
           { value: 'pending', label: pendingLabel, status: REVIEW_STATUS.pending },
           { value: 'approved', label: ADMIN_TEXT.tabApproved, status: REVIEW_STATUS.approved },
           { value: 'rejected', label: ADMIN_TEXT.tabRejected, status: REVIEW_STATUS.rejected },
+          { value: 'suspended', label: ADMIN_TEXT.tabSuspended, status: REVIEW_STATUS.suspended },
         ]}
       />
+      </div>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">{table}</div>
         {selectedId && wide && (

@@ -20,11 +20,21 @@ const EMPTY_TITLE: Record<ReviewStatus, string> = {
   pending: ADMIN_TEXT.emptyPending,
   approved: ADMIN_TEXT.emptyApproved,
   rejected: ADMIN_TEXT.emptyRejected,
+  suspended: ADMIN_TEXT.emptySuspended,
 }
 
-/** When it happened, in words: a pending request counts from when it arrived, a reviewed one from its review. */
-function sinceText(item: AdminRestaurantItem): string {
-  return formatSince(item.reviewedAt ?? item.submittedAt)
+const EMPTY_DESCRIPTION: Partial<Record<ReviewStatus, string>> = {
+  pending: ADMIN_TEXT.emptyPendingDescription,
+  suspended: ADMIN_TEXT.emptySuspendedDescription,
+}
+
+/**
+ * When it happened, in words: a pending request counts from when it arrived, the other views from the last review. A restaurant
+ * that was never reviewed (the team approved it) has no review date: the date it was sent is not a substitute for it.
+ */
+function sinceText(item: AdminRestaurantItem, status: ReviewStatus): string {
+  if (status === 'pending') return formatSince(item.submittedAt)
+  return item.reviewedAt ? formatSince(item.reviewedAt) : ADMIN_TEXT.notReviewed
 }
 
 /**
@@ -70,7 +80,7 @@ export function RequestsTable({ status, rows, total, page, loading, selectedId, 
       header: status === 'pending' ? ADMIN_TEXT.columnReceived : ADMIN_TEXT.columnReviewed,
       mobileLine: 2,
       className: 'whitespace-nowrap',
-      cell: sinceText,
+      cell: (item) => sinceText(item, status),
     },
     {
       key: 'status',
@@ -91,7 +101,7 @@ export function RequestsTable({ status, rows, total, page, loading, selectedId, 
         emptyState={
           <EmptyState
             title={EMPTY_TITLE[status]}
-            description={status === 'pending' ? ADMIN_TEXT.emptyPendingDescription : undefined}
+            description={EMPTY_DESCRIPTION[status]}
           />
         }
       />

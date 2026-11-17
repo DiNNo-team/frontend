@@ -116,4 +116,5 @@ Elige contra qué trabajas con `.env.local`:
 - [`AVISOS.md`](AVISOS.md): cambios que el equipo debe conocer, lo más nuevo arriba.
 - [`AGENTS.md`](AGENTS.md): guía corta para asistentes de código.
 - [`docs/qa/matriz-sprint2.md`](docs/qa/matriz-sprint2.md): matriz de pruebas del Sprint 2.
+- [`docs/admin-panel-contract.md`](docs/admin-panel-contract.md): contrato de la API del panel del administrador (suspensión, cobro mensual, actividad y métricas de plataforma); copia del backend, fuente de verdad.
 - [`docs/DiNNo_Manual_Identidad_v2_0.md`](docs/DiNNo_Manual_Identidad_v2_0.md): manual de identidad (el [v1.1](docs/DiNNo_Manual_Identidad_v1_1.md) queda como histórico). Memoria de la renovación: [`docs/renovacion-v2/`](docs/renovacion-v2/).
