@@ -5,6 +5,41 @@
 
 ---
 
+## 18 nov 2026 · Sergio · Informe de IA en la web: pantalla `/informe` (Sprint 4, Task 2.1.2) · rama `feat/sprint4-informe-ia` · para revisar: Sebastián
+
+- **Qué hay:** la pantalla «Informe de la semana» en `/informe` («Informe» en el dock, entre Resumen y Restaurante). Detalle en CLAUDE.md §11, «Informe de IA»; capturas en `docs/design/insights/`.
+- **Endpoint:** `GET /v1/restaurants/me/insights` (`?refresh=true` solo desde «Actualizar informe»), contrato en §12.16, **copiado idéntico del backend en este PR**. Solo un restaurante aprobado: un suspendido no ve la ruta ni el ítem del dock (el backend le responde `403 RESTAURANT_SUSPENDED`). La app del comensal no cambia.
+- **Respuesta (ejemplo):**
+```json
+{ "period": { "from": "2026-11-12", "to": "2026-11-18", "timezone": "America/Bogota" },
+  "previousPeriod": { "from": "2026-11-05", "to": "2026-11-11", "timezone": "America/Bogota" },
+  "generatedAt": "2026-11-18T15:02:11.000Z", "dataSufficiency": "enough", "minResolved": 10,
+  "metrics": { "reservationsCreated": 42, "active": 3, "resolved": 39, "completed": 26, "cancelled": 4, "expired": 9,
+    "checkIns": 26, "checkInRate": 0.6667, "noShowRate": 0.2308, "cancellationRate": 0.1026,
+    "medianMinutesToCheckIn": 9.5, "averagePartySize": 2.83,
+    "topSlots": [{ "dayOfWeek": 5, "hour": 13, "reservations": 8 }],
+    "daily": [{ "date": "2026-11-12", "created": 6, "completed": 4, "cancelled": 1, "expired": 1, "manualUpdates": 3 }],
+    "manualUpdates": 24, "manualUpdatesPerDay": 3.43, "daysWithManualUpdates": 6, "daysWithoutManualUpdates": 1 },
+  "previous": { "reservationsCreated": 35, "resolved": 33, "checkInRate": 0.5758 },
+  "reliability": { "level": "medium", "reasons": ["Tasa de check-in del 67 %", "Actualizaste tus mesas a mano en 6 de 7 días"] },
+  "narrative": { "text": "…", "source": "llm", "fallback": null } }
+```
+  (`daily` trae siempre 7 días; aquí se muestra uno.)
+- **Estados:** carga (skeletons) · vacío (sin reservas esta semana ni la anterior) · «Aún no hay suficientes reservas» con «Te faltan N» (`minResolved − resolved`) y sin tasas, nivel ni recomendaciones · listo con IA («Generado con IA · hace X min») · listo con plantillas («Recomendaciones básicas: el asistente de IA no estuvo disponible») · error con «Intentar de nuevo» · 401/403 con el texto de la cuenta y sin reintento · 429 con el texto del kit, sin reintento y conservando el informe que había. **Todo se decide por campos, nunca por el texto.**
+- **Las tasas son sobre las reservas resueltas**, no sobre las creadas como en `/resumen`: por eso cada tasa dice «de las reservas resueltas».
+- **Cambios frente al boceto A (`docs/ia-diseno.md` del backend y el análisis del 18 nov):**
+  - El gráfico semanal va en **filas horizontales**, no en columnas: así cabe la única animación permitida (`animate-grow-x`), y en el teléfono cada barra ocupa su propia línea de ancho completo.
+  - Los cambios de mesas a mano se marcan con el ícono de **Bitácora** (`history`), no con un punto: el punto verde ya es «Con check-in».
+  - El botón dice «Actualizar informe» (verbo + objeto, manual 14).
+  - «Canceladas» usa `dark:bg-fg-2` en oscuro (con `bg-line` desaparecía sobre la tarjeta). `/resumen` sigue con `bg-line` y tiene el mismo problema en oscuro (**Elizabeth:** si quieres, lo igualamos).
+- **Kit (aviso a Sebastián, autorizado por él):** `reliability-high` / `-medium` / `-low` en `STATUS_META` con `RELIABILITY_STATUS`, `AiIcon` (`sparkles`) y «Informe» en `NAV_ITEMS_RESTAURANT`. Documentado en `components/ui/README.md`.
+- **Reutiliza de `features/summary` (Elizabeth), sin modificarlos:** `BarTrack`, `ChartTable`, `HelpToggle`, `formatHour`, `formatDecimal`, `formatDayMonth`, `formatLongDay` y `bogotaToday`. Si cambian, revisen `/informe`.
+- **Pendiente con Santiago:** `narrative.recommendations: string[]` (la web ya lo acepta como opcional) y el formato de hora: el texto de plantillas escribe «13:00» y la pantalla «1:00 p. m.».
+- **QA:** las filas IW de `docs/qa/matriz-sprint4.md` se hacen el jueves sobre Azure (necesitan la llave del modelo en Key Vault y Casa 72 con 10 o más reservas resueltas).
+- **Sin** variables de entorno, dependencias ni cambios de API nuevos.
+
+---
+
 ## 17 nov 2026 · Jacobo · Azure listo para el despliegue de la web (Sprint 4) · para revisar: Sebastián
 
 - **Qué hice (solo en Azure y en GitHub, sin cambios de código):** lo que necesitaba `.github/workflows/web-ci-cd.yml` de Sebastián para publicar. El workflow y `public/staticwebapp.config.json` son los suyos, sin cambios. Detalle en CLAUDE.md §11, «Despliegue».

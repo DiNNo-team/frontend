@@ -300,12 +300,13 @@ src/
 │   ├── restaurant/       registro (Santiago) y ver/editar (Jacobo)
 │   ├── restaurant-status/ switch abierto/cerrado (Sergio)
 │   ├── tables/           mesas (Sebastián)
-│   └── activity-log/     bitácora (Sergio)
+│   ├── activity-log/     bitácora (Sergio)
+│   └── insights/         informe de IA (Sergio, Sprint 4)
 └── lib/              utilidades compartidas (Sebastián): api.ts, cn.ts, icon.tsx, format.ts, theme.tsx, use-delayed-flag.ts
 ```
 - Cada funcionalidad en su carpeta de `features/`; nada de lógica de negocio en `App.tsx`.
 - Código en inglés (nombres, archivos, props, tipos); interfaz en español con el glosario del manual (14.1): Mesa ("Mesa 04"), Comensal, Restaurante, Disponible, Reservada, Ocupada, Inactiva, Abierto, Cerrado, Capacidad ("4 personas"), Bitácora, Iniciar sesión / Cerrar sesión. **Nunca:** "Libre" como estado, cliente, local, negocio, log, historial, pax, OK, Enviar, Aceptar. Mayúscula inicial, botones = verbo + objeto, sin signos de exclamación.
-- **Router y datos:** React Router y TanStack Query están acordados e instalados; las rutas viven en `src/app/router.tsx` (Sebastián). Las rutas son `/login`, `/registro`, `/onboarding`, `/solicitud`, `/suspendido`, `/mesas`, `/resumen`, `/restaurante`, `/bitacora` y las del administrador `/admin`, `/admin/solicitudes`, `/admin/restaurantes`, `/admin/cobros` y `/admin/cobros/:restaurantId` (las de Sprint 4, con carga diferida: `/registro`, `/solicitud`, `/suspendido`, `/resumen` y todas las de `/admin`). No agregues otra librería de estado sin acordarlo con el equipo.
+- **Router y datos:** React Router y TanStack Query están acordados e instalados; las rutas viven en `src/app/router.tsx` (Sebastián). Las rutas son `/login`, `/registro`, `/onboarding`, `/solicitud`, `/suspendido`, `/mesas`, `/resumen`, `/informe`, `/restaurante`, `/bitacora` y las del administrador `/admin`, `/admin/solicitudes`, `/admin/restaurantes`, `/admin/cobros` y `/admin/cobros/:restaurantId` (las de Sprint 4, con carga diferida: `/registro`, `/solicitud`, `/suspendido`, `/resumen`, `/informe` y todas las de `/admin`). No agregues otra librería de estado sin acordarlo con el equipo.
 
 ### Conexión con el backend
 - **Toda llamada pasa por `src/lib/api.ts`** (`apiFetch('/ruta')` o `apiUrl('/ruta')`), que agrega el origen y el prefijo `/v1`. Nunca escribas la URL del backend ni `/v1` a mano.
@@ -394,6 +395,20 @@ src/
 - **Kit (aviso a Sebastián):** `TextArea` nuevo; estados `review-pending` («En revisión»), `review-approved` («Aprobado») y `review-rejected` («No aprobada») en `STATUS_META` con `REVIEW_STATUS`; panel del administrador: `review-suspended` («Suspendido», raya), `restaurant-active` («Activo», punto) y `billing-in-progress` / `billing-pending` / `billing-paid` («En curso», «Pendiente», «Cobrado») con `BILLING_STATUS`; utilidades `grid-rank-row` y `grid-weekday-row` en `globals.css`; `NavDock` y `AppShell` aceptan `navItems` y `navBadges` (`NAV_ITEMS` se dividió en `NAV_ITEMS_RESTAURANT`, `NAV_ITEMS_ADMIN` y `NAV_ITEMS_SUSPENDED`; `NavItem` acepta `end`); utilidad `animate-grow-x` en `globals.css` para las barras. Documentado en `components/ui/README.md` y `/kit`.
 - **Mocks de Sprint 4** (con `VITE_USE_MOCKS=true`, controles de `src/lib/mock-env.ts`): `?mockRole=admin|diner|none`, `?mockApproval=pending|rejected|suspended`, `?mockError=me-load|admin-list|admin-detail|admin-review|summary-load|billing-load|signup|admin-overview|admin-metrics|admin-billing|admin-activity|admin-mark`, `?mockConflict` (otro administrador ya revisó) y `?mockEmpty`.
 - **Pruebas:** el `testTimeout` de Vitest sube a 20 s (`vite.config.ts`): con unos 60 archivos en paralelo, los 5 s por defecto fallaban al azar en pruebas que escriben en formularios.
+
+### Informe de IA (`/informe`, `features/insights/`, Sergio, Sprint 4, Task 2.1.2)
+- **Contrato:** §12.16 (`GET /v1/restaurants/me/insights`, solo un restaurante **aprobado**). Los tipos de `types.ts` son la forma exacta del DTO. `narrative.recommendations?: string[]` es **opcional y todavía no está en el contrato** (pedido a Santiago): si llega, la pantalla lista las recomendaciones; si no, muestra `narrative.text` tal cual. **La web nunca separa el párrafo.**
+- **La pantalla decide por campos, nunca por el texto:** `insightsScreenState` (`insights-view.ts`, función pura con pruebas) devuelve `loading`, `empty`, `insufficient`, `ready-llm`, `ready-template`, `error`, `access-error` o `rate-limited` solo a partir de `dataSufficiency`, `narrative.source`, `narrative.fallback` y los conteos. Un informe en pantalla gana sobre un error posterior.
+- **Las tasas son sobre las reservas RESUELTAS** (`completed + cancelled + expired`), no sobre las creadas como en `/resumen`: todo texto de tasa dice «de las reservas resueltas» (`messages.ts`, lo fija una prueba). La variación frente a la semana anterior va en puntos y se calcula con los porcentajes que se ven (67 % − 58 % = 9).
+- **Orden de lectura (dirección A, «La semana, contada»):** titular con la tasa de check-in y su variación, y la confiabilidad (`StatusChip` con `RELIABILITY_STATUS` y una escala Baja · Media · Alta) · «La semana día a día» (`WeekChart`: una fila por día con barra apilada con check-in / vencieron sin check-in / canceladas / siguen activas y los cambios de mesas a mano con el ícono de Bitácora; respaldado por `ChartTable`) · «Qué hacer esta semana».
+- **Marca del texto:** `source = llm` → «Generado con IA · hace X min» (`AiIcon`); `template` con `llm_*` → «Generado automáticamente · hace X min» y el aviso «Recomendaciones básicas: el asistente de IA no estuvo disponible»; con `insufficient_data` no hay bloque de recomendaciones.
+- **Límite de 10 por minuto (`@RateLimit('ai')`):** cada GET cuenta, así que `useInsightsQuery` queda fresco 5 min y sin `refetchOnWindowFocus`. «Actualizar informe» es una mutación con `refresh=true` que hace `setQueryData`: mientras genera (hasta ~20 s) y si falla, se sigue viendo el informe anterior. Un 429 se muestra y nunca se reintenta solo.
+- **Movimiento:** solo `animate-grow-x` una vez en las barras (apagado con movimiento reducido). Las cifras no se mueven.
+- **Reutiliza de `features/summary`** (Elizabeth), sin modificarlos: `BarTrack`, `ChartTable`, `HelpToggle`, `formatHour`, `formatDecimal`, `formatDayMonth`, `formatLongDay` y `bogotaToday`.
+- **«Canceladas» en el gráfico:** `bg-line` en claro y `dark:bg-fg-2` en oscuro (con `bg-line` desaparecía sobre la tarjeta oscura). Difiere de «Estado de las reservas» de `/resumen`, que sigue con `bg-line`.
+- **Kit (autorizado por Sebastián):** `reliability-high` (Alta, `ok`, punto), `reliability-medium` (Media, `limited`, rombo) y `reliability-low` (Baja, `error`, punto + alerta) en `STATUS_META` con `RELIABILITY_STATUS`; `AiIcon` (`sparkles`); «Informe» en `NAV_ITEMS_RESTAURANT` (no en `NAV_ITEMS_SUSPENDED`).
+- **Mock** (con `VITE_USE_MOCKS=true`; los 7 días terminan hoy en Bogotá): `?mockInsights=enough` (por defecto) `| insufficient | empty | template | disabled | long600 | withList`, `?mockError=insights-load` o `insights-refresh`, `?mockRateLimit` (429 al actualizar; `=all` también en la primera carga), `?mockForbidden=<errorCode>` (403) y `?mockLatency=20000` (modelo lento). El mock no entra al build de producción (import dinámico detrás de `VITE_USE_MOCKS`).
+- **Capturas** con el mock (claro/oscuro, 375/1440 px): `docs/design/insights/`.
 
 ### Despliegue
 - **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
@@ -731,3 +746,23 @@ Los 404 y 409 existentes de mesas siguen sin `errorCode`; no se cambian en este 
 - **Cuenta suspendida:** `403 RESTAURANT_SUSPENDED` fuera de su lista (`GET /me`, `GET /restaurants/me`, `GET /restaurants/me/status`, summary, billing, `GET /restaurants/me/reservations` y el check-in); también `connect_error` `RESTAURANT_SUSPENDED` (no se reintenta). `GET /restaurants/me` trae `suspensionReason`; `GET /restaurants/me/status` trae `approvalStatus` y `suspensionReason`.
 - **Panel del administrador** (`platform_admin`): `/v1/admin/restaurants/:id/suspend` y `/reactivate`, `/v1/admin/overview`, `/v1/admin/billing` (+ `/:restaurantId`, `mark-paid`, `mark-pending`), `/v1/admin/activity` y `/v1/admin/platform/metrics`.
 - **`errorCode` nuevos:** `RESTAURANT_SUSPENDED` (403); `RESTAURANT_NOT_APPROVED`, `RESTAURANT_NOT_SUSPENDED`, `PERIOD_NOT_CLOSED`, `NOTHING_TO_BILL`, `PERIOD_ALREADY_PAID` y `PERIOD_NOT_PAID` (409).
+
+### 12.16 Sprint 4 · Informe inteligente del restaurante (IA)
+
+**`GET /v1/restaurants/me/insights?refresh=true|false`** · solo `restaurant_admin` aprobado (pendiente, rechazado o suspendido: su `403`) · límite de 10 por minuto por cuenta (`429` de §12.14).
+- **Periodo:** los últimos 7 días de Bogotá, hoy incluido (`period`), comparados con los 7 anteriores (`previousPeriod`).
+- **`refresh=true`** genera el informe de nuevo; sin él puede venir de la caché (`generatedAt` dice cuándo se generó). Otro valor u otro parámetro: `400`.
+- **Nunca falla por la IA:** si el modelo falla, tarda o su texto no sirve, responde `200` con texto de plantillas.
+
+**`RestaurantInsights`:** `{ period, previousPeriod, generatedAt, dataSufficiency, minResolved, metrics, previous, reliability, narrative }`
+- `period` y `previousPeriod`: `{ from, to, timezone: 'America/Bogota' }`, días `AAAA-MM-DD` inclusivos.
+- `dataSufficiency`: `enough` con al menos `minResolved` (10) reservas resueltas en el periodo; si no, `insufficient`: las tasas y `reliability.level` llegan en `null`.
+- `metrics`: `{ reservationsCreated, active, resolved, completed, cancelled, expired, checkIns, checkInRate, noShowRate, cancellationRate, medianMinutesToCheckIn, averagePartySize, topSlots: [{ dayOfWeek, hour, reservations }], daily: [{ date, created, completed, cancelled, expired, manualUpdates }], manualUpdates, manualUpdatesPerDay, daysWithManualUpdates, daysWithoutManualUpdates }`.
+  - Reservas **creadas** en el periodo, por su estado actual; `resolved` = `completed + cancelled + expired`. Tasas sobre `resolved`, 4 decimales.
+  - `medianMinutesToCheckIn` (1 decimal) y `averagePartySize` (2 decimales): `null` si no hay de dónde medir.
+  - `topSlots`: hasta 3 franjas (día ISO 1 = lunes … 7 = domingo, hora 0 a 23 de Bogotá), de mayor a menor.
+  - `daily`: siempre 7 elementos, del más antiguo a hoy; `manualUpdates` = cambios de mesas hechos a mano ese día (bitácora, `source = manual`).
+- `previous`: `{ reservationsCreated, resolved, checkInRate }` de la semana anterior (`checkInRate` en `null` si tuvo menos de 10 resueltas).
+- `reliability`: `{ level: 'high' | 'medium' | 'low' | null, reasons: string[] }` (motivos en español).
+- `narrative`: `{ text, source: 'llm' | 'template', fallback }`. `text`: 2 o 3 recomendaciones en español, máximo 600 caracteres, generado automáticamente (la web lo marca así). `fallback` es `null` si lo redactó el modelo, o el motivo de las plantillas: `insufficient_data`, `llm_disabled`, `llm_unavailable` o `llm_invalid`.
+- Los clientes deciden por `dataSufficiency`, `reliability.level`, `narrative.source` y `narrative.fallback`, nunca por el texto. Nunca trae datos de comensales.
