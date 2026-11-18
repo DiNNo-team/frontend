@@ -28,6 +28,9 @@ const EXPECTED: Record<Status, string> = {
   'payment-in-progress': 'En curso',
   'payment-pending': 'Pendiente',
   'payment-paid': 'Pagado',
+  'reliability-high': 'Alta',
+  'reliability-medium': 'Media',
+  'reliability-low': 'Baja',
 }
 
 describe('StatusChip', () => {
@@ -64,5 +67,11 @@ describe('StatusChip', () => {
       (s) => STATUS_META[s].label,
     )
     expect(words).toEqual(['Activa', 'Cumplida', 'Vencida', 'Cancelada'])
+  })
+
+  it('the three reliability levels read apart without color and are never orange', () => {
+    const levels = (['reliability-high', 'reliability-medium', 'reliability-low'] as const).map((s) => STATUS_META[s])
+    expect(new Set(levels.map((meta) => meta.shape)).size).toBe(3)
+    expect(levels.map((meta) => meta.tone)).toEqual(['ok', 'limited', 'error'])
   })
 })
