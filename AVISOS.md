@@ -5,15 +5,86 @@
 
 ---
 
-## 17 nov 2026 · Jacobo · La web se publica en Azure Static Web Apps en cada push a `develop` (Sprint 4) · para revisar: Sebastián
+## 17 nov 2026 · Jacobo · Azure listo para el despliegue de la web (Sprint 4) · para revisar: Sebastián
 
-- **Qué hay:** workflow nuevo `.github/workflows/deploy-azure.yml` y `public/staticwebapp.config.json` (recargar una ruta como `/mesas` no da 404). Detalle en CLAUDE.md §11, «Despliegue».
-- **URL de la web en Azure:** https://brave-grass-07093571e.3.azurestaticapps.net. Usa el backend de Azure: https://ca-dinno-backend.icyrock-d101225d.westus2.azurecontainerapps.io.
-- **Antes de que el login con Google y el mapa funcionen ahí:** esa URL tiene que estar en Firebase → Authentication → Dominios autorizados (Sebastián) y en la restricción de la llave de Maps `dinno-web` (Santiago).
-- **Un PR que rompa lint, typecheck, pruebas o `check:ui` no se publica** en Azure: el workflow los corre antes del build.
-- **Sin claves en GitHub:** entra con OIDC (identidad `id-gh-frontend`, que solo puede publicar en `swa-dinno`). En el repo hay **variables** (no secretos): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `SWA_NAME`, `VITE_API_URL` y las `VITE_FIREBASE_*` y `VITE_GOOGLE_MAPS_*`. No le agreguen `environment` al job: el login fallaría.
-- **Vercel no cambia:** sigue desplegando `main` y es el **plan B** hasta después de la presentación. Sigue usando el backend de Render: lo que se haga en una web no aparece en la otra (son bases distintas).
-- **Sin cambios** de código, componentes, variables de entorno locales ni dependencias.
+- **Qué hice (solo en Azure y en GitHub, sin cambios de código):** lo que necesitaba `.github/workflows/web-ci-cd.yml` de Sebastián para publicar. El workflow y `public/staticwebapp.config.json` son los suyos, sin cambios. Detalle en CLAUDE.md §11, «Despliegue».
+- **Static Web App:** `swa-dinno`, plan Free, en `rg-dinno` (westus2). **URL de la web en Azure:** https://brave-grass-07093571e.3.azurestaticapps.net.
+- **Identidad de OIDC:** `id-gh-frontend`, con el rol Contributor **solo** sobre `swa-dinno` y una credencial federada para el entorno `Production` del repo (el `environment: production` del job `deploy`). Ninguna clave en GitHub.
+- **Variables del repositorio** (no secretos): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP` (`rg-dinno`), `AZURE_STATIC_WEB_APP_NAME` (`swa-dinno`), y los `VITE_*` del build. `VITE_API_URL` apunta al backend de Azure: https://ca-dinno-backend.icyrock-d101225d.westus2.azurecontainerapps.io.
+- **Desde ya, cada push a `main` publica en Azure** (con `AZURE_CLIENT_ID` definida, el job `deploy` deja de saltarse).
+- **El backend de Azure ya acepta la web:** `CORS_ORIGINS` tiene la URL de arriba y `http://localhost:5173`.
+- **Falta, para el login con Google y el mapa:** agregar la URL en Firebase → Authentication → Dominios autorizados (Sebastián) y en la restricción de la llave de Maps `dinno-web` (Santiago).
+- **Vercel sigue igual** hasta que Azure quede como la web oficial, y sigue usando el backend de Render: lo que se haga en una web no aparece en la otra (son bases distintas).
+
+---
+
+## 17 nov 2026 · Elizabeth · Nueva pantalla Resumen del restaurante y revisión de textos del administrador (Sprint 4) · rama `feat/sprint4-admin-panel`
+
+- **Qué cambia:** `/resumen` del restaurante se rediseñó con el diseño de `docs/design/restaurant-summary/` (capturas de lo implementado en `implementado/`). Los bloques, el calendario accesible y los estados están en el CLAUDE.md, «Resumen del restaurante». Sin datos de comensales. Sin recomendaciones automáticas (eso es de la IA).
+- **Backend:** `GET /v1/restaurants/me/summary` agrega (aditivo) `billing.guests`, `previousComparable`, `byDate`, `byDayHour`, `monthly` y `payment`. Contrato en `docs/restaurant-summary-contract.md` (copia idéntica del backend). El detalle de un día reutiliza `GET /billing/check-ins`. **Hay que fusionar y desplegar el backend primero:** sin él, la pantalla muestra el error del resumen.
+- **Kit (aviso a Sebastián):** estados nuevos `payment-in-progress`, `payment-pending` y `payment-paid` (`STATUS_META`, `PAYMENT_STATUS`), misma forma y color que `billing-*`, palabra «Pagado»; documentados en `components/ui/README.md`. Utilidades nuevas en `globals.css`: `grid-cols-hero`, `grid-cols-calendar`, `grid-cols-demand` y `grid-weekday-bar-row`.
+- **Componentes compartidos con el admin:** `HeatGrid` y `heat.ts` salen de «Pulso por hora»; `MonthBars` recibe `value` en vez de `revenueCop` y acepta `formatValue`, `describe` y `groupLabel`. Los valores por defecto son los de antes: el admin se ve y se comporta igual. Además, las etiquetas de los días del mapa de calor ya quedan alineadas con su fila (estaban corridas una fila).
+- **Textos del administrador, revisados** (solo texto, sin tocar lógica): «Lo que DiNNo ha cobrado, cómo se mueven las reservas y qué restaurantes aportan más.» → «Cobros, reservas y restaurantes del mes.» · «Todo al día» → «Sin saldos pendientes» · «Toca un mes para ver su detalle» → «Selecciona un mes para ver su detalle» · «De la reserva a la mesa» → «Resultado de las reservas» · «Pulso por hora» → «Reservas por hora» · «Por qué se cobra» → «Cómo se calcula el cobro» · «Cuéntale al restaurante qué debe corregir» → «Indica qué debe corregir el restaurante» · «Cuéntale al restaurante por qué se suspende» → «Indica por qué se suspende el restaurante» · «Revisa los restaurantes que quieren estar en DiNNo.» → «Revisa las solicitudes de los restaurantes que piden entrar a DiNNo.»
+- **Texto del restaurante suspendido:** «Resumen y cobro» → «Resumen y pago»; «cuánto se te cobra» → «cuánto pagas a DiNNo».
+- **Formato de pesos:** el Resumen del restaurante sigue escribiendo «$12.000» (como el diseño); el panel del administrador, «$ 12.000».
+
+---
+
+## 17 nov 2026 · Santiago · Matriz de pruebas del Sprint 4
+
+- **Qué hay:** `docs/qa/matriz-sprint4.md`, con el mismo formato de la del Sprint 3. Casos de notificaciones, informe de IA (API y pantalla), estado de cuenta, flujos completos, humo y regresión en Azure, concurrencia, red, carga, seguridad y la revisión final.
+- **Cada quien llena solo sus filas:** Santiago (N, IA, F), Sergio (IW, E), Jacobo (H, C, R, L, S), Elizabeth y Sebastián (D, después de que Jacobo avise). Evidencias con el prefijo `s4-` en `docs/qa/evidencias/img/`.
+- **Por confirmar** (sección 10 de la matriz): URLs de Azure, ruta de la pantalla de IA, llave del modelo en Key Vault, vigencia corta en Azure, cuentas de comensal extra, adaptador de Redis y datos para la IA después de `demo:reset`.
+- Sin cambios de código, dependencias ni variables.
+
+---
+
+## 17 nov 2026 · Elizabeth · Panel del administrador en la web: Resumen, Solicitudes, Restaurantes y Cobros, y restaurante suspendido (Sprint 4, rama `feat/sprint4-admin-panel`)
+
+- **Pantallas nuevas** (solo `platform_admin`, protegidas por `AccessGuard`): `/admin` es ahora el **Resumen** (ingresos por mes como selector, reservas por día, días de la semana, de la reserva a la mesa, pulso por hora y restaurantes del mes); **Solicitudes** pasó a `/admin/solicitudes` y gana el segmento «Suspendidas» y las acciones `Suspender restaurante` / `Reactivar restaurante`; **Restaurantes** (`/admin/restaurantes`) y **Cobros** (`/admin/cobros` y `/admin/cobros/:restaurantId?mes=`, con `Marcar como cobrado` y `Deshacer cobro`). Un enlace viejo `/admin?estado=…` se redirige a `/admin/solicitudes`.
+- **Restaurante suspendido** (`/suspendido`): `approvalStatus` acepta `suspended` y `suspensionReason`; el guardia lo lleva a su propia pantalla (motivo, reservas con «Validar código» y acceso al Resumen de solo lectura). Un 403 `RESTAURANT_SUSPENDED` dispara el cambio de estado y el socket no se reintenta.
+- **Para Sebastián (kit y estilos, para revisar):** `STATUS_META` suma `review-suspended` («Suspendido»), `restaurant-active` («Activo») y `billing-in-progress` / `billing-pending` / `billing-paid` («En curso», «Pendiente», «Cobrado»), con `REVIEW_STATUS.suspended` y `BILLING_STATUS`; `NavItem` acepta `end` y hay `NAV_ITEMS_SUSPENDED`; `globals.css` suma las utilidades `grid-rank-row` y `grid-weekday-row`. No se agregó ningún componente nuevo a `components/ui` ni dependencias. `getApiErrorMessage` se reescribió con un mapa código → texto (mismos textos). Documentado en el README del kit.
+- **Límite de 30 lecturas pesadas por minuto:** el Resumen pide el `overview` una sola vez y `billing`/`metrics` por mes con caché de 5 minutos, sin reintentos; al cambiar de mes solo se pide `metrics`. Un 429 se muestra con «Intentar de nuevo» (no se reintenta solo).
+- **Mocks** (`VITE_USE_MOCKS=true`): 16 restaurantes (uno suspendido), seis meses, un mes con pendientes y un `amountMismatch`. Controles nuevos: `?mockApproval=suspended` y `?mockError=admin-overview|admin-metrics|admin-billing|admin-activity|admin-mark`.
+- **Referencia y capturas:** `docs/design/admin-panel/` (referencia visual) y `docs/design/admin-panel/implementado/` (lo implementado, claro y oscuro).
+- **Backend:** las migraciones del Sprint 4 **ya están aplicadas en producción** y las rutas `/v1/admin/*` responden con datos reales (comprobado contra Render).
+
+---
+
+## 17 nov 2026 · Elizabeth · Panel del administrador: suspensión, cobro mensual, actividad y métricas de plataforma (Sprint 4, backend `feat/sprint4-admin-panel`)
+
+- **Qué hay:** el contrato y las reglas (las pantallas llegaron en la entrada de arriba). El contrato completo, con formas de respuesta, ejemplos, `errorCode` y textos sugeridos, está en [`docs/admin-panel-contract.md`](docs/admin-panel-contract.md) (copia idéntica del backend, commit `0c0cce2`). Las reglas están en CLAUDE.md §8, §10 y §12.15.
+- **Qué consume el front** (todas `platform_admin`, bajo `/v1/admin`):
+  - `POST /restaurants/:id/suspend` `{ reason }` (10 a 300 caracteres) y `POST /restaurants/:id/reactivate`; la lista acepta `?status=suspended` y el detalle agrega `suspensionReason`, `suspendedAt` y `suspendedByEmail`.
+  - `GET /overview?month`, `GET /billing?month&page&pageSize`, `GET /billing/:restaurantId`, `POST /billing/:restaurantId/:month/mark-paid` y `mark-pending`.
+  - `GET /activity?month&page&pageSize` y `GET /platform/metrics?from&to`. Esta última trae `byDate` (una entrada por cada día del periodo, con los días en 0) y `byDayHour` (siempre 168 entradas; índice del mapa de calor = (`dayOfWeek` − 1) × 24 + `hour`), además de lo de siempre. La suma de `byDate` = la de `byDayHour` = `reservations.created`.
+- **Estado nuevo `suspended` y código nuevo `RESTAURANT_SUSPENDED` (403):**
+  - `approvalStatus` ahora puede ser `suspended`. `GET /restaurants/me` y `GET /restaurants/me/status` traen `suspensionReason` (este último, además, `approvalStatus`; `isOpen` no cambia).
+  - La cuenta suspendida solo puede ver su cuenta, su restaurante, el Resumen, el cobro y las reservas, y hacer el check-in de sus reservas activas. Todo lo demás responde `403 RESTAURANT_SUSPENDED`.
+  - El socket la rechaza con `connect_error` `RESTAURANT_SUSPENDED`; **no se reintenta**.
+  - **Ya adaptado** en la web: `AccessGuard` y `useAccess()` conocen `suspended`, `ACCOUNT_ERROR_TEXT` y `getApiErrorMessage` tienen `RESTAURANT_SUSPENDED`, los 409 nuevos tienen su texto, `ACCESS_CHANGED_EVENT` se dispara con el 403 nuevo y el dock del administrador tiene las cuatro secciones.
+- **Límite de peticiones:** las cinco lecturas pesadas (`overview`, `billing`, `billing/:restaurantId`, `activity`, `platform/metrics`) comparten **30 por minuto** por cuenta. Al pasarlo, `429` sin `errorCode` (el texto ya existe, `RATE_LIMITED_TEXT`); no se reintenta solo. Las pantallas no deberían consultar en bucle ni al escribir: una consulta por cambio de mes o periodo.
+- **Confidencialidad:** ninguna respuesta nueva trae correos de comensales, nombres, códigos de reserva ni la bitácora. Los únicos correos son `ownerEmail`, `reviewedByEmail` y `suspendedByEmail` del detalle de solicitudes, solo para el administrador.
+- **Backend desplegado:** las migraciones ya están aplicadas en producción (Render) y estas rutas responden.
+- **Para todos:** §8, §10 y §12 de CLAUDE.md cambiaron y deben quedar iguales en los tres repos (backend y este ya los tienen; falta mobile).
+
+---
+
+## 16 nov 2026 · Sebastián · La web pasa a Azure Static Web Apps (Sprint 4) · todavía no está activa
+
+- **Qué hay:** `.github/workflows/web-ci-cd.yml` y `public/staticwebapp.config.json`. Todo el detalle está en CLAUDE.md §11, «Despliegue».
+- **Desde que se fusione,** cada PR a `develop` o `main` corre lint, typecheck y pruebas.
+- **El despliegue en Azure** queda listo, pero no funciona hasta que existan el recurso de Static Web Apps, la identidad de OIDC y las variables del repositorio. Lo configura Sebastián. Mientras tanto, Vercel sigue igual.
+- **Cuando cambie el dominio de la web:** hay que agregarlo en Firebase (*Authorized domains*), en la llave de Google Maps y en `CORS_ORIGINS` del backend.
+
+---
+
+## 16 nov 2026 · Sebastián · Límite de peticiones: texto del 429 y reintento con RATE_LIMITED (Sprint 4, §12.14)
+
+- **El backend ahora limita las peticiones** (backend PR #65). Al pasar un límite responde `429` sin `errorCode`; el WebSocket rechaza una conexión de más con `connect_error` `RATE_LIMITED`.
+- **`getApiErrorMessage`** muestra con un `429` el texto «Hiciste muchas solicitudes seguidas. Espera un momento e intenta de nuevo.» (`RATE_LIMITED_TEXT`, en `lib/api-client.ts`). No se reintenta solo (`retryUnlessAnswered` ya no reintenta un 4xx).
+- **Tiempo real:** `RATE_LIMITED` se reintenta como `SERVER_ERROR` (5 s, 15 s, 30 s). Está en `RETRYABLE_REJECTIONS` (`features/realtime/events.ts`). Los códigos de sesión siguen sin reintentarse.
+- **Contrato:** nueva §12.14 en `CLAUDE.md`, igual en los tres repos.
 
 ---
 

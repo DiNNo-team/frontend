@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Check, ExternalLink, X } from 'lucide-react'
+import { ArrowLeft, Check, ExternalLink, Pause, Play, X } from 'lucide-react'
 import { Alert, Button, Card, ConfirmDialog, DetailList, EmptyState, REVIEW_STATUS, Skeleton, StatusChip, useToast } from '@/components/ui'
 import { closesNextDay, DAY_LABELS } from '@/components/ui/hours'
 import { toRestaurantFormValues } from '@/features/restaurant/restaurant-form'
@@ -8,17 +8,20 @@ import { RESTAURANT_CATEGORY_LABELS } from '@/features/restaurant/types'
 import { formatDateTime, formatTime12h } from '@/lib/format'
 import { Icon } from '@/lib/icon'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
-import { adminQueryKey, useAdminRestaurantQuery, useApproveRestaurant, useRejectRestaurant } from '../hooks'
-import { ADMIN_TEXT, describeReviewError, isNotFoundError, isNotPendingError } from '../messages'
+import { adminQueryKey, useAdminRestaurantQuery, useApproveRestaurant, useReactivateRestaurant, useRejectRestaurant, useSuspendRestaurant } from '../hooks'
+import { ADMIN_TEXT, describeReviewError, isNotApprovedError, isNotFoundError, isNotPendingError, isNotSuspendedError } from '../messages'
 import { formatSince } from '../relative-time'
 import type { AdminRestaurantDetail } from '../types'
 import { RejectDialog } from './RejectDialog'
+import { SuspendDialog } from './SuspendDialog'
 
 interface RequestDetailProps {
   id: string
   /** `page`: a phone, the detail replaces the list and has a way back. `panel`: next to the list. */
   variant: 'panel' | 'page'
   onClose: () => void
+  /** More actions beside the decisions (the Restaurantes screen adds «Ver cobro del mes»). */
+  extraActions?: ReactNode
 }
 
 function mapsUrl({ latitude, longitude }: { latitude: number; longitude: number }): string {
@@ -34,6 +37,29 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       </h3>
       {children}
     </section>
+  )
+}
+
+/** The last suspension (there is no history): the reason and who, also once the restaurant is active again. */
+function SuspensionSection({ detail }: { detail: AdminRestaurantDetail }) {
+  const date = detail.suspendedAt ? formatDateTime(detail.suspendedAt) : ''
+  if (detail.approvalStatus !== 'suspended') {
+    return (
+      <Section title={ADMIN_TEXT.detailTitleSuspension}>
+        <p className="text-sec text-fg">{ADMIN_TEXT.suspendedBefore(date, detail.suspensionReason ?? '')}</p>
+      </Section>
+    )
+  }
+  return (
+    <Section title={ADMIN_TEXT.detailTitleSuspension}>
+      <DetailList
+        items={[
+          { label: ADMIN_TEXT.suspendedSince, value: `${date}${detail.suspendedAt ? ' · ' + formatSince(detail.suspendedAt) : ''}` },
+          { label: ADMIN_TEXT.reasonLabel, value: detail.suspensionReason ?? '' },
+          ...(detail.suspendedByEmail ? [{ label: ADMIN_TEXT.suspendedBy, value: <span className="break-all">{detail.suspendedByEmail}</span> }] : []),
+        ]}
+      />
+    </Section>
   )
 }
 
@@ -104,6 +130,7 @@ function DetailBody({ detail }: { detail: AdminRestaurantDetail }) {
           ]}
         />
       </Section>
+      {detail.suspendedAt && <SuspensionSection detail={detail} />}
     </>
   )
 }
@@ -113,30 +140,38 @@ function DetailBody({ detail }: { detail: AdminRestaurantDetail }) {
  * only primary button; «Rechazar solicitud» asks for the reason in a dialog. A 409 (somebody reviewed it first) shows the
  * request as it is now; a 404 closes the detail. The backend has no undo, and both dialogs say so.
  */
-export function RequestDetail({ id, variant, onClose }: RequestDetailProps) {
+export function RequestDetail({ id, variant, onClose, extraActions }: RequestDetailProps) {
   const toast = useToast()
   const queryClient = useQueryClient()
   const query = useAdminRestaurantQuery(id)
   const showSkeleton = useDelayedFlag(query.isPending)
   const approve = useApproveRestaurant()
   const reject = useRejectRestaurant()
+  const suspend = useSuspendRestaurant()
+  const reactivate = useReactivateRestaurant()
+  const [suspendOpen, setSuspendOpen] = useState(false)
+  const [reactivateOpen, setReactivateOpen] = useState(false)
   const [approveOpen, setApproveOpen] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [error, setError] = useState<string>()
   const detail = query.data
-  const busy = approve.isPending || reject.isPending
+  const busy = approve.isPending || reject.isPending || suspend.isPending || reactivate.isPending
 
   function handleReviewFailure(failure: unknown, fallback: string) {
-    if (isNotPendingError(failure)) {
-      // Somebody else reviewed it first: close the dialog and let the detail show what it is now.
+    if (isNotPendingError(failure) || isNotApprovedError(failure) || isNotSuspendedError(failure)) {
+      // Somebody else changed it first: close the dialog and let the detail show what it is now.
       setApproveOpen(false)
       setRejectOpen(false)
+      setSuspendOpen(false)
+      setReactivateOpen(false)
       toast.show({ type: 'warning', message: describeReviewError(failure, fallback) })
       return
     }
     if (isNotFoundError(failure)) {
       setApproveOpen(false)
       setRejectOpen(false)
+      setSuspendOpen(false)
+      setReactivateOpen(false)
       toast.show({ type: 'warning', message: describeReviewError(failure, fallback) })
       void queryClient.invalidateQueries({ queryKey: adminQueryKey })
       onClose()
@@ -166,6 +201,30 @@ export function RequestDetail({ id, variant, onClose }: RequestDetailProps) {
       toast.show({ type: 'success', message: ADMIN_TEXT.rejectSuccess })
     } catch (failure) {
       handleReviewFailure(failure, ADMIN_TEXT.rejectFailed)
+    }
+  }
+
+  async function handleSuspend(reason: string) {
+    if (busy || !detail) return
+    setError(undefined)
+    try {
+      await suspend.mutateAsync({ id, reason })
+      setSuspendOpen(false)
+      toast.show({ type: 'success', message: ADMIN_TEXT.suspendSuccess(detail.name) })
+    } catch (failure) {
+      handleReviewFailure(failure, ADMIN_TEXT.suspendFailed)
+    }
+  }
+
+  async function handleReactivate() {
+    if (busy || !detail) return
+    setError(undefined)
+    try {
+      await reactivate.mutateAsync({ id })
+      setReactivateOpen(false)
+      toast.show({ type: 'success', message: ADMIN_TEXT.reactivateSuccess(detail.name) })
+    } catch (failure) {
+      handleReviewFailure(failure, ADMIN_TEXT.reactivateFailed)
     }
   }
 
@@ -203,6 +262,55 @@ export function RequestDetail({ id, variant, onClose }: RequestDetailProps) {
             </Button>
           </div>
         )}
+        {(detail.approvalStatus === 'approved' || detail.approvalStatus === 'suspended' || extraActions) && (
+          <div className="flex flex-col-reverse gap-3 *:w-full sm:flex-row sm:justify-end sm:*:w-auto">
+            {extraActions}
+            {detail.approvalStatus === 'approved' && (
+              <Button
+                variant="danger"
+                icon={Pause}
+                onClick={() => {
+                  setError(undefined)
+                  setSuspendOpen(true)
+                }}
+              >
+                {ADMIN_TEXT.suspend}
+              </Button>
+            )}
+            {detail.approvalStatus === 'suspended' && (
+              <Button
+                variant="outline"
+                icon={Play}
+                onClick={() => {
+                  setError(undefined)
+                  setReactivateOpen(true)
+                }}
+              >
+                {ADMIN_TEXT.reactivate}
+              </Button>
+            )}
+          </div>
+        )}
+        <SuspendDialog
+          open={suspendOpen}
+          onOpenChange={setSuspendOpen}
+          restaurantName={detail.name}
+          saving={suspend.isPending}
+          error={error}
+          onSuspend={handleSuspend}
+        />
+        <ConfirmDialog
+          open={reactivateOpen}
+          onOpenChange={(open) => !busy && setReactivateOpen(open)}
+          title={ADMIN_TEXT.reactivateTitle(detail.name)}
+          description={ADMIN_TEXT.reactivateBody}
+          confirmLabel={ADMIN_TEXT.reactivate}
+          confirmVariant="primary"
+          loadingText={ADMIN_TEXT.reactivating}
+          loading={reactivate.isPending}
+          error={error}
+          onConfirm={handleReactivate}
+        />
         <ConfirmDialog
           open={approveOpen}
           onOpenChange={(open) => !busy && setApproveOpen(open)}

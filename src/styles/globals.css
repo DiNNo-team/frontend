@@ -230,3 +230,15 @@
 @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 @theme { --animate-skeleton: skeleton-pulse 1.2s var(--ease) infinite; }        /* pulso de opacidad del skeleton */
 @keyframes skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+/* Paneles del administrador (Sprint 4): filas con columnas fijas, sin valores arbitrarios en las pantallas. Manual 13.4 (tablas). */
+@utility grid-rank-row {
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  @media (min-width: 768px) { grid-template-columns: 2.5rem minmax(0, 1.4fr) minmax(0, 1fr) 7rem 7rem 8rem 7rem; }
+}
+/* Resumen del restaurante: hero (invitados y pago), calendario y detalle del día, y horas de mayor demanda. */
+@utility grid-cols-hero { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+@utility grid-cols-calendar { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+@utility grid-cols-demand { grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 0.9fr); }
+@utility grid-weekday-bar-row { grid-template-columns: 2.25rem minmax(0, 1fr) 1.5rem; }
+@utility grid-weekday-row { grid-template-columns: 5.5rem minmax(0, 1fr) 4.5rem; }

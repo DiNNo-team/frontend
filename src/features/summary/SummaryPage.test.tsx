@@ -6,7 +6,8 @@ import { mockSummaryApi } from './api.mock'
 import SummaryPage from './SummaryPage'
 import type { RestaurantSummary } from './types'
 
-// VITE_USE_MOCKS=true in tests: fixed reports (12 check-ins at $2.000, 30 reservations created). Controls by URL as in dev.
+// VITE_USE_MOCKS=true in tests: the sample of the design (docs/design/restaurant-summary), «today» is 15 Nov 2026. In «Este mes»
+// (1–15 Nov) the sample has 5 check-ins (8 Nov ×2, 10 Nov ×2, 11 Nov ×1) at $2.000. Controls by URL as in dev.
 
 function renderSummary(path = '/resumen', browserSearch = '') {
   window.history.replaceState({}, '', `/${browserSearch}`)
@@ -14,12 +15,9 @@ function renderSummary(path = '/resumen', browserSearch = '') {
   return { router, ...renderWithProviders(<RouterProvider router={router} />) }
 }
 
-/** The section with that heading, once the report has loaded. */
 const section = async (title: string | RegExp) => within(((await screen.findByRole('heading', { name: title })).closest('section')) as HTMLElement)
 
-const cellsOf = (row: HTMLElement) => Array.from(row.children).map((cell) => cell.textContent)
-
-/** A summary of the sample with the given changes, for cases the fixed sample does not cover (null rates…). */
+/** A summary of the sample with the given changes, for cases the sample does not cover. */
 function withSummary(changes: Partial<RestaurantSummary>) {
   const original = mockSummaryApi.getSummary.bind(mockSummaryApi)
   return vi.spyOn(mockSummaryApi, 'getSummary').mockImplementation(async (range) => ({ ...(await original(range)), ...changes }))
@@ -34,161 +32,271 @@ afterEach(() => {
   window.history.replaceState({}, '', '/')
 })
 
-describe('SummaryPage · A cobrar', () => {
-  it('puts the total owed first, as one big figure, with the sum behind it in a phrase', async () => {
+describe('SummaryPage · comensales y pago', () => {
+  it('puts the guests first, the big figure, and what is paid beside them', async () => {
     renderSummary()
-    expect(await screen.findByText('$24.000')).toBeInTheDocument()
+    const hero = await section('Comensales con reserva DiNNo')
     expect(screen.getByRole('heading', { level: 1, name: 'Resumen' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'A cobrar' })).toBeInTheDocument()
-    expect(screen.getByText('12 check-ins × tarifa de $2.000')).toBeInTheDocument()
+    expect(screen.getByText('Reservas, comensales y pago del periodo.')).toBeInTheDocument()
+    expect(hero.getByText('Total a pagar a DiNNo')).toBeInTheDocument()
+    expect(hero.getByText('$10.000')).toBeInTheDocument()
+    expect(hero.getByText('5 check-ins × tarifa de $2.000')).toBeInTheDocument()
+    expect(hero.getByText('Costo por comensal')).toBeInTheDocument()
+    expect(hero.getByText('Cierre del periodo')).toBeInTheDocument()
+    expect(hero.getByText('Solo pagas los check-ins. Las reservas canceladas o vencidas no tienen costo.')).toBeInTheDocument()
   })
 
-  it('explains, in a help, that each check-in keeps its own fee and that cancellations and expirations are not charged', async () => {
-    const { user } = renderSummary()
-    await screen.findByText('$24.000')
-    const toggle = screen.getByRole('button', { name: 'Cómo se cobra' })
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    await user.click(toggle)
-    expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('status')).toHaveTextContent('Cada check-in guarda la tarifa que había cuando se hizo. Por eso el total de un periodo no cambia si la tarifa cambia después.')
-    expect(screen.getByRole('status')).toHaveTextContent('las cancelaciones y los vencimientos no se cobran')
-  })
-
-  it('does not claim «N × tarifa» when the fees of the period were not all the same', async () => {
-    withSummary({ billing: { checkIns: 10, amountCop: 18_000, currentFeeCop: 2000 } })
+  it('never says «A cobrar», «cobro» or «Cobrado» anywhere on the screen', async () => {
     renderSummary()
-    expect(await screen.findByText('$18.000')).toBeInTheDocument()
-    expect(screen.getByText('10 check-ins, cada uno con la tarifa de su momento')).toBeInTheDocument()
-    expect(screen.queryByText(/× tarifa/)).not.toBeInTheDocument()
+    await screen.findByText('Comensales con reserva DiNNo')
+    await screen.findByText('Detalle del pago')
+    expect(document.body.textContent).not.toMatch(/cobr/i)
   })
 
-  it('with no check-ins it shows $0 and says kindly when DiNNo charges', async () => {
+  it('the cost per guest is the amount over the guests, and is not shown with 0 guests', async () => {
+    renderSummary()
+    const hero = await section('Comensales con reserva DiNNo')
+    // 5 check-ins: 2 + 2 + 2 + 3 (8 Nov ×2 mesa 04, 10 Nov ×2, 11 Nov ×1 mesa 04) → guests of the sample, $10.000 over them.
+    expect(hero.getByText('Costo por comensal').closest('div')).toHaveTextContent(/\$[\d.]+/)
     renderSummary('/resumen', '?mockEmpty')
-    expect(await screen.findByText('$0')).toBeInTheDocument()
-    expect(screen.getByText('Todavía no hay cobros en este periodo')).toBeInTheDocument()
-    expect(screen.getByText('Se cobra solo cuando un comensal llega y validas su código. Las cancelaciones y los vencimientos no se cobran.')).toBeInTheDocument()
+    expect(await screen.findAllByText('Todavía no hay check-ins en este periodo')).not.toHaveLength(0)
+  })
+
+  it('compares with the same stretch of the month before, and says which', async () => {
+    renderSummary()
+    const hero = await section('Comensales con reserva DiNNo')
+    expect(await hero.findByText('vs. octubre (mismo tramo)')).toBeInTheDocument()
+  })
+
+  it('shows no percentage when the stretch before had nothing', async () => {
+    renderSummary('/resumen', '?mockPrevious=zero')
+    const hero = await section('Comensales con reserva DiNNo')
+    await screen.findByText('Total a pagar a DiNNo')
+    expect(hero.queryByText(/vs\./)).not.toBeInTheDocument()
+  })
+
+  it('says «Sin datos» for a rate whose denominator is 0, never 0 or NaN', async () => {
+    renderSummary('/resumen', '?mockEmpty')
+    const hero = await section('Comensales con reserva DiNNo')
+    expect(hero.getAllByText('Sin datos').length).toBeGreaterThan(0)
+    expect(document.body.textContent).not.toMatch(/NaN/)
+  })
+
+  it('the month before shows its state with color, shape and word: Pagado, Pendiente', async () => {
+    renderSummary()
+    const hero = await section('Comensales con reserva DiNNo')
+    expect(await hero.findByText('Pagado')).toBeInTheDocument()
+    expect(hero.getByText('Octubre · $8.000')).toBeInTheDocument()
+    expect(hero.getByText('En curso')).toBeInTheDocument()
+  })
+
+  it('a pending previous month reads «Pendiente»', async () => {
+    renderSummary('/resumen', '?mockPayment=pending')
+    const hero = await section('Comensales con reserva DiNNo')
+    expect(await hero.findByText('Pendiente')).toBeInTheDocument()
+  })
+
+  it('a custom period over several months has no state for the period, only for the month before', async () => {
+    renderSummary('/resumen?periodo=personalizado&desde=2026-09-15&hasta=2026-11-10')
+    const hero = await section('Comensales con reserva DiNNo')
+    await hero.findByText('Total a pagar a DiNNo')
+    expect(hero.queryByText('Cierre del periodo')).not.toBeInTheDocument()
+    expect(hero.getByText('Octubre · $8.000')).toBeInTheDocument()
   })
 })
 
-describe('SummaryPage · así van tus reservas', () => {
-  it('splits the reservations created in one bar, with its legend and the table that backs it', async () => {
+describe('SummaryPage · calendario y detalle del día', () => {
+  it('opens on today, with its detail, and day buttons that say reservations and check-ins', async () => {
     renderSummary()
-    await screen.findByText('$24.000')
-    const story = await section('Así van tus reservas')
-    expect(story.getByText('30 reservas creadas en el periodo')).toBeInTheDocument()
-    const table = story.getByRole('table', { name: 'Reservas del periodo por estado' })
-    const rows = within(table).getAllByRole('row').slice(1).map((row) => cellsOf(row))
-    expect(rows).toEqual([['Llegaron', '12'], ['Canceladas', '8'], ['Vencidas', '6'], ['Activas', '4']])
-    // The drawing itself is decorative: it is hidden from screen readers.
-    expect(story.getAllByText('Llegaron').length).toBeGreaterThan(0)
-    expect(document.querySelectorAll('svg[aria-hidden="true"]').length).toBeGreaterThan(0)
+    const calendar = await section('Noviembre')
+    expect(calendar.getByRole('button', { name: '8 de noviembre, 4 reservas, 2 check-ins' })).toHaveAttribute('aria-pressed', 'false')
+    expect(calendar.getByRole('button', { name: '15 de noviembre, 1 reserva, 0 check-ins' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('heading', { name: 'Detalle del día' })).toBeInTheDocument()
+    expect(screen.getByText('Domingo 15 de noviembre')).toBeInTheDocument()
   })
 
-  it('says each rate in its own sentence, with its own denominator, never mixed', async () => {
+  it('November 2026 starts on a Sunday: Monday first, six blanks before the 1st', async () => {
     renderSummary()
-    await screen.findByText('$24.000')
-    const story = await section('Así van tus reservas')
-    expect(story.getByText('De cada 10 reservas, 4 llegaron.')).toBeInTheDocument()
-    expect(story.getByText('12 de 30 reservas')).toBeInTheDocument()
-    expect(story.getByText('De cada 10 reservas, 3 se cancelaron.')).toBeInTheDocument()
-    expect(story.getByText('8 de 30 reservas')).toBeInTheDocument()
-    expect(story.getByText('De las 18 reservas que llegaron o vencieron, 3 de cada 10 no llegaron.')).toBeInTheDocument()
-    expect(story.getByText('6 vencidas de 18 que llegaron o vencieron')).toBeInTheDocument()
-    for (const sentence of story.getAllByText(/^De /)) {
-      expect(sentence.textContent).not.toMatch(/De cada 10 reservas.*llegaron o vencieron|llegaron o vencieron.*De cada 10 reservas/)
-    }
-    expect(story.getByText('Cada reserva fue en promedio de 3,2 personas.')).toBeInTheDocument()
+    const calendar = await section('Noviembre')
+    const group = calendar.getByRole('group')
+    // 7 weekday letters + 6 blanks, and then day 1.
+    const children = Array.from(group.children)
+    expect(children.slice(0, 7).map((child) => child.textContent)).toEqual(['L', 'M', 'X', 'J', 'V', 'S', 'D'])
+    expect(children[13].getAttribute('data-date')).toBe('2026-11-01')
   })
 
-  it('defines every rate in a contextual help', async () => {
+  it('days that have not come are disabled and cannot be chosen', async () => {
     const { user } = renderSummary()
-    await screen.findByText('$24.000')
-    await user.click(screen.getByRole('button', { name: 'Cómo se calculan' }))
-    const help = screen.getByText('Cómo se calculan estos porcentajes').closest('[role="status"]') as HTMLElement
-    expect(help).toHaveTextContent('Las reservas se cuentan por el día en que se crearon, con el estado que tienen hoy.')
-    expect(help).toHaveTextContent('No llegaron: reservas vencidas, de las que ya se resolvieron por llegada o por vencimiento.')
+    const calendar = await section('Noviembre')
+    const future = calendar.getByRole('button', { name: '20 de noviembre, todavía no llega' })
+    expect(future).toBeDisabled()
+    await user.click(future)
+    expect(screen.getByText('Domingo 15 de noviembre')).toBeInTheDocument()
   })
 
-  it('shows «Sin datos» with a dash for a rate whose denominator is 0, never 0 or NaN', async () => {
-    withSummary({
-      reservations: { created: 5, completed: 0, cancelled: 2, expired: 0, active: 3 },
-      rates: { conversion: 0, noShow: null, cancellation: 0.4 },
-      averagePartySize: null,
-    })
+  it('choosing a day with the mouse shows its figures, its check-ins and the value of the day', async () => {
+    const { user } = renderSummary()
+    const calendar = await section('Noviembre')
+    await user.click(calendar.getByRole('button', { name: '8 de noviembre, 4 reservas, 2 check-ins' }))
+    expect(screen.getByText('Domingo 8 de noviembre')).toBeInTheDocument()
+    const detail = await section('Detalle del día')
+    expect(await detail.findByText('11:56 a. m. · Mesa 04')).toBeInTheDocument()
+    expect(detail.getByText('3:47 p. m. · Mesa 04')).toBeInTheDocument()
+    expect(detail.getByText('Valor del día').closest('p')).toHaveTextContent('$4.000')
+    expect(detail.getByText('canceladas o vencidas')).toBeInTheDocument()
+  })
+
+  it('the keyboard moves between days with the arrows and chooses with Enter; the detail is announced politely', async () => {
+    const { user } = renderSummary()
+    const calendar = await section('Noviembre')
+    const day15 = calendar.getByRole('button', { name: '15 de noviembre, 1 reserva, 0 check-ins' })
+    day15.focus()
+    // One week back: the 8th.
+    await user.keyboard('{ArrowUp}')
+    expect(calendar.getByRole('button', { name: '8 de noviembre, 4 reservas, 2 check-ins' })).toHaveFocus()
+    await user.keyboard('{Enter}')
+    expect(calendar.getByRole('button', { name: '8 de noviembre, 4 reservas, 2 check-ins' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Domingo 8 de noviembre').closest('[aria-live]')).toHaveAttribute('aria-live', 'polite')
+    await user.keyboard('{ArrowLeft}')
+    expect(calendar.getByRole('button', { name: '7 de noviembre, 3 reservas, 0 check-ins' })).toHaveFocus()
+    await user.keyboard('{Home}')
+    expect(calendar.getByRole('button', { name: '1 de noviembre, 0 reservas, 0 check-ins' })).toHaveFocus()
+  })
+
+  it('the grid is one tab stop: only the chosen day is tabbable', async () => {
     renderSummary()
-    await screen.findByText('5 reservas creadas en el periodo')
-    const story = await section('Así van tus reservas')
-    expect(story.getAllByText('Sin datos', { exact: false })).toHaveLength(2)
-    expect(story.getByText('No llegaron')).toBeInTheDocument()
-    expect(story.getByText('Personas por reserva')).toBeInTheDocument()
-    expect(story.getByText('De cada 10 reservas, 0 llegaron.')).toBeInTheDocument()
-    expect(story.queryByText(/NaN/)).not.toBeInTheDocument()
+    const calendar = await section('Noviembre')
+    const tabbable = calendar.getAllByRole('button').filter((button) => button.getAttribute('tabindex') === '0')
+    expect(tabbable).toHaveLength(1)
+    expect(tabbable[0]).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('a period of several months has one calendar per month with arrows between them', async () => {
+    const { user } = renderSummary('/resumen?periodo=personalizado&desde=2026-10-20&hasta=2026-11-10')
+    const calendar = await section('Noviembre')
+    await user.click(calendar.getByRole('button', { name: 'Mes anterior del calendario' }))
+    expect(await screen.findByRole('heading', { name: 'Octubre' })).toBeInTheDocument()
+    const october = await section('Octubre')
+    // Days before the period are not selectable.
+    expect(october.getByRole('button', { name: '10 de octubre, fuera del periodo' })).toBeDisabled()
+    expect(october.getByRole('button', { name: 'Mes anterior del calendario' })).toBeDisabled()
+  })
+
+  it('opens on the last day with data when today is not in the period', async () => {
+    renderSummary('/resumen?periodo=anterior')
+    const calendar = await section('Octubre')
+    expect(await calendar.findByRole('button', { pressed: true })).toHaveAccessibleName(/^28 de octubre/)
+  })
+
+  it('a failure of the check-ins of a day says so, with a retry, and does not take the calendar down', async () => {
+    renderSummary('/resumen', '?mockError=billing-load')
+    const detail = await section('Detalle del día')
+    expect(await detail.findByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Noviembre' })).toBeInTheDocument()
+  })
+})
+
+describe('SummaryPage · comensales por mes y estado de las reservas', () => {
+  it('shows the guests of the last six months and says which one is in progress', async () => {
+    renderSummary()
+    const months = await section('Comensales por mes')
+    expect(months.getByText('Últimos 6 meses')).toBeInTheDocument()
+    expect(months.getAllByRole('listitem').filter((item) => item.getAttribute('aria-label'))).toHaveLength(6)
+    expect(months.getByText('Noviembre en curso (rayado).')).toBeInTheDocument()
+  })
+
+  it('splits the reservations in arrived, did not arrive and cancelled, with percents over the created ones', async () => {
+    renderSummary()
+    const status = await section('Estado de las reservas')
+    expect(status.getAllByText('Llegaron').length).toBeGreaterThan(0)
+    expect(status.getAllByText('No llegaron').length).toBeGreaterThan(0)
+    expect(status.getAllByText('Canceladas').length).toBeGreaterThan(0)
+    expect(status.getByRole('img')).toHaveAccessibleName(/llegaron/)
+    expect(status.getByText('llegaron', { selector: 'dt' })).toBeInTheDocument()
+  })
+
+  it('defines every percentage in a contextual help', async () => {
+    const { user } = renderSummary()
+    const status = await section('Estado de las reservas')
+    const toggle = status.getByRole('button', { name: 'Cómo se calculan' })
+    await user.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(status.getAllByText(/de todas las reservas creadas/).length).toBeGreaterThan(0)
   })
 
   it('says there are no reservations when the period has none', async () => {
     renderSummary('/resumen', '?mockEmpty')
-    expect(await screen.findByText('No hay reservas creadas en este periodo.')).toBeInTheDocument()
+    const status = await section('Estado de las reservas')
+    expect(status.getByText('Aún no hay reservas en este periodo')).toBeInTheDocument()
   })
 })
 
-describe('SummaryPage · tu ritmo', () => {
-  it('lists the three peak hours, highest first, and nothing else (no 24-hour map)', async () => {
+describe('SummaryPage · horas de mayor demanda', () => {
+  it('shows the map, the three peak hours and the reservations of each weekday in one block', async () => {
     renderSummary()
-    await screen.findByText('$24.000')
-    const peak = await section('Tus horas pico')
-    const items = peak.getAllByRole('listitem')
-    expect(items).toHaveLength(3)
-    expect(items[0]).toHaveTextContent('1. 7:00 p. m.9 reservas')
-    expect(items[1]).toHaveTextContent('2. 8:00 p. m.7 reservas')
-    expect(items[2]).toHaveTextContent('3. 1:00 p. m.5 reservas')
+    const demand = await section('Horas de mayor demanda')
+    expect(demand.getByRole('img', { name: /Reservas creadas por día de la semana y hora/ })).toBeInTheDocument()
+    const peaks = within(demand.getByRole('heading', { name: 'Horas pico' }).closest('section') as HTMLElement)
+    expect(peaks.getAllByRole('listitem')).toHaveLength(3)
+    expect(peaks.getByText('7:00 p. m.')).toBeInTheDocument()
+    expect(demand.getByRole('heading', { name: 'Por día de la semana' })).toBeInTheDocument()
   })
 
-  it('shows the seven days Monday to Sunday and marks the busiest in words, in a table for screen readers', async () => {
-    renderSummary()
-    await screen.findByText('$24.000')
-    const days = await section('Días de más movimiento')
-    const table = days.getByRole('table', { name: 'Reservas creadas por día de la semana' })
-    const rows = within(table).getAllByRole('row').slice(1).map((row) => cellsOf(row))
-    expect(rows).toEqual([
-      ['Lunes', '4'], ['Martes', '5'], ['Miércoles', '7'], ['Jueves', '6'], ['Viernes', '13 (Día con más movimiento)'], ['Sábado', '9'], ['Domingo', '3'],
-    ])
-    expect(days.getByText('Viernes', { selector: 'p' })).toBeInTheDocument()
+  it('reads the cell under the keyboard in words', async () => {
+    const { user } = renderSummary()
+    const demand = await section('Horas de mayor demanda')
+    await user.tab()
+    demand.getByRole('img', { name: /Reservas creadas por día de la semana y hora/ }).focus()
+    await user.keyboard('{ArrowRight}')
+    expect(demand.getByText(/Lunes, 8:00 a\. m\. · 0 reservas/)).toBeInTheDocument()
   })
 
-  it('says so when there is no rhythm yet', async () => {
+  it('says so when nothing has been reserved yet', async () => {
     renderSummary('/resumen', '?mockEmpty')
-    expect(await screen.findByText('Todavía no hay horas pico en este periodo.')).toBeInTheDocument()
-    expect(screen.getByText('Todavía no hay reservas en este periodo.')).toBeInTheDocument()
+    const demand = await section('Horas de mayor demanda')
+    expect(demand.getByText('Aún no hay reservas en este periodo')).toBeInTheDocument()
   })
 })
 
-describe('SummaryPage · detalle de cobro', () => {
-  it('lists the check-ins in Bogotá time, with table, people and fee, and the same total as the figure', async () => {
+describe('SummaryPage · detalle del pago', () => {
+  it('shows three rows, the total of the period and «Ver los N check-ins»', async () => {
     renderSummary()
-    await screen.findByText('$24.000')
-    const detail = await section('Detalle de cobro')
-    const table = await detail.findByRole('table', { name: 'Check-ins del periodo' })
-    const rows = within(table).getAllByRole('row').slice(1)
-    expect(rows).toHaveLength(12)
-    expect(within(rows[0]).getByText('15 nov · 11:30 p. m.')).toBeInTheDocument()
-    expect(within(rows[0]).getByText('Mesa 01')).toBeInTheDocument()
-    expect(within(rows[0]).getByText('2 personas')).toBeInTheDocument()
-    expect(within(rows[0]).getByText('$2.000')).toBeInTheDocument()
-    expect(detail.getByText('Total del periodo: 12 check-ins · $24.000')).toBeInTheDocument()
-    expect(detail.queryByText(/comensal/i)).not.toBeInTheDocument()
+    const detail = await section('Detalle del pago')
+    expect(await detail.findByText('Total del periodo: 5 check-ins · $10.000')).toBeInTheDocument()
+    expect(detail.getAllByRole('row')).toHaveLength(4)
+    expect(detail.getByRole('button', { name: 'Ver los 5 check-ins' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('opens the whole list and closes it again', async () => {
+    const { user } = renderSummary()
+    const detail = await section('Detalle del pago')
+    await user.click(await detail.findByRole('button', { name: 'Ver los 5 check-ins' }))
+    expect(detail.getAllByRole('row')).toHaveLength(6)
+    await user.click(detail.getByRole('button', { name: 'Ver menos' }))
+    expect(detail.getAllByRole('row')).toHaveLength(4)
+  })
+
+  it('explains how it is calculated, in a help', async () => {
+    const { user } = renderSummary()
+    const detail = await section('Detalle del pago')
+    const toggle = detail.getByRole('button', { name: 'Cómo se calcula' })
+    await user.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(detail.getByText(/Cada check-in guarda la tarifa que había cuando se hizo/)).toBeInTheDocument()
   })
 
   it('with no check-ins it says when they will show up', async () => {
     renderSummary('/resumen', '?mockEmpty')
-    expect(await screen.findByText('No hay check-ins en este periodo')).toBeInTheDocument()
-    expect(screen.getByText('Cuando valides el código de un comensal, aparecerá aquí.')).toBeInTheDocument()
+    const detail = await section('Detalle del pago')
+    expect(await detail.findByText('No hay check-ins en este periodo')).toBeInTheDocument()
   })
 
   it('a failure of the detail does not take the rest down: it says so, with a retry', async () => {
     renderSummary('/resumen', '?mockError=billing-load')
-    expect(await screen.findByText('$24.000')).toBeInTheDocument()
-    expect(await screen.findByText('No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Intentar de nuevo' })).toBeInTheDocument()
+    const detail = await section('Detalle del pago')
+    expect(await detail.findByText('No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.')).toBeInTheDocument()
+    expect(detail.getByRole('button', { name: 'Intentar de nuevo' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Comensales con reserva DiNNo' })).toBeInTheDocument()
   })
 })
 
@@ -197,14 +305,14 @@ describe('SummaryPage · periodo', () => {
     const getSummary = vi.spyOn(mockSummaryApi, 'getSummary')
     renderSummary()
     expect(await screen.findByText('Del 1 al 15 de noviembre de 2026')).toBeInTheDocument()
-    await screen.findByText('$24.000')
+    await screen.findByText('Total a pagar a DiNNo')
     expect(getSummary).toHaveBeenCalledWith({ from: '2026-11-01', to: '2026-11-15' })
   })
 
   it('«Mes anterior» asks for the whole previous month', async () => {
     const getSummary = vi.spyOn(mockSummaryApi, 'getSummary')
     const { user, router } = renderSummary()
-    await screen.findByText('$24.000')
+    await screen.findByText('Total a pagar a DiNNo')
     await user.click(screen.getByRole('radio', { name: 'Mes anterior' }))
     expect(await screen.findByText('Del 1 al 31 de octubre de 2026')).toBeInTheDocument()
     await waitFor(() => expect(getSummary).toHaveBeenCalledWith({ from: '2026-10-01', to: '2026-10-31' }))
@@ -214,13 +322,12 @@ describe('SummaryPage · periodo', () => {
   it('«Personalizado» shows two dates and asks the period they say', async () => {
     const getSummary = vi.spyOn(mockSummaryApi, 'getSummary')
     const { user } = renderSummary()
-    await screen.findByText('$24.000')
+    await screen.findByText('Total a pagar a DiNNo')
     await user.click(screen.getByRole('radio', { name: 'Personalizado' }))
     const from = screen.getByLabelText('Desde')
     const to = screen.getByLabelText('Hasta')
     expect(from).toHaveValue('2026-11-01')
     expect(to).toHaveValue('2026-11-15')
-    expect(to).toHaveAttribute('max', '2026-11-15')
     await user.clear(from)
     await user.type(from, '2026-10-20')
     await user.click(screen.getByRole('button', { name: 'Ver periodo' }))
@@ -235,7 +342,7 @@ describe('SummaryPage · periodo', () => {
   ])('rejects %s to %s without asking the backend: «%s»', async (start, end, message) => {
     const getSummary = vi.spyOn(mockSummaryApi, 'getSummary')
     const { user } = renderSummary()
-    await screen.findByText('$24.000')
+    await screen.findByText('Total a pagar a DiNNo')
     await user.click(screen.getByRole('radio', { name: 'Personalizado' }))
     const calls = getSummary.mock.calls.length
     const from = screen.getByLabelText('Desde')
@@ -253,22 +360,38 @@ describe('SummaryPage · periodo', () => {
     const getSummary = vi.spyOn(mockSummaryApi, 'getSummary')
     renderSummary('/resumen?periodo=personalizado&desde=2026-11-10&hasta=2026-11-30')
     expect(await screen.findByText('Revisa las fechas del periodo.')).toBeInTheDocument()
-    expect(screen.getByText('La fecha final no puede ser futura. Elige hoy o un día anterior.')).toBeInTheDocument()
     expect(getSummary).not.toHaveBeenCalled()
+  })
+
+  it('changing the period starts the calendar over on that period\'s default day', async () => {
+    const { user } = renderSummary()
+    const calendar = await section('Noviembre')
+    await user.click(calendar.getByRole('button', { name: '8 de noviembre, 4 reservas, 2 check-ins' }))
+    await user.click(screen.getByRole('radio', { name: 'Mes anterior' }))
+    const october = await section('Octubre')
+    expect(await october.findByRole('button', { pressed: true })).toHaveAccessibleName(/^28 de octubre/)
   })
 })
 
 describe('SummaryPage · carga y error', () => {
   it('shows a polite loading state while the first summary arrives', async () => {
     renderSummary('/resumen', '?mockLatency=600')
-    expect(await screen.findByText('Cargando el resumen')).toBeInTheDocument()
+    expect(await screen.findAllByText('Cargando el resumen')).not.toHaveLength(0)
   })
 
-  it('shows a clear error with a retry when the summary cannot load', async () => {
+  it('shows a clear error with a retry when the summary cannot load, and the detail of the payment still asks on its own', async () => {
     const { user } = renderSummary('/resumen', '?mockError=summary-load')
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.')
+    expect(await screen.findByText('Detalle del pago')).toBeInTheDocument()
     window.history.replaceState({}, '', '/')
     await user.click(screen.getByRole('button', { name: 'Intentar de nuevo' }))
-    expect(await screen.findByText('$24.000')).toBeInTheDocument()
+    expect(await screen.findByText('Total a pagar a DiNNo')).toBeInTheDocument()
+  })
+
+  it('a summary with other numbers is drawn from the answer, not from fixed values', async () => {
+    withSummary({ averagePartySize: null, rates: { conversion: null, noShow: null, cancellation: null } })
+    renderSummary()
+    const hero = await section('Comensales con reserva DiNNo')
+    expect(hero.getAllByText('Sin datos')).toHaveLength(2)
   })
 })

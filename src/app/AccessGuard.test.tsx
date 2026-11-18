@@ -42,6 +42,7 @@ function renderGuarded(allow: Parameters<typeof AccessGuard>[0]['allow'], authEv
       { path: '/solicitud', element: <p>Pantalla de solicitud</p> },
       { path: '/registro', element: <p>Pantalla de inscripción</p> },
       { path: '/admin', element: <p>Panel de administración</p> },
+      { path: '/suspendido', element: <p>Pantalla de suspendido</p> },
     ],
     { initialEntries: ['/aqui'] },
   )
@@ -93,6 +94,28 @@ describe('AccessGuard', () => {
     const router = renderGuarded(['approved'])
     await waitFor(() => expect(router.state.location.pathname).toBe('/solicitud'))
     expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+  })
+
+  it('sends a suspended restaurant to its own screen, from the tables or from anywhere else it cannot use', async () => {
+    mocks.getMe.mockResolvedValue(me('restaurant_admin'))
+    mocks.getRestaurant.mockResolvedValue(restaurant('suspended'))
+    const router = renderGuarded(['approved'])
+    await waitFor(() => expect(router.state.location.pathname).toBe('/suspendido'))
+    expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+  })
+
+  it('lets a suspended restaurant into the pages it keeps (summary, its account screen)', async () => {
+    mocks.getMe.mockResolvedValue(me('restaurant_admin'))
+    mocks.getRestaurant.mockResolvedValue(restaurant('suspended'))
+    renderGuarded(['approved', 'suspended'])
+    expect(await screen.findByText('Contenido protegido')).toBeInTheDocument()
+  })
+
+  it('sends an approved restaurant away from the suspended screen to its tables', async () => {
+    mocks.getMe.mockResolvedValue(me('restaurant_admin'))
+    mocks.getRestaurant.mockResolvedValue(restaurant('approved'))
+    const router = renderGuarded(['suspended'])
+    await waitFor(() => expect(router.state.location.pathname).toBe('/mesas'))
   })
 
   it('lets a pending or rejected restaurant into the request screen, and sends an approved one to its tables', async () => {

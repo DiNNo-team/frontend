@@ -57,6 +57,7 @@
 - Ejemplos: `feat(restaurant-operations): add table status change`, `fix(auth): show generic error on invalid credentials`, `chore(ui): add button and text field components`, `docs: update database schema`.
 - Opcional: agrega `AB#<id>` al final para enlazar el commit con el work item de Azure.
 - Commits pequeños y con sentido. No uses mensajes como “cambios”, “fix” o “wip”.
+- Los commits y PRs van solo a nombre de la autora; sin Co-Authored-By, Claude-Session ni "Generated with Claude Code".
 
 ### Mantenerse al día con `develop`
 - Antes de abrir el PR y cada día de trabajo: trae los cambios de `develop` a tu rama (`git fetch` + `git merge origin/develop`) y vuelve a correr las verificaciones.
@@ -125,11 +126,13 @@ Las decisiones y contratos del Sprint 2 están en la sección 10.
 - **Bitácora de mesas:** cambiar el estado, desactivar (`available` → `inactive`; desde §12.2 solo se desactiva una mesa `available`) y reactivar (`inactive` → `available`) se registran; editar el identificador o la capacidad no. Desde el Sprint 3, cada registro lleva `source` (`manual`, `reservation` o `system`) y las entradas automáticas (`system`, el vencimiento de una reserva) tienen `user_id` en `null` (§12.3).
 - **Plano de mesas:** la posición de cada mesa vive en `tables` (`plan_x`, `plan_y`, `plan_shape`, en NULL mientras no está ubicada) y se guarda con `PUT /v1/tables/plan`, que reemplaza el plano completo (gana el último que guarda). No se registra en la bitácora ni cambia la disponibilidad.
 - **Zonas de mesas:** un restaurante agrupa sus mesas en zonas con nombre libre ("Piso 1", "Terraza"): tabla `table_areas` y `tables.area_id` (NULL = sin zona), rutas `/v1/table-areas`. Cada zona tiene su propio plano: cambiar una mesa de zona la saca del plano y borrar una zona deja sus mesas sin zona. No se registra en la bitácora ni cambia la disponibilidad.
-- **Aprobación de restaurantes:** vive en `restaurants.approval_status` (`pending`, `approved`, `rejected`); solo un restaurante `approved` es visible para el comensal y opera; nace `pending` solo por `POST /v1/restaurants/signup` (los existentes y los de usuarios habilitados por el equipo, `approved`); el rol `platform_admin` (administrador de DiNNo) solo por seed o SQL. Detalle en §11 del backend, "Aprobación de restaurantes".
-- **Revisión de restaurantes:** solo el `platform_admin` aprueba o rechaza, y solo desde `pending`; el rechazo lleva motivo obligatorio (10 a 300 caracteres); la auditoría vive en el propio restaurante (`reviewed_by`, `reviewed_at`, `rejection_reason`). Sin documentos, sin correos y sin suspender aprobados.
+- **Aprobación de restaurantes:** vive en `restaurants.approval_status` (`pending`, `approved`, `rejected`, `suspended`); solo un restaurante `approved` es visible para el comensal y opera; nace `pending` solo por `POST /v1/restaurants/signup` (los existentes y los de usuarios habilitados por el equipo, `approved`); el rol `platform_admin` (administrador de DiNNo) solo por seed o SQL. Detalle en §11 del backend, "Aprobación de restaurantes".
+- **Revisión de restaurantes:** solo el `platform_admin` aprueba o rechaza, y solo desde `pending`; el rechazo lleva motivo obligatorio (10 a 300 caracteres); la auditoría vive en el propio restaurante (`reviewed_by`, `reviewed_at`, `rejection_reason`). Sin documentos ni correos.
+- **Suspensión de restaurantes:** solo el `platform_admin` suspende (solo desde `approved`, motivo obligatorio de 10 a 300 caracteres) y reactiva (solo desde `suspended`, vuelve a `approved`); se guarda solo la última suspensión en el restaurante (`suspension_reason`, `suspended_at`, `suspended_by`), también después de reactivar; no hay tabla de auditoría. Un suspendido no existe para el comensal (igual que uno no disponible) y su cuenta solo ve su restaurante, su cobro y sus reservas y hace check-in de las activas, que se respetan hasta el check-in o el vencimiento (`403 RESTAURANT_SUSPENDED` en lo demás).
+- **Estado de cobro mensual:** el administrador marca a mano cada mes cerrado de cada restaurante como cobrado o lo deshace (`billing_periods`, sin pasarela de pagos); el monto es siempre `SUM(check_ins.fee_cop)` del mes de Bogotá, se guarda un snapshot al marcarlo y, si después no coincide, se avisa (`amountMismatch`), nunca se corrige solo. El mes en curso no se marca y un mes sin check-ins no se cobra. Sin tarifa por restaurante, sin exportación por HTTP.
 - **Pendiente y rechazado editan:** un restaurante `pending` o `rejected` puede editar sus datos sin cambiar de estado; el rechazado reenvía (`rejected` → `pending`, se limpian motivo y revisión y cambia `submitted_at`).
 - **Cobro por check-in:** tarifa fija en COP por check-in válido (`CHECKIN_FEE_COP`, por defecto 2000); cada check-in guarda la tarifa vigente (`check_ins.fee_cop`) y cambiarla no altera el historial; cancelaciones y vencimientos no se cobran.
-- **Reportes del restaurante:** el estado de cuenta y el resumen (KPIs) van por rango de fechas en hora de Bogotá, inclusivo (`from`..`to`, `AAAA-MM-DD`), por defecto del día 1 del mes en curso hasta hoy, máximo 366 días.
+- **Reportes del restaurante:** el estado de cuenta y el resumen (KPIs) van por rango de fechas en hora de Bogotá, inclusivo (`from`..`to`, `AAAA-MM-DD`), por defecto del día 1 del mes en curso hasta hoy, máximo 366 días. Para la pantalla Resumen de la web, `GET /v1/restaurants/me/summary` agrega `billing.guests`, `previousComparable`, `byDate`, `byDayHour`, `monthly` y `payment` (aditivo; contrato en `docs/restaurant-summary-contract.md`). La app del comensal no consume estos endpoints.
 - Nuevas decisiones: se agregan aquí, en una línea, en el mismo PR que las aplica.
 
 ---
@@ -156,7 +159,7 @@ Una tarea está lista solo si:
 - **El backend no crea usuarios al iniciar sesión.** Solo dos endpoints crean un usuario: `POST /v1/diners/me` (siempre con el rol `diner`) y `POST /v1/restaurants/signup` (siempre con el rol `restaurant_admin` y su restaurante `pending`).
 - Resolución del usuario en cada petición: token válido → se busca por `firebase_uid` → si no aparece y el correo está verificado, se busca por correo y se vincula el UID (igual que en el Sprint 1) → si no existe, la cuenta queda **sin perfil**.
 
-**Códigos de cuenta.** Precedencia: 401 de sesión → `EMAIL_NOT_VERIFIED` → cuenta sin perfil (`PROFILE_REQUIRED` / `ACCOUNT_NOT_ENABLED`) → rol que la ruta no acepta (`DINER_ACCOUNT` / `RESTAURANT_ACCOUNT` / `ADMIN_ACCOUNT`) → restaurante no aprobado (`ACCOUNT_PENDING_APPROVAL` / `ACCOUNT_REJECTED`) → `RESTAURANT_REQUIRED`. El rol va antes que la aprobación: un restaurante pendiente en una ruta de comensal o de administrador recibe `RESTAURANT_ACCOUNT`.
+**Códigos de cuenta.** Precedencia: 401 de sesión → `EMAIL_NOT_VERIFIED` → cuenta sin perfil (`PROFILE_REQUIRED` / `ACCOUNT_NOT_ENABLED`) → rol que la ruta no acepta (`DINER_ACCOUNT` / `RESTAURANT_ACCOUNT` / `ADMIN_ACCOUNT`) → restaurante no aprobado (`ACCOUNT_PENDING_APPROVAL` / `ACCOUNT_REJECTED` / `RESTAURANT_SUSPENDED`) → `RESTAURANT_REQUIRED`. El rol va antes que la aprobación: un restaurante pendiente o suspendido en una ruta de comensal o de administrador recibe `RESTAURANT_ACCOUNT`.
 
 | Situación | HTTP | `errorCode` | Mensaje (`message`) |
 |---|---|---|---|
@@ -169,11 +172,12 @@ Una tarea está lista solo si:
 | Administrador de DiNNo en endpoint de restaurante o de comensal | 403 | `ADMIN_ACCOUNT` | Esta es una cuenta de administrador de DiNNo. Usa el panel de administración en la web. |
 | Restaurante en revisión (`pending`) en una ruta que no le está permitida | 403 | `ACCOUNT_PENDING_APPROVAL` | Tu solicitud está en revisión. Te avisaremos cuando tu cuenta esté aprobada. |
 | Restaurante rechazado (`rejected`) en una ruta que no le está permitida | 403 | `ACCOUNT_REJECTED` | Tu solicitud no fue aprobada. Revisa el motivo, corrige tus datos y vuelve a enviarla. |
+| Restaurante suspendido (`suspended`) en una ruta que no le está permitida | 403 | `RESTAURANT_SUSPENDED` | Tu restaurante está suspendido y no aparece para los comensales. Revisa el motivo en tu cuenta o escríbenos a dinnoteam2026@gmail.com para reactivarlo. |
 | Restaurante habilitado sin restaurante registrado | 403 | `RESTAURANT_REQUIRED` | Primero registra tu restaurante. *(sin cambios)* |
 
-- **Endpoints de restaurante:** todos los del Sprint 1 (`/v1/restaurants`, `/v1/restaurants/me*`, `/v1/tables*`, `/v1/table-logs`), los de restaurante de §12.8 y los de §12.12 (`/v1/restaurants/me/resubmit`, `/v1/restaurants/me/summary`, `/v1/restaurants/me/billing/check-ins`). Solo un restaurante `approved` los usa todos; uno `pending` o `rejected` solo puede usar los de la lista de §12.12.
+- **Endpoints de restaurante:** todos los del Sprint 1 (`/v1/restaurants`, `/v1/restaurants/me*`, `/v1/tables*`, `/v1/table-logs`), los de restaurante de §12.8 y los de §12.12 (`/v1/restaurants/me/resubmit`, `/v1/restaurants/me/summary`, `/v1/restaurants/me/billing/check-ins`). Solo un restaurante `approved` los usa todos; uno `pending` o `rejected` solo puede usar los de la lista de §12.12, y uno `suspended`, los de §12.15.
 - **Endpoints de comensal:** `/v1/search/*` y `/v1/restaurants/:id/public`, y los de comensal de §12.8 (`/v1/reservations*`).
-- **Endpoints de administrador** (`platform_admin`): `/v1/admin/*` (§12.12).
+- **Endpoints de administrador** (`platform_admin`): `/v1/admin/*` (§12.12 y §12.15).
 - **Todos los roles:** `GET /v1/me` (una cuenta sin perfil recibe `PROFILE_REQUIRED`).
 - **`GET /v1/geocode`:** comensal, restaurante (con o sin restaurante registrado, también pendiente o rechazado) y **cuenta de Firebase sin perfil con el correo verificado** (el formulario del registro público lo usa antes de que exista la cuenta). Solo `platform_admin` recibe `403 ADMIN_ACCOUNT`.
 - La forma del error no cambia: `{ statusCode, message, error, errorCode? }`. Los clientes deciden por `errorCode`, nunca por el texto.
@@ -186,7 +190,7 @@ Todos bajo `/v1`, con `Authorization: Bearer <token de Firebase>`.
 | GET | `/me` | todos | — | 200 `{ id, email, displayName: string \| null, role, restaurantId: string \| null }`; `role` puede ser `platform_admin` · sin perfil → 403 `PROFILE_REQUIRED` |
 | POST | `/diners/me` | token válido con correo verificado | `{ displayName?: string }` (1–60 caracteres, con trim) | 201 si lo crea · 200 si ya existía como comensal. Misma forma que `GET /me`. Si no llega `displayName`: el nombre de la cuenta de Google y, si no hay, la parte del correo antes de `@`. Correo o UID de restaurante → 403 `RESTAURANT_ACCOUNT` |
 | GET | `/search/zones` | diner | — | 200 `[{ id, name, latitude, longitude }]` |
-| GET | `/search/restaurants` | diner | `lat` + `lng` **o** `zone` · `radiusKm` ∈ {1, 2, 5, 10} (por defecto 2) · `category?` · `partySize?` (1–20) | 200 `[{ id, name, category, address, latitude, longitude, distanceKm, availability }]`, ordenado por distancia, máximo 50 |
+| GET | `/search/restaurants` | diner | `lat` + `lng` **o** `zone`, opcionales · `radiusKm?` ∈ {1, 2, 5, 10}, solo con `lat` + `lng` o `zone`; **sin radio, todos los restaurantes** (Sprint 4) · `category?` · `partySize?` (1–20) | 200 `[{ id, name, category, address, latitude, longitude, distanceKm, availability }]`; con `lat` + `lng` o `zone`, ordenado por distancia; sin ellas, por nombre y `distanceKm` en `null`. Máximo 50 con radio y 500 sin radio |
 | GET | `/restaurants/:id/public` | diner | `lat?` + `lng?` (juntos o ninguno) | 200 `{ id, name, category, address, latitude, longitude, schedules[], isOpenNow, availability, distanceKm? }` · 404 `RESTAURANT_NOT_FOUND` |
 | GET | `/geocode` | comensal, restaurante (con o sin restaurante, aprobado o no) y cuenta sin perfil con correo verificado | `address` (3–255 caracteres) | 200 `{ latitude, longitude, formattedAddress }` · 404 `ADDRESS_NOT_FOUND` «No encontramos esa dirección en Bogotá.» · 503 `GEOCODING_UNAVAILABLE` «No pudimos ubicar la dirección en este momento.» · `platform_admin` → 403 `ADMIN_ACCOUNT`. Los mensajes son neutros: cada cliente muestra su propio texto según el `errorCode` |
 | POST | `/restaurants` | restaurant_admin | agrega `latitude?`, `longitude?` | la respuesta agrega `latitude`, `longitude` (number \| null) |
@@ -195,9 +199,9 @@ Todos bajo `/v1`, con `Authorization: Bearer <token de Firebase>`.
 
 **Reglas de los campos:**
 - `latitude` y `longitude` son `number` en JSON, con hasta 6 decimales. Se aceptan con más de 6: el backend las **redondea** a 6 antes de guardar (no es un error), y las respuestas traen el valor redondeado. Se envían **los dos o ninguno** (si llega solo uno → 400). Deben estar dentro de Bogotá: latitud entre 4.45 y 4.85, longitud entre -74.25 y -73.95 (fuera → 400). En el backend las coordenadas son opcionales para no romper la web actual; la obligatoriedad al registrar la impone el formulario web.
-- Búsqueda: `lat`/`lng` y `zone` son excluyentes (los dos o ninguno → 400). `lat`/`lng` pueden estar fuera de Bogotá (simplemente no habrá resultados). Una `zone` desconocida, una `category` inválida, un `radiusKm` fuera de la lista o un `partySize` fuera de rango → 400 con un mensaje en español.
-- **Búsqueda por dirección (app):** la búsqueda no recibe `address`. La app llama a `GET /geocode?address=…`, muestra «Resultados cerca de: `formattedAddress`» y busca con `GET /search/restaurants?lat=…&lng=…` usando `latitude` y `longitude`. Con `404` o `503` la app muestra su propio texto y ofrece buscar por zona o por ubicación. Una dirección que existe en Bogotá se acepta aunque el comensal pensara en otra ciudad (las direcciones colombianas se repiten entre ciudades): por eso se muestra `formattedAddress`.
-- `distanceKm`: número en km con 2 decimales. El formato para mostrar («a 650 m», «a 1,4 km») lo hace la app.
+- Búsqueda: `lat`/`lng` y `zone` son excluyentes (los dos → 400) y opcionales. `radiusKm` sin `lat`/`lng` ni `zone` → 400. Sin `radiusKm` no hay límite de distancia (Sprint 4: la app muestra todos los restaurantes en el mapa). `lat`/`lng` pueden estar fuera de Bogotá (simplemente no habrá resultados). Una `zone` desconocida, una `category` inválida, un `radiusKm` fuera de la lista o un `partySize` fuera de rango → 400 con un mensaje en español.
+- **Búsqueda por dirección (app, hasta el Sprint 3):** desde el Sprint 4 la app ya no busca por dirección ni por zona: pide todos los restaurantes y filtra por nombre en pantalla. `GET /geocode` y `GET /search/zones` siguen (la web usa `/geocode`). La búsqueda no recibe `address`. La app llama a `GET /geocode?address=…`, muestra «Resultados cerca de: `formattedAddress`» y busca con `GET /search/restaurants?lat=…&lng=…` usando `latitude` y `longitude`. Con `404` o `503` la app muestra su propio texto y ofrece buscar por zona o por ubicación. Una dirección que existe en Bogotá se acepta aunque el comensal pensara en otra ciudad (las direcciones colombianas se repiten entre ciudades): por eso se muestra `formattedAddress`.
+- `distanceKm`: número en km con 2 decimales, o `null` en la búsqueda sin `lat`/`lng` ni `zone`. El formato para mostrar («a 650 m», «a 1,4 km») lo hace la app.
 - `category`: `colombian`, `italian`, `mexican`, `asian`, `grill`, `fast_food`, `healthy`, `seafood`, `cafe`, `other` (los mismos del Sprint 1).
 - `schedules[]` del detalle: el mismo formato que `GET /restaurants/me`: `{ dayOfWeek (1 = lunes … 7 = domingo), isOpen24h, opensAt: "HH:MM" | null, closesAt: "HH:MM" | null }`. Si `closesAt < opensAt`, el horario cierra al día siguiente. Los días cerrados no aparecen.
 - `/restaurants/:id/public` → 404 `RESTAURANT_NOT_FOUND` si el id no es un UUID válido, si no existe, si no tiene coordenadas o si no está aprobado (pendiente o rechazado).
@@ -218,7 +222,7 @@ Todos bajo `/v1`, con `Authorization: Bearer <token de Firebase>`.
 - **Nunca** se expone el número de mesas libres ni de mesas totales.
 
 ### Tiempo real
-- Socket.IO en el mismo host del backend (ruta por defecto `/socket.io`). Conexión: `io(BASE_URL, { auth: async (cb) => cb({ token: await user.getIdToken() }) })`. El `auth` va **como función** para que cada reconexión envíe un token vigente (con un objeto fijo, la reconexión usaría el token viejo). Se aceptan comensales (salas `diners` y `diner:{userId}`) y `restaurant_admin` con restaurante registrado **y aprobado** (sala `restaurant:{restaurantId}`); las salas y los eventos de reservas están en §12.7. Si no, la conexión se rechaza con `connect_error`, cuyo `message` es un código: `UNAUTHORIZED` (token ausente, inválido o vencido; solo existe en el WebSocket, en HTTP es el 401 sin `errorCode`), `EMAIL_NOT_VERIFIED` (correo sin verificar), `PROFILE_REQUIRED`, `RESTAURANT_REQUIRED` (admin sin restaurante registrado; mismo código que el 403 de HTTP), `ACCOUNT_PENDING_APPROVAL` / `ACCOUNT_REJECTED` (restaurante no aprobado; mismos códigos que el 403 de HTTP), `ADMIN_ACCOUNT` (`platform_admin`: todavía no hay eventos de administración) o `SERVER_ERROR` (el handshake falló por algo distinto a la sesión, por ejemplo la base caída). El socket ya no envía `RESTAURANT_ACCOUNT` (sigue existiendo en HTTP). En el backend, el autenticador del handshake es `SocketAuthenticator`.
+- Socket.IO en el mismo host del backend (ruta por defecto `/socket.io`). Conexión: `io(BASE_URL, { auth: async (cb) => cb({ token: await user.getIdToken() }) })`. El `auth` va **como función** para que cada reconexión envíe un token vigente (con un objeto fijo, la reconexión usaría el token viejo). Se aceptan comensales (salas `diners` y `diner:{userId}`) y `restaurant_admin` con restaurante registrado **y aprobado** (sala `restaurant:{restaurantId}`); las salas y los eventos de reservas están en §12.7. Si no, la conexión se rechaza con `connect_error`, cuyo `message` es un código: `UNAUTHORIZED` (token ausente, inválido o vencido; solo existe en el WebSocket, en HTTP es el 401 sin `errorCode`), `EMAIL_NOT_VERIFIED` (correo sin verificar), `PROFILE_REQUIRED`, `RESTAURANT_REQUIRED` (admin sin restaurante registrado; mismo código que el 403 de HTTP), `ACCOUNT_PENDING_APPROVAL` / `ACCOUNT_REJECTED` / `RESTAURANT_SUSPENDED` (restaurante no aprobado o suspendido; mismos códigos que el 403 de HTTP), `ADMIN_ACCOUNT` (`platform_admin`: todavía no hay eventos de administración) o `SERVER_ERROR` (el handshake falló por algo distinto a la sesión, por ejemplo la base caída). El socket ya no envía `RESTAURANT_ACCOUNT` (sigue existiendo en HTTP). En el backend, el autenticador del handshake es `SocketAuthenticator`.
 - Socket.IO **no reintenta solo** cuando el servidor rechaza la conexión. Con `SERVER_ERROR` la app reintenta ella misma con espera creciente (por ejemplo 5 s, 15 s, 30 s) y, mientras tanto, sigue la consulta cada 60 s. Con los demás códigos no reintenta.
 - Un token que vence **no desconecta** un socket ya abierto: el token solo se revisa al conectar, y la siguiente reconexión pide uno nuevo con la función de `auth`.
 - Evento del servidor `availability.changed`: `{ restaurantId, availability, isOpenNow, isSearchable }`. Se envía a todos los comensales conectados.
@@ -301,7 +305,7 @@ src/
 ```
 - Cada funcionalidad en su carpeta de `features/`; nada de lógica de negocio en `App.tsx`.
 - Código en inglés (nombres, archivos, props, tipos); interfaz en español con el glosario del manual (14.1): Mesa ("Mesa 04"), Comensal, Restaurante, Disponible, Reservada, Ocupada, Inactiva, Abierto, Cerrado, Capacidad ("4 personas"), Bitácora, Iniciar sesión / Cerrar sesión. **Nunca:** "Libre" como estado, cliente, local, negocio, log, historial, pax, OK, Enviar, Aceptar. Mayúscula inicial, botones = verbo + objeto, sin signos de exclamación.
-- **Router y datos:** React Router y TanStack Query están acordados e instalados; las rutas viven en `src/app/router.tsx` (Sebastián). Las rutas son `/login`, `/registro`, `/onboarding`, `/solicitud`, `/mesas`, `/resumen`, `/restaurante`, `/bitacora` y `/admin` (las de Sprint 4, con carga diferida: `/registro`, `/solicitud`, `/resumen` y `/admin`). No agregues otra librería de estado sin acordarlo con el equipo.
+- **Router y datos:** React Router y TanStack Query están acordados e instalados; las rutas viven en `src/app/router.tsx` (Sebastián). Las rutas son `/login`, `/registro`, `/onboarding`, `/solicitud`, `/suspendido`, `/mesas`, `/resumen`, `/restaurante`, `/bitacora` y las del administrador `/admin`, `/admin/solicitudes`, `/admin/restaurantes`, `/admin/cobros` y `/admin/cobros/:restaurantId` (las de Sprint 4, con carga diferida: `/registro`, `/solicitud`, `/suspendido`, `/resumen` y todas las de `/admin`). No agregues otra librería de estado sin acordarlo con el equipo.
 
 ### Conexión con el backend
 - **Toda llamada pasa por `src/lib/api.ts`** (`apiFetch('/ruta')` o `apiUrl('/ruta')`), que agrega el origen y el prefijo `/v1`. Nunca escribas la URL del backend ni `/v1` a mano.
@@ -371,26 +375,42 @@ src/
 | restaurante habilitado sin restaurante (`RESTAURANT_REQUIRED`) | `/onboarding` |
 | restaurante `pending` o `rejected` | `/solicitud` |
 | restaurante `approved` | `/mesas` y el resto del dashboard |
-| `platform_admin` | `/admin` (no ve Mesas, Resumen, Restaurante ni Bitácora) |
+| restaurante `suspended` | `/suspendido` (solo ve su cuenta, `/resumen`, sus reservas con el check-in y cerrar sesión) |
+| `platform_admin` | `/admin` (Resumen, Solicitudes, Restaurantes y Cobros; no ve Mesas, Resumen del restaurante, Restaurante ni Bitácora) |
 | comensal (`diner`) | pantalla «cuenta de comensal» con salida |
 
 - Un 403 con `ACCOUNT_PENDING_APPROVAL`, `ACCOUNT_REJECTED` o `ADMIN_ACCOUNT` dispara `ACCESS_CHANGED_EVENT` (`api-client.ts`) y el guardia vuelve a preguntar. Los textos de cuenta salen de `ACCOUNT_ERROR_TEXT`; el `message` del backend nunca se muestra. `retryUnlessAnswered` (en `api-client.ts`, usado por `createQueryClient`) no reintenta un 4xx.
 - **Registro público (`/registro`, `features/signup/`):** paso 1 crea la cuenta de Firebase (`signUp` en `useAuth()`, correo y clave o Google) y manda el correo de verificación; paso 2 es `RestaurantForm` con `contactPhone="required"` y `requireLocation`, que envía `POST /restaurants/signup` tras una confirmación. `RestaurantForm` tiene `contactPhone`: `hidden` (por defecto), `optional` (`/restaurante`) o `required`; reglas en `restaurant-form.ts` (`validateContactPhone`, 7 a 15 dígitos).
 - **Solicitud (`/solicitud`):** en revisión muestra lo enviado, `Editar mis datos` (PATCH, sigue en revisión) y consulta cada 30 s; rechazada, el motivo y el formulario precargado con «Reenviar solicitud» (PATCH si cambió algo y luego `POST /restaurants/me/resubmit`). Al aprobarse el guardia lleva a `/mesas` y el dashboard da la bienvenida una sola vez (`use-welcome.ts`, marca en `localStorage`). No hay correos: la pantalla es el aviso.
-- **Administrador (`/admin`, `features/admin/`):** lista con Pendientes · Aprobadas · Rechazadas (estado, página y solicitud abierta viven en la URL: `?estado=`, `?pagina=`, `?solicitud=`), detalle en panel lateral desde 1024 px y como página en el teléfono, `Aprobar restaurante` (confirmación) y `Rechazar solicitud` (motivo de 10 a 300 caracteres con `TextArea`, borradores editables). Un 409 `RESTAURANT_NOT_PENDING` vuelve a consultar y avisa; un 404 cierra el detalle. Dock propio: `NAV_ITEMS_ADMIN` con el contador de pendientes (`usePendingRestaurantsCount`).
-- **Resumen (`/resumen`, `features/summary/`):** periodo «Este mes», «Mes anterior» o «Personalizado» (máximo 366 días, `to` no futuro; `period.ts`, en la URL), «A cobrar» como cifra protagonista, una barra apilada SVG de las reservas creadas (sin librerías de gráficos), cada tasa en su propia frase con su denominador (`perTen` y `messages.ts`; `null` es «Sin datos»), horas pico (solo hay 3) y los 7 días, y el detalle de cobro de 50 en 50 en hora de Bogotá (`formatBogotaDateTime`). **Nunca** datos del comensal. Mock: `?mockEmpty`, `?mockError=summary-load` o `billing-load`.
-- **Socket:** solo conecta con `approvalStatus === 'approved'`; `ACCOUNT_PENDING_APPROVAL`, `ACCOUNT_REJECTED` y `ADMIN_ACCOUNT` no se reintentan (como todo código que no sea `SERVER_ERROR`).
-- **Kit (aviso a Sebastián):** `TextArea` nuevo; estados `review-pending` («En revisión»), `review-approved` («Aprobado») y `review-rejected` («No aprobada») en `STATUS_META` con `REVIEW_STATUS`; `NavDock` y `AppShell` aceptan `navItems` y `navBadges` (`NAV_ITEMS` se dividió en `NAV_ITEMS_RESTAURANT` y `NAV_ITEMS_ADMIN`); utilidad `animate-grow-x` en `globals.css` para las barras. Documentado en `components/ui/README.md` y `/kit`.
-- **Mocks de Sprint 4** (con `VITE_USE_MOCKS=true`, controles de `src/lib/mock-env.ts`): `?mockRole=admin|diner|none`, `?mockApproval=pending|rejected`, `?mockError=me-load|admin-list|admin-detail|admin-review|summary-load|billing-load|signup`, `?mockConflict` (otro administrador ya revisó) y `?mockEmpty`.
+- **Administrador (`/admin`, §12.15; contrato en `docs/admin-panel-contract.md`):** cuatro secciones con `NAV_ITEMS_ADMIN` (Resumen en `/admin`, Solicitudes en `/admin/solicitudes` con el contador de pendientes, Restaurantes y Cobros). Un enlace viejo `/admin?estado=…` se redirige a `/admin/solicitudes` (`OverviewPage`). Referencia visual en `docs/design/admin-panel/` y capturas de lo implementado en `docs/design/admin-panel/implementado/`.
+  - **Datos compartidos** (`features/admin/`): `panel-types.ts`, `panel-api.ts` (+ `panel-api.mock.ts`), `panel-hooks.ts`, `month.ts` (meses `AAAA-MM` en hora de Bogotá) y `format.ts` (`$ 374.000`). Cada pantalla tiene su carpeta: `admin-overview/`, `admin-billing/`, `admin-restaurants/`; Solicitudes sigue en `features/admin/` (ahora con «Suspendidas», `Suspender restaurante` y `Reactivar restaurante`, y «Suspendido antes: {fecha} · {motivo}»).
+  - **Límite de 30 lecturas por minuto** (`overview`, `billing`, `billing/:restaurantId`, `activity`, `platform/metrics`): `panel-hooks.ts` las deja frescas 5 min, sin `refetchOnWindowFocus` y sin reintentos. El `overview` se pide **una sola vez** (el del mes en curso; su `monthly` trae 12 meses y sirve para cualquier mes reciente); `billing` y `metrics` van por mes y se cachean, así que cambiar de mes no repite lo ya visto. Un 429 se muestra y no se reintenta.
+  - **Resumen** (`?mes=AAAA-MM`): las barras de «Ingresos por mes» son el selector (`aria-pressed`). Cada bloque tiene su carga, vacío y error (`BlockState`): si uno falla, los demás siguen. No se valida que `sum(byDate)`, `sum(byDayHour)` y `reservations.created` coincidan (pueden diferir en 1 durante el día en curso). Las gráficas son SVG/CSS propios; la lectura al pasar el cursor también se lee con el teclado (flechas).
+  - **Cobros** (`?mes=`, `?pagina=`; detalle `/admin/cobros/:restaurantId?mes=`): `Marcar como cobrado` (el único primario) solo con `status: pending` y monto > 0; `Deshacer cobro` con `paid`; mes en curso sin botones. Cada 409 (`PERIOD_NOT_CLOSED`, `NOTHING_TO_BILL`, `PERIOD_ALREADY_PAID`, `PERIOD_NOT_PAID`) tiene el texto del contrato y recarga el detalle (`features/admin-billing/messages.ts`). `amountMismatch` muestra los dos valores.
+  - **Restaurantes** (`?estado=todos|activos|suspendidos`, `?restaurante=`): directorio de `/admin/activity`; el detalle reutiliza `RequestDetail` (panel desde 1024 px, página en el teléfono) con «Ver cobro del mes». Con el panel abierto la tabla deja solo nombre, estado y monto.
+- **Resumen del restaurante (`/resumen`, `features/summary/`; contrato en `docs/restaurant-summary-contract.md`, diseño en `docs/design/restaurant-summary/`):** periodo «Este mes», «Mes anterior» o «Personalizado» (máximo 366 días, `to` no futuro; `period.ts`, en la URL) y cinco bloques en este orden: **1** comensales (suma de personas de los check-ins, comparados con el MISMO TRAMO del periodo anterior; sin porcentaje si el anterior es 0) y **Total a pagar a DiNNo** (chip En curso / Pendiente / Pagado, costo por comensal, cierre del periodo y estado del mes anterior); **2** calendario de lunes a domingo (seis tonos por reservas creadas, círculo verde con los check-ins, días futuros punteados y no seleccionables; un calendario por mes con flechas si el periodo pasa de un mes; cada día es un botón con `aria-label` y `aria-pressed`, la cuadrícula es una sola parada de Tab y las flechas, Inicio y Fin se mueven entre días) y **Detalle del día** (`aria-live="polite"`; sus check-ins salen de `GET /billing/check-ins?from=día&to=día&pageSize=200`); **3** Comensales por mes (6 meses, el mes en curso rayado) y Estado de las reservas (barra llegaron / no llegaron / canceladas); **4** Horas de mayor demanda (mapa día × hora, 3 horas pico y reservas por día de la semana); **5** Detalle del pago (3 filas y «Ver los N check-ins», que abre la lista de 50 en 50). Los bloques 1 a 4 leen la misma respuesta (`/summary`) y cargan y fallan juntos (`BlockState`); el detalle del pago y los check-ins de un día piden por su cuenta. **Quien paga nunca lee «A cobrar», «cobro» ni «Cobrado»** (lo fija `messages.test.ts`): el kit trae `payment-in-progress`, `payment-pending` y `payment-paid` (`PAYMENT_STATUS`, «Pagado»), con la misma forma y color que los `billing-*` del administrador. Lógica pura en `calendar.ts` (+ `calendar.test.ts`) y `heat.ts`; el mapa de calor (`HeatGrid`, `use-heat-cursor.ts`) y `MonthBars` (ahora con `value`, formato y textos por props, de solo lectura sin `onSelect`) se comparten con el panel del administrador, que se ve y se comporta igual (`admin-overview/components/shared-components.test.tsx`). **Nunca** datos del comensal. Mock: `?mockEmpty`, `?mockPrevious=zero`, `?mockPayment=pending|paid|in_progress`, `?mockError=summary-load` o `billing-load`. El restaurante suspendido la ve en solo lectura.
+- **Restaurante suspendido (§12.15, `features/suspended/`):** `useAccess()` lo resuelve con `approvalStatus: 'suspended'` (`AccessKind` `suspended`, destino `/suspendido`; los tipos aceptan `suspensionReason?`). `DashboardLayout` pasa a `NAV_ITEMS_SUSPENDED` (Cuenta y Resumen), sin el switch Abierto/Cerrado, sin avisos de mesas y sin socket. `/suspendido` muestra el motivo, «Reservas DiNNo» con «Validar código» y el acceso a `/resumen` (solo lectura). Un 403 `RESTAURANT_SUSPENDED` dispara `ACCESS_CHANGED_EVENT` y el guardia lo lleva ahí. Mock: `?mockApproval=suspended`.
+- **Socket:** solo conecta con `approvalStatus === 'approved'`; `ACCOUNT_PENDING_APPROVAL`, `ACCOUNT_REJECTED`, `RESTAURANT_SUSPENDED` y `ADMIN_ACCOUNT` no se reintentan (como todo código que no sea `SERVER_ERROR`).
+- **Kit (aviso a Sebastián):** `TextArea` nuevo; estados `review-pending` («En revisión»), `review-approved` («Aprobado») y `review-rejected` («No aprobada») en `STATUS_META` con `REVIEW_STATUS`; panel del administrador: `review-suspended` («Suspendido», raya), `restaurant-active` («Activo», punto) y `billing-in-progress` / `billing-pending` / `billing-paid` («En curso», «Pendiente», «Cobrado») con `BILLING_STATUS`; utilidades `grid-rank-row` y `grid-weekday-row` en `globals.css`; `NavDock` y `AppShell` aceptan `navItems` y `navBadges` (`NAV_ITEMS` se dividió en `NAV_ITEMS_RESTAURANT`, `NAV_ITEMS_ADMIN` y `NAV_ITEMS_SUSPENDED`; `NavItem` acepta `end`); utilidad `animate-grow-x` en `globals.css` para las barras. Documentado en `components/ui/README.md` y `/kit`.
+- **Mocks de Sprint 4** (con `VITE_USE_MOCKS=true`, controles de `src/lib/mock-env.ts`): `?mockRole=admin|diner|none`, `?mockApproval=pending|rejected|suspended`, `?mockError=me-load|admin-list|admin-detail|admin-review|summary-load|billing-load|signup|admin-overview|admin-metrics|admin-billing|admin-activity|admin-mark`, `?mockConflict` (otro administrador ya revisó) y `?mockEmpty`.
 - **Pruebas:** el `testTimeout` de Vitest sube a 20 s (`vite.config.ts`): con unos 60 archivos en paralelo, los 5 s por defecto fallaban al azar en pruebas que escriben en formularios.
 
 ### Despliegue
-- **Azure Static Web Apps** (`swa-dinno`, plan Free): https://brave-grass-07093571e.3.azurestaticapps.net. `.github/workflows/deploy-azure.yml` corre en cada push a **`develop`**: `npm ci`, lint, typecheck, test, `check:ui` y build con las variables del repo (`VITE_API_URL` apunta al backend de Azure), y publica `dist`. Si una verificación falla, no publica. Entra a Azure con OIDC (identidad `id-gh-frontend`, solo sobre `swa-dinno`): **el job no declara `environment`**, porque la credencial federada solo confía en `repo:DiNNo-team/frontend:ref:refs/heads/develop`. El token de despliegue se pide en cada corrida y no se guarda en GitHub.
-- `public/staticwebapp.config.json` hace en Azure lo que `vercel.json` en Vercel: toda ruta que no sea `/assets/*` devuelve `index.html`, para que recargar `/mesas` no dé 404.
-- Las `VITE_*` de Azure son **variables** del repo (Settings → Secrets and variables → Actions → Variables), no secretos: terminan en el navegador igual. Si cambian, hay que volver a desplegar. `VITE_USE_MOCKS` no se define.
-- **Vercel** sigue como **plan B** hasta después de la presentación: despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
+- **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
 - `VITE_API_URL` se configura en Vercel (Production y Preview) y se incrusta al compilar: si cambia, hay que volver a desplegar.
 - Los PR generan despliegues de vista previa: úsalos para probar antes del merge.
+- **Azure Static Web Apps (Sprint 4, reemplaza a Vercel):** `swa-dinno`, https://brave-grass-07093571e.3.azurestaticapps.net. `.github/workflows/web-ci-cd.yml`. En cada PR a `develop` o `main` corre lint, typecheck y pruebas. En cada push a `main` (el PR `develop` → `main`) además compila y sube `dist` a Static Web Apps (plan Free).
+  - **Sin claves en GitHub:** entra a Azure con OIDC (credencial federada, entorno `production`). El token de despliegue se lee en ese momento con `az staticwebapp secrets list` y se oculta en el log.
+  - **Variables del repositorio** (GitHub → Settings → Variables, no secretos): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_STATIC_WEB_APP_NAME` y los `VITE_*` del build. `VITE_API_URL` debe ser `https://`; si no, el despliegue se detiene.
+  - **`public/staticwebapp.config.json`** (Vite lo copia a `dist`):
+    - cualquier ruta sirve `index.html`, igual que `vercel.json`;
+    - cabeceras de seguridad: HSTS, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Permissions-Policy` con la cámara solo para el propio sitio, para el QR;
+    - caché larga para `/assets/*`.
+  - **Al cambiar de dominio**, el dominio nuevo de la web se agrega en tres lugares:
+    - Firebase Authentication → *Authorized domains*;
+    - la restricción de referer de la llave de Google Maps;
+    - `CORS_ORIGINS` del backend.
+  - `vercel.json` se borra cuando Static Web Apps quede como la web oficial.
 
 ---
 
@@ -560,9 +580,9 @@ Los 404 y 409 existentes de mesas siguen sin `errorCode`; no se cambian en este 
 
 ### 12.10 Fuera de alcance del Sprint 3
 - Que el restaurante cancele una reserva.
-- Notificaciones push.
+- Notificaciones push (llegaron en el Sprint 4: §12.13).
 - Comisiones variables, facturas y pagos (el estado de cuenta con tarifa fija por check-in está en §12.12).
-- Límite de peticiones y de conexiones WebSocket (Sprint 4, seguridad).
+- Límite de peticiones y de conexiones WebSocket (llegó en el Sprint 4: §12.14).
 - Adaptador de Redis para Socket.IO (Sprint 4, Azure).
 - Extender el tiempo de una reserva.
 
@@ -588,7 +608,7 @@ Los 404 y 409 existentes de mesas siguen sin `errorCode`; no se cambian en este 
 - **Editar** (`PATCH /v1/restaurants/me`) no cambia el estado: un pendiente sigue pendiente y un rechazado sigue rechazado hasta que reenvía.
 - **Reenviar** (`POST /v1/restaurants/me/resubmit`, sin body): solo desde `rejected`; vuelve a `pending`, se borran el motivo y la revisión y la solicitud vuelve al final de la lista del administrador. Si no está rechazado: `409 RESTAURANT_NOT_REJECTED`.
 - **Revisar** (solo `platform_admin`): aprobar o rechazar, solo desde `pending`. El rechazo lleva motivo obligatorio (10 a 300 caracteres) que ve el restaurante en `rejectionReason`. Dos administradores a la vez: uno gana y el otro recibe `409 RESTAURANT_NOT_PENDING`. Al aprobar, el restaurante empieza a aparecer para los comensales (se emite `availability.changed`) si cumple lo demás.
-- Sin documentos, sin correos y sin suspender restaurantes aprobados.
+- Sin documentos ni correos. Suspender y reactivar restaurantes aprobados llegó con el panel del administrador (§12.15).
 
 **Registro público** (`POST /v1/restaurants/signup`)
 - Lo usa una cuenta de Firebase **sin perfil** con el **correo verificado**; no lleva `@Roles`.
@@ -638,3 +658,76 @@ Los 404 y 409 existentes de mesas siguen sin `errorCode`; no se cambian en este 
 - `averagePartySize`: promedio de personas de las creadas, con 2 decimales; `null` si no hay.
 - `peakHours`: las 3 horas (0 a 23, hora de Bogotá) con más reservas creadas, de mayor a menor; a igual cantidad, la hora menor primero; vacío si no hay.
 - `byDayOfWeek`: siempre 7 entradas (1 = lunes … 7 = domingo), con 0 en los días sin reservas.
+
+### 12.13 Sprint 4 · QR de check-in y notificaciones de la reserva
+
+**QR de check-in**
+- **Contenido:** solo el código de 6 caracteres de la reserva (§12.1), sin URL ni prefijo. Modo alfanumérico, corrección de errores nivel M. Siempre tinta oscura sobre fondo claro, también en modo oscuro.
+- **App:** lo dibuja en el tiquete de la reserva activa. Tocarlo lo abre en grande con el código debajo.
+- **Web (restaurante):** lee el código de tres formas y en las tres valida con el mismo `POST /v1/restaurants/me/check-ins` (§12.6):
+  - Lector USB de código de barras/QR: el lector «escribe» como un teclado. Una ráfaga de teclas con menos de 60 ms entre ellas que termina en Enter se toma como un escaneo.
+  - Cámara del computador.
+  - Escribir el código a mano.
+- El backend no cambia: sigue recibiendo el código como en el Sprint 3.
+
+**Notificaciones de la reserva** (solo el comensal)
+- **Registro del teléfono:** `PUT /v1/notifications/devices`, solo `diner`, body `{ "token": string, "platform": "android" | "ios" }` → `204`.
+  - `token` es el token de Firebase Cloud Messaging del teléfono, máximo 4096 caracteres.
+  - Un token pertenece a un solo comensal: si ya existía, pasa al comensal de la sesión.
+  - La app lo registra al iniciar, al dar el permiso y cuando el sistema cambia el token.
+- **Baja:** `DELETE /v1/notifications/devices`, body `{ "token": string }` → `204`. La app la llama antes de cerrar sesión.
+- **Cuándo se envía:** el backend envía una push, después de confirmar la transacción, cuando la reserva:
+  - se crea: «Mesa reservada en …»;
+  - se cancela: «Cancelaste tu reserva»;
+  - vence: «Tu reserva se venció»;
+  - tiene check-in: «Check-in confirmado».
+- **Textos:** los escribe el backend y nunca incluyen el código de la reserva.
+- **`data` de la push:** `{ "type": "created" | "cancelled" | "expired" | "checked_in", "reservationId": string }`. Al tocarla, la app abre la reserva.
+- **Si falla:** las notificaciones nunca bloquean la reserva. Sin credenciales, la API arranca con la push desactivada. Los tokens que FCM rechaza se borran.
+- **Credenciales del backend:** cuenta de servicio de Firebase en `FIREBASE_SERVICE_ACCOUNT_JSON` (el contenido; es lo que usa Render) o en `FIREBASE_SERVICE_ACCOUNT_FILE` (una ruta). Nunca en el repo.
+- **Credenciales de la app:** `google-services.json` y `GoogleService-Info.plist` sí van en el repo; no tienen secretos.
+- **iOS:** sin el programa pago de Apple no hay push remota, solo el recordatorio local.
+- **Recordatorio local** «Tu reserva vence pronto», en Android y en iOS: lo programa la app, sin backend.
+  - Suena 5 minutos antes del vencimiento, o 1 minuto antes si la reserva dura 5 minutos o menos.
+  - Se calcula con la hora del servidor.
+  - Se cancela si la reserva termina antes.
+- Tabla `push_devices` (`token` único, `user_id` con borrado en cascada, `platform`).
+
+### 12.14 Sprint 4 · Límite de peticiones y cabeceras de seguridad
+
+**Límite de peticiones (tarea 6.1.3)**
+- **Respuesta al pasar un límite:** `429` con `{ "statusCode": 429, "message": "Hiciste muchas solicitudes seguidas. Espera un momento e intenta de nuevo.", "error": "Too Many Requests" }`, sin `errorCode`, y la cabecera `Retry-After-<límite>` con los segundos que faltan.
+- **En los clientes:** cada uno muestra su propio texto por el status `429` y **no reintenta solo**. La persona vuelve a intentar.
+- **A quién se le cuenta:** con sesión, a la cuenta (el `sub` del token de Firebase); sin sesión, a la IP. En una misma red (por ejemplo, la universidad) todos salen por la misma IP, y así una persona no bloquea a las demás.
+- **Límites:** por ventana fija de 1 minuto, salvo donde se indica.
+
+| Qué | Límite |
+|---|---|
+| Toda la API, por cuenta (o IP sin sesión) | 300 |
+| Toda la API, por IP | 1000 |
+| `GET /v1/me` · `POST /v1/diners/me` | 20 |
+| `POST /v1/restaurants` · `POST /v1/restaurants/signup` · `POST /v1/restaurants/me/resubmit` | 10 cada 10 minutos |
+| `POST /v1/reservations` · `POST /v1/reservations/:id/cancel` (un solo contador) | 10 |
+| `POST /v1/restaurants/me/check-ins` | 30 |
+| `GET /v1/geocode` | 20 |
+| Lecturas del panel del administrador (`GET /v1/admin/overview`, `/admin/billing`, `/admin/billing/:restaurantId`, `/admin/activity`, `/admin/platform/metrics`) | 30 |
+| WebSocket: conexiones nuevas por IP | 120 |
+
+- **WebSocket:** una conexión de más se rechaza con `connect_error` `RATE_LIMITED`, antes de revisar el token. A diferencia de los códigos de sesión, **este sí se reintenta**, igual que `SERVER_ERROR` (5 s, 15 s, 30 s). Mientras tanto sigue la consulta periódica.
+- **Varias réplicas:** los contadores viven en Redis, así que con 2 réplicas cada cuenta tiene un solo límite. Si Redis falla, cada réplica cuenta en su memoria y la API sigue respondiendo.
+- **Prueba de carga:** `RATE_LIMIT_FACTOR` (entero de 1 a 1000) multiplica todos los límites y `RATE_LIMIT_ENABLED=false` los apaga. Solo durante la prueba: después se dejan como estaban.
+
+**Cabeceras de seguridad (tarea 6.1.4)**
+- La API responde con las cabeceras de helmet: `Content-Security-Policy` que no permite cargar nada ni incrustar la API, HSTS, `nosniff`, `Referrer-Policy: no-referrer` y sin `X-Powered-By`.
+- Swagger (`/docs`) usa la política por defecto de helmet, que permite sus propios scripts.
+- Para web y app no cambia nada: CORS sigue con `CORS_ORIGINS` y la app nativa no usa CORS.
+
+### 12.15 Sprint 4 · Panel del administrador: suspensión, cobro mensual y reportes de plataforma
+
+> Contrato completo (rutas, formas, ejemplos, `errorCode` y textos): `backend/docs/admin-panel-contract.md` (en este repo, copia en `docs/admin-panel-contract.md`). Aquí, lo que los tres repos deben saber.
+
+- **Estado nuevo `suspended`** en `approvalStatus`. Solo desde `approved` (con motivo) y vuelve a `approved` al reactivar.
+- **Para el comensal un suspendido no existe:** no aparece en la búsqueda; su detalle y su reserva responden `404 RESTAURANT_NOT_FOUND`. Sus reservas activas se respetan hasta el check-in o el vencimiento.
+- **Cuenta suspendida:** `403 RESTAURANT_SUSPENDED` fuera de su lista (`GET /me`, `GET /restaurants/me`, `GET /restaurants/me/status`, summary, billing, `GET /restaurants/me/reservations` y el check-in); también `connect_error` `RESTAURANT_SUSPENDED` (no se reintenta). `GET /restaurants/me` trae `suspensionReason`; `GET /restaurants/me/status` trae `approvalStatus` y `suspensionReason`.
+- **Panel del administrador** (`platform_admin`): `/v1/admin/restaurants/:id/suspend` y `/reactivate`, `/v1/admin/overview`, `/v1/admin/billing` (+ `/:restaurantId`, `mark-paid`, `mark-pending`), `/v1/admin/activity` y `/v1/admin/platform/metrics`.
+- **`errorCode` nuevos:** `RESTAURANT_SUSPENDED` (403); `RESTAURANT_NOT_APPROVED`, `RESTAURANT_NOT_SUSPENDED`, `PERIOD_NOT_CLOSED`, `NOTHING_TO_BILL`, `PERIOD_ALREADY_PAID` y `PERIOD_NOT_PAID` (409).
