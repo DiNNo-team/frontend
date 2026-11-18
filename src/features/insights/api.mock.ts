@@ -9,6 +9,7 @@ import type { InsightsDaily, InsightsPeriod, RestaurantInsights } from './types'
 //   ?mockInsights=enough (default) | insufficient | empty | template | disabled | long600 | withList
 //   ?mockError=insights-load or insights-refresh (network error) · ?mockLatency=20000 (a slow model; shared)
 //   ?mockRateLimit        «Actualizar» answers 429 · ?mockRateLimit=all   the first load answers 429 too
+//   ?mockForbidden=RESTAURANT_SUSPENDED (or another account errorCode)   every call answers 403 with that code
 
 export const MOCK_INSIGHTS_SCENARIOS = ['enough', 'insufficient', 'empty', 'template', 'disabled', 'long600', 'withList'] as const
 export type MockInsightsScenario = (typeof MOCK_INSIGHTS_SCENARIOS)[number]
@@ -163,6 +164,11 @@ function scenarioFromUrl(): MockInsightsScenario {
   return MOCK_INSIGHTS_SCENARIOS.find((scenario) => scenario === asked) ?? 'enough'
 }
 
+function failIfForbidden(): void {
+  const code = mockParams().get('mockForbidden')
+  if (code !== null) throw new ApiError({ status: 403, code: code || undefined })
+}
+
 function failIfRateLimited(refresh: boolean): void {
   const limit = mockParams().get('mockRateLimit')
   if (limit === null) return
@@ -176,6 +182,7 @@ export const mockInsightsApi: InsightsApi = {
     // A new report takes a while (the model); the cached one answers fast.
     await mockWait(refresh ? 1500 : 500)
     mockFailIfAsked(refresh ? 'insights-refresh' : 'insights-load')
+    failIfForbidden()
     failIfRateLimited(refresh)
     const now = new Date()
     return mockInsightsReport(scenarioFromUrl(), now, refresh ? now : new Date(now.getTime() - CACHED_AGE_MS))

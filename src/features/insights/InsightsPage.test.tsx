@@ -52,6 +52,14 @@ describe('InsightsPage · datos suficientes', () => {
     expect(recommendations.getByText(/Lo redactó la IA solo con tus números/)).toBeInTheDocument()
   })
 
+  it('shows a text of 600 characters whole, in one paragraph that wraps', async () => {
+    renderInsights('?mockInsights=long600')
+    const recommendations = await section('Qué hacer esta semana')
+    const paragraph = recommendations.getByText(/^El 67 % de tus reservas resueltas/)
+    expect(paragraph.textContent).toHaveLength(600)
+    expect(paragraph).toHaveClass('break-words')
+  })
+
   it('lists the recommendations when the backend sends them separated', async () => {
     renderInsights('?mockInsights=withList')
     const recommendations = await section('Qué hacer esta semana')
@@ -93,6 +101,13 @@ describe('InsightsPage · errores y actualizar', () => {
     window.history.replaceState({}, '', '/informe')
     await user.click(screen.getByRole('button', { name: 'Intentar de nuevo' }))
     expect(await screen.findByText('67 %')).toBeInTheDocument()
+  })
+
+  it('a 403 shows the account text and offers no retry', async () => {
+    renderInsights('?mockForbidden=RESTAURANT_SUSPENDED')
+    expect(await screen.findByRole('heading', { name: /Tu restaurante está suspendido/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Intentar de nuevo' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Actualizar informe' })).not.toBeInTheDocument()
   })
 
   it('a 429 on the first load shows the text of the limit and does not retry on its own', async () => {

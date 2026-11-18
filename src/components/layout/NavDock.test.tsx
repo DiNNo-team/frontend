@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { renderWithProviders } from '@/test/render'
 import { NavDock } from './NavDock'
-import { NAV_ITEMS_ADMIN, NAV_ITEMS_RESTAURANT } from './nav-items'
+import { NAV_ITEMS_ADMIN, NAV_ITEMS_RESTAURANT, NAV_ITEMS_SUSPENDED } from './nav-items'
 
 function renderDock(props: Parameters<typeof NavDock>[0] = {}, path = '/') {
   return renderWithProviders(
@@ -19,6 +19,12 @@ describe('NavDock', () => {
     expect(NAV_ITEMS_RESTAURANT.map((item) => item.label)).toEqual(['Mesas', 'Resumen', 'Informe', 'Restaurante', 'Bitácora'])
     for (const link of screen.getAllByRole('link')) expect(link).toHaveTextContent(/\S/)
     expect(screen.queryByRole('link', { name: /Solicitudes/ })).not.toBeInTheDocument()
+  })
+
+  it('a suspended restaurant keeps Cuenta and Resumen, without «Informe» (§12.16: the report is only for approved ones)', () => {
+    renderDock({ items: NAV_ITEMS_SUSPENDED }, '/suspendido')
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Cuenta', 'Resumen'])
+    expect(NAV_ITEMS_SUSPENDED.some((item) => item.to === '/informe')).toBe(false)
   })
 
   it("shows only the administrator's section, and none of the restaurant's", () => {
