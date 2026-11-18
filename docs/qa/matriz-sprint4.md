@@ -4,10 +4,10 @@
 |---|---|
 | **Sprint** | Sprint 4 · Despliegue final, seguridad y estabilización |
 | **Objetivo** | DiNNo completo, desplegado en Azure y listo para presentarse: la IA funciona de punta a punta (con respaldo si falla), las notificaciones llegan, el estado de cuenta cobra bien, la API es segura y todo responde desde cualquier red (la presentación es desde la universidad) (`DiNNo_Sprint4_Reparto.md`, sección 1). |
-| **Ambiente** | **Azure**: backend en Container Apps, PostgreSQL Flexible Server y Redis · web en Azure Static Web Apps (mientras no esté activa, Vercel) · app como development build o APK apuntando al backend de Azure. Algunos casos se marcan **solo local** porque en Azure no se pueden forzar sin tocar la configuración. ⚠️ [#1](#10-por-confirmar) |
+| **Ambiente** | **Azure**: backend en Container Apps, PostgreSQL Flexible Server y Redis · web en Azure Static Web Apps (mientras no esté activa, Vercel) · app como development build o APK apuntando al backend de Azure. Algunos casos se marcan **solo local** porque en Azure no se pueden forzar sin tocar la configuración. ⚠️ [#1](#11-por-confirmar) |
 | **Fecha** | Matriz creada el 17 nov 2026 con el formato de [`matriz-sprint3.md`](matriz-sprint3.md). Código terminado: martes o miércoles · pruebas en Azure: jueves o viernes · ensayo: viernes · presentación: sábado (Reparto, «Fechas clave») |
-| **Responsables** | Santiago: la matriz, N, IA y F · Sergio: IW y E · Jacobo: H, C, R, L y S · Elizabeth y Sebastián: D, la revisión final (Reparto, sección 4) |
-| **Fuente de los resultados esperados** | `DiNNo_Sprint4_Reparto.md` (secciones 1, 2, 4 y 5) y el `CLAUDE.md` del backend: §12.12 (cobro y resumen), §12.13 (notificaciones), §12.14 (límite de peticiones) y §12.16 (informe de IA). El diseño de la IA está en `backend/docs/ia-diseno.md`. Lo que no está definido está marcado ⚠️ y listado en la [sección 10](#10-por-confirmar). |
+| **Responsables** | Santiago: la matriz, N, IA y F · Sergio: IW y E · Jacobo: H, C y L · Sebastián: S y R (seguridad y red) · Elizabeth y Sebastián: D, la revisión final (Reparto, sección 4) |
+| **Fuente de los resultados esperados** | `DiNNo_Sprint4_Reparto.md` (secciones 1, 2, 4 y 5) y el `CLAUDE.md` del backend: §12.12 (cobro y resumen), §12.13 (notificaciones), §12.14 (límite de peticiones) y §12.16 (informe de IA). El diseño de la IA está en `backend/docs/ia-diseno.md`. Lo que no está definido está marcado ⚠️ y listado en la [sección 11](#11-por-confirmar). |
 
 > [!WARNING]
 > **Capturas sin secretos.** Ninguna captura ni video puede mostrar tokens (el campo *Authorize* de Swagger, una cabecera `Authorization`), llaves (Maps, Firebase, **la del modelo de IA**), contraseñas, cadenas de conexión ni datos del portal de Azure con secretos (Key Vault, variables del Container App). Si aparece uno, recorta la imagen o vuelve a tomarla antes de subirla.
@@ -20,7 +20,7 @@
 **Cómo llenar la matriz**
 - Cada quien llena **solo las filas de sus casos**.
 - **Estado:** `Pendiente` · `Pasa en local` · `Pasa` (en Azure) · `Falla` · `Bloqueado (motivo)` · `⚠️ Por confirmar (#n)` · `Automática` (la cubre una prueba automática del repo; en **Evidencia** va el nombre de la prueba).
-- **Resultado obtenido:** lo que viste, en una línea. Si falla, crea el Bug en Azure con el [formato de hallazgos](#9-formato-para-reportar-hallazgos) y pega el enlace en **Bug**.
+- **Resultado obtenido:** lo que viste, en una línea. Si falla, crea el Bug en Azure con el [formato de hallazgos](#10-formato-para-reportar-hallazgos) y pega el enlace en **Bug**.
 - **Evidencia:** nombre del archivo en [`evidencias/img/`](evidencias/README.md), **con el prefijo `s4-`**, por ejemplo `s4-IA1.1-pasa.png`.
 - **Cuándo probar:** apenas algo llega a `develop` y a Azure, no solo al final. Después de cada corrección se repiten los casos afectados.
 
@@ -30,12 +30,13 @@
 2. [Tabla resumen](#2-tabla-resumen)
 3. [Casos de Santiago](#3-casos-de-santiago): N · IA · F
 4. [Casos de Sergio](#4-casos-de-sergio): IW · E
-5. [Casos de Jacobo](#5-casos-de-jacobo): H · C · R · L · S
-6. [Revisión final (Elizabeth y Sebastián)](#6-revisión-final-elizabeth-y-sebastián): D
-7. [Datos para la IA](#7-datos-para-la-ia)
-8. [Matriz final](#8-matriz-final)
-9. [Formato para reportar hallazgos](#9-formato-para-reportar-hallazgos)
-10. [Por confirmar ⚠️](#10-por-confirmar)
+5. [Casos de Jacobo](#5-casos-de-jacobo): H · C · L
+6. [Casos de Sebastián: seguridad y red](#6-casos-de-sebastián-seguridad-y-red): S · R
+7. [Revisión final (Elizabeth y Sebastián)](#7-revisión-final-elizabeth-y-sebastián): D
+8. [Datos para la IA](#8-datos-para-la-ia)
+9. [Matriz final](#9-matriz-final)
+10. [Formato para reportar hallazgos](#10-formato-para-reportar-hallazgos)
+11. [Por confirmar ⚠️](#11-por-confirmar)
 
 ---
 
@@ -43,7 +44,7 @@
 
 ### 1.1 Encender y comprobar el backend
 1. Pide a Jacobo que encienda el backend (una réplica) y la base de datos, o síguelo con su procedimiento de encendido y apagado.
-2. Abre `https://<URL del backend en Azure>/v1/health` ⚠️ [#1](#10-por-confirmar). Debe responder `{ "status": "ok", "commit": "…" }`. Anota el `commit` en tus hallazgos.
+2. Abre `https://<URL del backend en Azure>/v1/health` ⚠️ [#1](#11-por-confirmar). Debe responder `{ "status": "ok", "commit": "…" }`. Anota el `commit` en tus hallazgos.
 3. Al terminar, avisa en el grupo para que se apague.
 
 ### 1.2 Cuentas de prueba
@@ -52,7 +53,7 @@ Las credenciales van en Discord (#usuarios-comensal y #usuarios-restaurante), nu
 | Cuenta | Para qué |
 |---|---|
 | Comensal A: `dinnoteam2026+comensal@gmail.com` | Casos de la app |
-| Comensales B a E | Concurrencia (C1) y casos con dos comensales ⚠️ [#5](#10-por-confirmar) |
+| Comensales B a E | Concurrencia (C1) y casos con dos comensales ⚠️ [#5](#11-por-confirmar) |
 | Dueño de Casa 72 (web): `dinnoteam2026+casa72@gmail.com` | Check-in, reservas, mesas, estado de cuenta, IA |
 | Dueño de Casa16 (web): `dinnoteam2026@gmail.com` | «Otro restaurante» en IA y E |
 | Restaurante pendiente o rechazado | Casos de aprobación (IA7.3, E7.2) |
@@ -64,7 +65,7 @@ Las credenciales van en Discord (#usuarios-comensal y #usuarios-restaurante), nu
 - Comandos útiles del Sprint 3 (`adb`, modo avión, red lenta, ubicación) en [`matriz-sprint3.md`](matriz-sprint3.md), sección 1.9.
 
 ### 1.4 Vigencia corta para los vencimientos
-Los casos de vencimiento (N1.3, N2.4, H7, F3, E3) necesitan `RESERVATION_TTL_MINUTES=3`. En Azure lo cambia **solo Jacobo** (crea una revisión nueva del Container App) y lo devuelve a 15 al terminar ⚠️ [#4](#10-por-confirmar). En local, pon 2 o 3 en tu `.env`.
+Los casos de vencimiento (N1.3, N2.4, H7, F3, E3) necesitan `RESERVATION_TTL_MINUTES=3`. En Azure lo cambia **solo Jacobo** (crea una revisión nueva del Container App) y lo devuelve a 15 al terminar ⚠️ [#4](#11-por-confirmar). En local, pon 2 o 3 en tu `.env`.
 
 ### 1.5 Swagger
 `https://<URL del backend en Azure>/docs`, con *Authorize* y el token de la cuenta. **Nunca captures el token.**
@@ -78,17 +79,17 @@ Actualiza los conteos al terminar cada caso.
 | Caso | Nombre | Responsable | Variantes | Pasa | Pasa en local | Automática | Falla | Pendiente | Bloqueado | ⚠️ |
 |---|---|---|---|---|---|---|---|---|---|---|
 | [N](#n--notificaciones-task-114) | Notificaciones | Santiago | 9 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
-| [IA](#ia--informe-de-ia-api-tasks-211-213-214) | Informe de IA (API) | Santiago | 17 | 0 | 0 | 2 | 0 | 15 | 0 | 0 |
+| [IA](#ia--informe-de-ia-api-tasks-211-213-214) | Informe de IA (API) | Santiago | 17 | 0 | 2 | 2 | 0 | 13 | 0 | 0 |
 | [F](#f--flujos-completos-con-web-y-app-abiertas) | Flujos completos | Santiago | 6 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
 | [IW](#iw--informe-de-ia-pantalla-task-212) | Informe de IA (pantalla) | Sergio | 10 | 0 | 0 | 0 | 0 | 9 | 0 | 1 |
 | [E](#e--estado-de-cuenta-task-124) | Estado de cuenta | Sergio | 9 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
 | [H](#h--humo-y-regresión-en-azure-task-711) | Humo y regresión | Jacobo | 12 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
 | [C](#c--concurrencia-y-fallos-tasks-712-713) | Concurrencia y fallos | Jacobo | 6 | 0 | 0 | 0 | 0 | 5 | 0 | 1 |
-| [R](#r--red-desde-distintos-lugares) | Red | Jacobo | 4 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | [L](#l--carga-y-capacidad) | Carga | Jacobo | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
-| [S](#s--seguridad-task-616) | Seguridad | Jacobo | 9 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
-| [D](#6-revisión-final-elizabeth-y-sebastián) | Revisión final | Elizabeth y Sebastián | 9 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
-| **Total** | | | **93** | **0** | **0** | **2** | **0** | **89** | **0** | **2** |
+| [S](#s--seguridad-task-616) | Seguridad | Sebastián | 10 | 0 | 0 | 0 | 0 | 10 | 0 | 0 |
+| [R](#r--red-desde-distintos-lugares) | Red | Sebastián | 3 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
+| [D](#7-revisión-final-elizabeth-y-sebastián) | Revisión final | Elizabeth y Sebastián | 9 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
+| **Total** | | | **93** | **0** | **2** | **2** | **0** | **87** | **0** | **2** |
 
 ---
 
@@ -111,14 +112,14 @@ Actualiza los conteos al terminar cada caso.
 | N2.5 | Permiso denegado | Permiso de notificaciones negado en Ajustes | 1. Reserva y cancela. | La reserva funciona normal; simplemente no llegan notificaciones | | Pendiente | | |
 
 ### IA · Informe de IA: API (Tasks 2.1.1, 2.1.3, 2.1.4)
-**Responsable:** Santiago · **Ruta:** `GET /v1/restaurants/me/insights` (§12.16), en Swagger con el token del dueño de Casa 72. **Precondiciones comunes:** backend con `INSIGHTS_LLM_API_KEY` configurada ⚠️ [#3](#10-por-confirmar), salvo donde se diga otra cosa · datos de la [sección 7](#7-datos-para-la-ia).
+**Responsable:** Santiago · **Ruta:** `GET /v1/restaurants/me/insights` (§12.16), en Swagger con el token del dueño de Casa 72. **Precondiciones comunes:** backend con `INSIGHTS_LLM_API_KEY` configurada ⚠️ [#3](#11-por-confirmar), salvo donde se diga otra cosa · datos de la [sección 8](#8-datos-para-la-ia).
 **Reglas de todos los casos:** siempre `200` por la IA (nunca un `500` porque el modelo falle) y **ninguna consulta del informe cambia una reserva ni una mesa.**
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| IA1.1 | Datos suficientes | Casa 72 con 10 o más reservas resueltas en los últimos 7 días (sección 7) | 1. `GET /insights?refresh=true`. | `dataSufficiency: "enough"` · tasas con valor · `reliability.level` `high`, `medium` o `low` con motivos · `narrative.source: "llm"` y `fallback: null` · `metrics.daily` con 7 días | | Pendiente | | |
+| IA1.1 | Datos suficientes | Casa 72 con 10 o más reservas resueltas en los últimos 7 días (sección 8) | 1. `GET /insights?refresh=true`. | `dataSufficiency: "enough"` · tasas con valor · `reliability.level` `high`, `medium` o `low` con motivos · `narrative.source: "llm"` y `fallback: null` · `metrics.daily` con 7 días | 18 nov, backend local contra Neon, Casa 72: `enough` con 11 resueltas · tasas con valor · `reliability.level: "low"` con motivos · `narrative.source: "llm"`, `fallback: null` · `daily` con 7 días | Pasa en local | `s4-IA1.1-pasa-local.png` | |
 | IA1.2 | Los números cuadran | Después de IA1.1 | 1. Crea 2 reservas: una con check-in y otra cancelada.<br>2. `GET /insights?refresh=true`. | `reservationsCreated` +2, `completed` +1, `cancelled` +1, `resolved` +2 y el día de hoy de `daily` +2 frente a IA1.1 | | Pendiente | | |
-| IA1.3 | El texto usa datos reales | Después de IA1.1 | 1. Compara cada número del `narrative.text` con `metrics`. | Cada cifra del texto existe en `metrics` y con su unidad correcta (un porcentaje es una tasa, una hora es una franja). El texto tiene máximo 600 caracteres | | Pendiente | | |
+| IA1.3 | El texto usa datos reales | Después de IA1.1 | 1. Compara cada número del `narrative.text` con `metrics`. | Cada cifra del texto existe en `metrics` y con su unidad correcta (un porcentaje es una tasa, una hora es una franja). El texto tiene máximo 600 caracteres | 18 nov, local: las 5 cifras del texto coinciden con `metrics` y tienen la unidad correcta (82 % = `cancellationRate` 0,8182; 9 % = `noShowRate` 0,0909; miércoles 10:00 y lunes 18:00 y 19:00 = `topSlots`; confiabilidad baja = `reliability.level`) · menos de 600 caracteres · sin datos de comensales | Pasa en local | `s4-IA1.3-pasa-local.png` | |
 | IA2.1 | Pocos datos | Restaurante con menos de 10 resueltas en los últimos 7 días (por ejemplo Casa16) | 1. `GET /insights?refresh=true` con su token. | `dataSufficiency: "insufficient"` · `checkInRate`, `noShowRate`, `cancellationRate` y `reliability.level` en `null` · `narrative.source: "template"`, `fallback: "insufficient_data"` · el texto dice cuántas resueltas faltan | | Pendiente | | |
 | IA2.2 | Ningún dato | Restaurante sin reservas en 14 días | 1. `GET /insights`. | Conteos en 0, `daily` con 7 días en 0, `medianMinutesToCheckIn` y `averagePartySize` en `null`, `topSlots` vacío · `200` | | Pendiente | | |
 | IA3.1 | Sin llave del modelo | Backend **sin** `INSIGHTS_LLM_API_KEY` (local, o Azure con la llave quitada por Jacobo) | 1. `GET /insights?refresh=true` con datos suficientes. | `200` · `narrative.source: "template"`, `fallback: "llm_disabled"` · métricas e indicador igual que con llave | | Pendiente | | |
@@ -151,7 +152,7 @@ Actualiza los conteos al terminar cada caso.
 ## 4. Casos de Sergio
 
 ### IW · Informe de IA: pantalla (Task 2.1.2)
-**Responsable:** Sergio (revisa Santiago) · **Precondiciones comunes:** web como dueño de Casa 72, en la pantalla del informe ⚠️ [#2](#10-por-confirmar) · criterios del Reparto (4.4) y del manual de identidad.
+**Responsable:** Sergio (revisa Santiago) · **Precondiciones comunes:** web como dueño de Casa 72, en la pantalla del informe ⚠️ [#2](#11-por-confirmar) · criterios del Reparto (4.4) y del manual de identidad.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
@@ -185,7 +186,7 @@ Actualiza los conteos al terminar cada caso.
 
 ## 5. Casos de Jacobo
 
-Los procedimientos y los resultados detallados viven en el backend: `docs/qa/pruebas-de-red.md`, `docs/qa/pruebas-de-carga.md`, `docs/azure/seguridad-red.md` y `docs/seguridad/auditoria-sprint4.md`. Aquí va un caso por cosa a comprobar, con el enlace a su resultado.
+Los procedimientos y los resultados detallados viven en el backend (`docs/qa/pruebas-de-carga.md` para la carga). Seguridad y red pasaron a la [sección 6](#6-casos-de-sebastián-seguridad-y-red), con Sebastián. Aquí va un caso por cosa a comprobar, con el enlace a su resultado.
 
 ### H · Humo y regresión en Azure (Task 7.1.1)
 
@@ -208,22 +209,12 @@ Los procedimientos y los resultados detallados viven en el backend: `docs/qa/pru
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| C1 | Misma mesa a la vez | Una sola mesa libre · 5 comensales ⚠️ [#5](#10-por-confirmar) | 1. 5 solicitudes simultáneas para la misma mesa. | Exactamente **1** `201` y 4 `409 NO_TABLE_AVAILABLE`; ninguna reserva ni mesa a medias | | Pendiente | | |
+| C1 | Misma mesa a la vez | Una sola mesa libre · 5 comensales ⚠️ [#5](#11-por-confirmar) | 1. 5 solicitudes simultáneas para la misma mesa. | Exactamente **1** `201` y 4 `409 NO_TABLE_AVAILABLE`; ninguna reserva ni mesa a medias | | Pendiente | | |
 | C2 | Doble check-in a la vez | Reserva activa | 1. Dos validaciones simultáneas del mismo código. | Una `200` y la otra `409 RESERVATION_ALREADY_USED`; un solo registro en el estado de cuenta | | Pendiente | | |
 | C3 | Reinicio del servicio | Reserva activa con vigencia corta | 1. Reinicia el backend.<br>2. Espera que pase la vigencia. | Al volver, la reserva queda Vencida y la mesa Disponible; sin estados a medias | | Pendiente | | |
 | C4 | Redis caído | Redis detenido o inaccesible | 1. Reserva, cancela y haz check-in.<br>2. Abre el informe de IA. | Todo funciona (el límite de peticiones cuenta en memoria con un aviso en el log; el informe se calcula sin caché) | | Pendiente | | |
 | C5 | Dos réplicas: tiempo real | 2 réplicas, Redis encendido (Tasks 5.1.x) | 1. Web conectada a una réplica, app a otra.<br>2. Crea una reserva. | La web recibe la reserva sin recargar. **Al terminar, se vuelve a 1 réplica** | | ⚠️ Por confirmar (#6) | | |
 | C6 | Dos réplicas: límite compartido | 2 réplicas | 1. 11 reservas en un minuto con la misma cuenta. | La 11.ª da `429`, aunque las peticiones caigan en réplicas distintas | | Pendiente | | |
-
-### R · Red desde distintos lugares
-Procedimiento y resultados: `backend/docs/qa/pruebas-de-red.md`. **Se repite después de cualquier cambio de red o firewall.**
-
-| ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
-|---|---|---|---|---|---|---|---|---|
-| R1 | Casa | Red de la casa | 1. Inicio de sesión, búsqueda, reserva y check-in (web y app). | Funciona, con tiempo real | | Pendiente | | |
-| R2 | Universidad | Red de la universidad | 1. Lo mismo. | Funciona, con tiempo real | | Pendiente | | |
-| R3 | Datos móviles | App con datos móviles, sin wifi | 1. Lo mismo desde la app. | Funciona, con tiempo real | | Pendiente | | |
-| R4 | Sin depender de una IP | Desde una red que nunca se agregó a ninguna regla | 1. Lo mismo. | Funciona: la API no depende de la IP de quien configuró | | Pendiente | | |
 
 ### L · Carga y capacidad
 Procedimiento, cifras y conclusiones: `backend/docs/qa/pruebas-de-carga.md`.
@@ -233,25 +224,42 @@ Procedimiento, cifras y conclusiones: `backend/docs/qa/pruebas-de-carga.md`.
 | L1 | 1 réplica | `RATE_LIMIT_FACTOR` subido solo durante la prueba | 1. Corre la prueba de k6. | Quedan medidos usuarios simultáneos, reservas por segundo, tiempo de respuesta y dónde se degrada primero | | Pendiente | | |
 | L2 | 2 réplicas | Igual, con 2 réplicas | 1. Repite. | Igual que L1. Al terminar: 1 réplica y los límites como estaban | | Pendiente | | |
 
+---
+
+## 6. Casos de Sebastián: seguridad y red
+
+**Responsable:** Sebastián (dueño de la seguridad de Azure; reparto §4.2). Él marca cada caso como pasa o falla, con evidencia. Los casos y los comandos salen del backend: [`docs/azure/seguridad-red.md`](https://github.com/DiNNo-team/backend/blob/develop/docs/azure/seguridad-red.md), §6 (seguridad), y [`docs/qa/pruebas-de-red.md`](https://github.com/DiNNo-team/backend/blob/develop/docs/qa/pruebas-de-red.md) (red). Si cambian allá, se cambian aquí. **Se repiten después de cualquier cambio de red, firewall o secretos** (`seguridad-red.md`, §5).
+
 ### S · Seguridad (Task 6.1.6)
+`<api>` es la URL del backend en Azure. Las capturas no muestran tokens, claves de Redis ni la cadena de conexión de la base.
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| S1 | Ruta privada sin sesión | — | 1. `GET /v1/restaurants/me` sin token. | `401` «Tu sesión terminó…» | | Pendiente | | |
-| S2 | Rol incorrecto | Tokens de comensal, restaurante y administrador | 1. Comensal → ruta de restaurante; restaurante → ruta de comensal; administrador → ruta de restaurante. | `403 DINER_ACCOUNT`, `RESTAURANT_ACCOUNT` y `ADMIN_ACCOUNT` | | Pendiente | | |
-| S3 | Exceso de peticiones | — | 1. 11 reservas en un minuto. | La 11.ª da `429` (§12.14) | | Pendiente | | |
-| S4 | PostgreSQL no accesible desde afuera | Desde un computador sin regla temporal | 1. Intenta conectarte a la base. | No conecta (tiempo agotado o rechazo) | | Pendiente | | |
-| S5 | Redis no accesible desde afuera | Igual | 1. Intenta conectarte a Redis. | No conecta | | Pendiente | | |
-| S6 | CORS | — | 1. Llama a la API desde un origen que no está en `CORS_ORIGINS`. | El navegador bloquea la respuesta; la web autorizada sigue funcionando | | Pendiente | | |
-| S7 | Cabeceras y HTTPS | — | 1. Revisa las cabeceras de una respuesta.<br>2. Llama por `http://`. | CSP, HSTS, `nosniff`, `Referrer-Policy` y sin `X-Powered-By` · HTTP redirige o no responde | | Pendiente | | |
-| S8 | Errores sin información interna | — | 1. Provoca un error (por ejemplo un id inválido). | Mensaje en español, sin SQL, rutas internas ni stack | | Pendiente | | |
-| S9 | Secretos | — | 1. Revisa `docs/seguridad/auditoria-sprint4.md` y los registros del Container App. | Ningún secreto en el repo, la imagen ni los registros (tampoco la llave del modelo de IA) | | Pendiente | | |
+| S1 | Ruta privada sin sesión | — | 1. `curl -i https://<api>/v1/me` | `401` «Tu sesión terminó. Inicia sesión de nuevo.» | | Pendiente | | |
+| S2 | Rol incorrecto | Token del comensal A | 1. `GET /v1/tables` con el token del comensal. | `403 DINER_ACCOUNT` | | Pendiente | | |
+| S3 | Datos de otro restaurante | Token del dueño de Casa 72 · id de una mesa de otro restaurante | 1. `PATCH /v1/tables/<id de la otra mesa>`. | `404`: no revela que la mesa existe | | Pendiente | | |
+| S4 | Exceso de peticiones | Una cuenta de comensal | 1. 11 `POST /v1/reservations` en un minuto con la misma cuenta. | El 11.º da `429` «Hiciste muchas solicitudes seguidas…» (§12.14) | | Pendiente | | |
+| S5 | Base no expuesta | Una red fuera de Azure, **sin** regla temporal en el firewall | 1. `nc -vz -w 5 <servidor de PostgreSQL> 5432` o `psql`. | Conexión rechazada o sin respuesta | | Pendiente | | |
+| S6 | Redis sin clave | — | 1. `redis-cli --tls -h <redis> -p 10000 PING` | `NOAUTH` | | Pendiente | | |
+| S7 | Redis sin TLS | — | 1. `redis-cli -h <redis> -p 10000 PING` | Sin respuesta o conexión cerrada | | Pendiente | | |
+| S8 | HTTPS obligatorio | — | 1. `curl -i http://<api>/v1/health` | Redirección a HTTPS o rechazo | | Pendiente | | |
+| S9 | Errores sin detalle interno | — | 1. Llama a una ruta que no existe.<br>2. Envía un JSON inválido. | Mensaje en español, sin SQL, rutas internas ni stack | | Pendiente | | |
+| S10 | Cabeceras | — | 1. `curl -I https://<api>/v1/health` | CSP, HSTS, `nosniff` (y sin `X-Powered-By`, §12.14) | | Pendiente | | |
+
+### R · Red desde distintos lugares
+Una fila por red. **Pasa** si `scripts/qa/humo-red.mjs` (en el backend) termina con todos los pasos en OK con `CONFIRM=1`, incluidos los dos WebSocket, y la prueba a mano en esa misma red funciona: iniciar sesión, buscar, reservar, ver la reserva en la web y hacer el check-in. Cómo correr el script: `pruebas-de-red.md`. Las credenciales se escriben en la terminal, nunca en un archivo ni en esta matriz. El resultado detallado (fecha, API y tiempo total) también va en la tabla de `pruebas-de-red.md`.
+
+| ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
+|---|---|---|---|---|---|---|---|---|
+| R1 | Casa | Wifi de la casa · backend en Azure encendido | 1. `humo-red.mjs` con `NETWORK_LABEL=casa` y `CONFIRM=1`.<br>2. Prueba a mano en la web y la app. | Todos los pasos en OK, con los dos WebSocket · el recorrido a mano funciona, con tiempo real | | Pendiente | | |
+| R2 | Universidad | Red de la universidad | 1. Lo mismo, con `NETWORK_LABEL=universidad`. | Igual que R1 | | Pendiente | | |
+| R3 | Datos móviles | Computador compartiendo los datos del teléfono · app sin wifi | 1. Lo mismo, con `NETWORK_LABEL=datos-moviles`. | Igual que R1 | | Pendiente | | |
 
 ---
 
-## 6. Revisión final (Elizabeth y Sebastián)
+## 7. Revisión final (Elizabeth y Sebastián)
 
-**Cuándo:** solo después de que Jacobo avise que terminó sus pruebas (Reparto, 4.3). Es el recorrido de la demo (Reparto, sección 5), desde la red de la universidad o con datos móviles.
+**Cuándo:** solo después de que Jacobo y Sebastián avisen que terminaron sus pruebas (Reparto, 4.3). Es el recorrido de la demo (Reparto, sección 5), desde la red de la universidad o con datos móviles.
 
 | ID | Paso de la demo | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|
@@ -267,7 +275,7 @@ Procedimiento, cifras y conclusiones: `backend/docs/qa/pruebas-de-carga.md`.
 
 ---
 
-## 7. Datos para la IA
+## 8. Datos para la IA
 
 El informe necesita **10 o más reservas resueltas** (con check-in, canceladas o vencidas) **creadas en los últimos 7 días** para calcular tasas e indicador. Hoy casi no hay reservas reales.
 
@@ -275,11 +283,11 @@ El informe necesita **10 o más reservas resueltas** (con check-in, canceladas o
 1. Con el comensal A: reserva y haz check-in desde la web, o cancela. Repite hasta tener al menos 10 resueltas, mezclando check-ins, cancelaciones y algún vencimiento.
 2. **Respeta el límite:** crear y cancelar comparten un contador de 10 por minuto por cuenta (§12.14). Con dos o más comensales va más rápido.
 3. Para que el indicador tenga sentido, cambia a mano el estado de alguna mesa en varios días (la confiabilidad mira los cambios manuales de mesas por día).
-4. Antes del ensayo y de la presentación, Elizabeth limpia los datos de la demo (`demo:reset`): **después de eso el informe vuelve a «aún no hay datos suficientes»** hasta que se creen reservas de nuevo. Acordarlo con ella para que la demo de la IA tenga datos ⚠️ [#7](#10-por-confirmar).
+4. Antes del ensayo y de la presentación, Elizabeth limpia los datos de la demo (`demo:reset`): **después de eso el informe vuelve a «aún no hay datos suficientes»** hasta que se creen reservas de nuevo. Acordarlo con ella para que la demo de la IA tenga datos ⚠️ [#7](#11-por-confirmar).
 
 ---
 
-## 8. Matriz final
+## 9. Matriz final
 
 Se llena el viernes, antes del ensayo: todo caso en **Pasa**, **Automática** o **Falla** (con su Bug y su dueño). Ningún caso queda en Pendiente sin explicación.
 
@@ -292,14 +300,14 @@ Se llena el viernes, antes del ensayo: todo caso en **Pasa**, **Automática** o 
 | Flujos completos (F) | | | | | | |
 | Humo y regresión (H) | | | | | | |
 | Concurrencia y fallos (C) | | | | | | |
-| Red (R) | | | | | | |
+| Red (R, Sebastián) | | | | | | |
 | Carga (L) | | | | | | |
-| Seguridad (S) | | | | | | |
+| Seguridad (S, Sebastián) | | | | | | |
 | Revisión final (D) | | | | | | |
 
 ---
 
-## 9. Formato para reportar hallazgos
+## 10. Formato para reportar hallazgos
 
 Cada hallazgo va **al grupo y a Azure (Bug)** el mismo día. Copia esta plantilla:
 
@@ -313,20 +321,20 @@ Cada hallazgo va **al grupo y a Azure (Bug)** el mismo día. Copia esta plantill
 - Resultado esperado: … (copia el de la matriz)
 - Resultado obtenido: …
 - Captura: evidencias/img/s4-<ID>-falla.png (sin tokens, llaves, contraseñas, cadenas de conexión ni códigos de reservas activas)
-- Responsable: Elizabeth (backend) · Sebastián (web y app) · Santiago y Sergio (IA) · Jacobo (Azure)
+- Responsable: Elizabeth (backend) · Sebastián (web y app) · Santiago y Sergio (IA) · Jacobo (Azure) · Sebastián (seguridad y red)
 ```
 
 Después pega el enlace del Bug en la columna **Bug**, cambia el estado a «Falla» y avisa al dueño. Santiago anota el día de la corrección y el caso se repite después de cada corrección (Reparto, 4.6).
 
 ---
 
-## 10. Por confirmar
+## 11. Por confirmar
 
 | # | Punto | Por qué | Preguntar a | Afecta |
 |---|---|---|---|---|
 | 1 | URLs de Azure del backend y de la web | La matriz no las escribe hasta que existan. La web sigue en Vercel mientras Static Web Apps no esté activa (`AVISOS.md` del frontend, 16 nov) | Jacobo y Sebastián | Todos |
 | 2 | Ruta y nombre de la pantalla del informe de IA en la web | El diseño proponía `/informe`; la pantalla la decide Sergio. IW10 necesita a alguien que no conozca DiNNo | Sergio | IW |
-| 3 | `INSIGHTS_LLM_API_KEY` en Azure | La llave de Claude la crea el equipo y se guarda en Key Vault. Sin ella, todos los informes salen con plantillas | Santiago y Jacobo | IA1, IA4, IW1, F1, D7 |
+| 3 | `INSIGHTS_LLM_API_KEY` en Azure | La llave de Claude ya funciona en local (IA1.1, 18 nov). Falta una llave aparte para Azure, guardada en Key Vault como `insights-llm-api-key` (`backend/docs/azure/seguridad-red.md`, §2.4). Sin ella, todos los informes de Azure salen con plantillas | Santiago y Jacobo | IA1, IA4, IW1, F1, D7 |
 | 4 | Vigencia corta en Azure | Cambiar `RESERVATION_TTL_MINUTES` crea una revisión nueva del Container App. ¿Se hace en una ventana de QA y se devuelve a 15? | Jacobo | N1.3, N2.4, H7, F3, E3 |
 | 5 | Cuentas de comensal B a E | C1 necesita 5 comensales distintos (una reserva activa por comensal) | Jacobo | C1, F |
 | 6 | Adaptador de Redis para Socket.IO | C5 solo aplica si las Tasks 5.1.x quedaron hechas | Jacobo | C5 |
