@@ -1,0 +1,89 @@
+name: Deploy Azure
+
+# Each push to develop (a merged PR) is checked and published to Azure Static
+# Web Apps (swa-dinno). Vercel keeps deploying main on its own, as plan B.
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Only the latest commit of develop matters: a newer push cancels an older
+    # deployment that is still running.
+    concurrency:
+      group: deploy-azure-develop
+      cancel-in-progress: true
+    # Signs in with OIDC (identity id-gh-frontend): the federated credential
+    # only trusts this repo's develop branch, so the job must not declare an
+    # `environment` (that would change the token subject).
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Nothing is published if a check fails.
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: UI rules
+        run: npm run check:ui
+
+      # The VITE_* values are repository variables, not secrets: they end up in
+      # the browser anyway. VITE_USE_MOCKS is never set here.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_MAPS_MAP_ID: ${{ vars.VITE_GOOGLE_MAPS_MAP_ID }}
+
+      - name: Sign in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # The deployment token is read at run time and masked, never stored as a
+      # GitHub secret.
+      - name: Get the deployment token
+        run: |
+          token=$(az staticwebapp secrets list --name "${{ vars.SWA_NAME }}" \
+            --resource-group rg-dinno --query properties.apiKey --output tsv)
+          echo "::add-mask::$token"
+          echo "SWA_TOKEN=$token" >> "$GITHUB_ENV"
+
+      - name: Publish to Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.SWA_TOKEN }}
+          action: upload
+          app_location: dist
+          skip_app_build: true
+          skip_api_build: true

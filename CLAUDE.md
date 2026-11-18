@@ -385,7 +385,10 @@ src/
 - **Pruebas:** el `testTimeout` de Vitest sube a 20 s (`vite.config.ts`): con unos 60 archivos en paralelo, los 5 s por defecto fallaban al azar en pruebas que escriben en formularios.
 
 ### Despliegue
-- **Vercel** despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
+- **Azure Static Web Apps** (`swa-dinno`, plan Free): https://brave-grass-07093571e.3.azurestaticapps.net. `.github/workflows/deploy-azure.yml` corre en cada push a **`develop`**: `npm ci`, lint, typecheck, test, `check:ui` y build con las variables del repo (`VITE_API_URL` apunta al backend de Azure), y publica `dist`. Si una verificación falla, no publica. Entra a Azure con OIDC (identidad `id-gh-frontend`, solo sobre `swa-dinno`): **el job no declara `environment`**, porque la credencial federada solo confía en `repo:DiNNo-team/frontend:ref:refs/heads/develop`. El token de despliegue se pide en cada corrida y no se guarda en GitHub.
+- `public/staticwebapp.config.json` hace en Azure lo que `vercel.json` en Vercel: toda ruta que no sea `/assets/*` devuelve `index.html`, para que recargar `/mesas` no dé 404.
+- Las `VITE_*` de Azure son **variables** del repo (Settings → Secrets and variables → Actions → Variables), no secretos: terminan en el navegador igual. Si cambian, hay que volver a desplegar. `VITE_USE_MOCKS` no se define.
+- **Vercel** sigue como **plan B** hasta después de la presentación: despliega a producción cuando se sube a **`main`**. El trabajo diario entra a `develop` por PR; cuando `develop` está listo y probado, se pasa a `main` por PR. Framework Vite (build `npm run build`, salida `dist`). `vercel.json` reescribe las rutas a `/` para que recargar una ruta no dé 404.
 - `VITE_API_URL` se configura en Vercel (Production y Preview) y se incrusta al compilar: si cambia, hay que volver a desplegar.
 - Los PR generan despliegues de vista previa: úsalos para probar antes del merge.
 

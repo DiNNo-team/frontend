@@ -5,6 +5,18 @@
 
 ---
 
+## 17 nov 2026 · Jacobo · La web se publica en Azure Static Web Apps en cada push a `develop` (Sprint 4) · para revisar: Sebastián
+
+- **Qué hay:** workflow nuevo `.github/workflows/deploy-azure.yml` y `public/staticwebapp.config.json` (recargar una ruta como `/mesas` no da 404). Detalle en CLAUDE.md §11, «Despliegue».
+- **URL de la web en Azure:** https://brave-grass-07093571e.3.azurestaticapps.net. Usa el backend de Azure: https://ca-dinno-backend.icyrock-d101225d.westus2.azurecontainerapps.io.
+- **Antes de que el login con Google y el mapa funcionen ahí:** esa URL tiene que estar en Firebase → Authentication → Dominios autorizados (Sebastián) y en la restricción de la llave de Maps `dinno-web` (Santiago).
+- **Un PR que rompa lint, typecheck, pruebas o `check:ui` no se publica** en Azure: el workflow los corre antes del build.
+- **Sin claves en GitHub:** entra con OIDC (identidad `id-gh-frontend`, que solo puede publicar en `swa-dinno`). En el repo hay **variables** (no secretos): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `SWA_NAME`, `VITE_API_URL` y las `VITE_FIREBASE_*` y `VITE_GOOGLE_MAPS_*`. No le agreguen `environment` al job: el login fallaría.
+- **Vercel no cambia:** sigue desplegando `main` y es el **plan B** hasta después de la presentación. Sigue usando el backend de Render: lo que se haga en una web no aparece en la otra (son bases distintas).
+- **Sin cambios** de código, componentes, variables de entorno locales ni dependencias.
+
+---
+
 ## 15 nov 2026 · Elizabeth · Registro, aprobación, panel de administrador y Resumen (Sprint 4, rama `feat/admin-resumen-front`)
 
 - **Qué hay:** `/registro` (crear cuenta y datos del restaurante), `/solicitud` (en revisión, o rechazada con el motivo y reenvío), `/admin` (aprobar y rechazar) y `/resumen` (cobro y KPIs). Todo lo explica CLAUDE.md §11, «Cuentas, aprobación, administrador y Resumen».
