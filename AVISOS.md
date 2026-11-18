@@ -32,7 +32,8 @@
   - Los cambios de mesas a mano se marcan con el ícono de **Bitácora** (`history`), no con un punto: el punto verde ya es «Con check-in».
   - El botón dice «Actualizar informe» (verbo + objeto, manual 14).
   - «Canceladas» usa `dark:bg-fg-2` en oscuro (con `bg-line` desaparecía sobre la tarjeta). `/resumen` sigue con `bg-line` y tiene el mismo problema en oscuro (**Elizabeth:** si quieres, lo igualamos).
-- **Kit (aviso a Sebastián, autorizado por él):** `reliability-high` / `-medium` / `-low` en `STATUS_META` con `RELIABILITY_STATUS`, `AiIcon` (`sparkles`) y «Informe» en `NAV_ITEMS_RESTAURANT`. Documentado en `components/ui/README.md`.
+- **Kit (aviso a Sebastián, autorizado por él):** `reliability-high` / `-medium` / `-low` en `STATUS_META` con `RELIABILITY_STATUS`, `AiIcon` (`sparkles`, también en `/kit`) y «Informe» en `NAV_ITEMS_RESTAURANT`. Documentado en `components/ui/README.md`.
+- **Dock (`NavDock`, aprobado por Sebastián):** con cinco ítems no cabía en un teléfono y «Mesas» quedaba fuera de la pantalla. Por debajo de `sm` ya no muestra el botón de tema (está en el menú de usuario) y cada ítem mide lo que su palabra (mínimo 48 px); desde `md` vuelven los 96 px fijos. Medido a 320, 375, 390, 430, 640 y 768 px en claro y oscuro: nada queda fuera.
 - **Reutiliza de `features/summary` (Elizabeth), sin modificarlos:** `BarTrack`, `ChartTable`, `HelpToggle`, `formatHour`, `formatDecimal`, `formatDayMonth`, `formatLongDay` y `bogotaToday`. Si cambian, revisen `/informe`.
 - **Pendiente con Santiago:** `narrative.recommendations: string[]` (la web ya lo acepta como opcional) y el formato de hora: el texto de plantillas escribe «13:00» y la pantalla «1:00 p. m.».
 - **QA:** las filas IW de `docs/qa/matriz-sprint4.md` se hacen el jueves sobre Azure (necesitan la llave del modelo en Key Vault y Casa 72 con 10 o más reservas resueltas).
