@@ -84,6 +84,8 @@ export const routes: RouteObject[] = [
                   { path: '/mesas', element: <TablesPage /> },
                   { path: '/restaurante', element: <RestaurantPage /> },
                   { path: '/bitacora', element: <ActivityLogPage /> },
+                  // Smart report (Sprint 4, §12.16): only an approved restaurant; a suspended one gets 403 RESTAURANT_SUSPENDED.
+                  { path: '/informe', lazy: lazyPage(() => import('@/features/insights/InsightsPage')) },
                 ],
               },
             ],

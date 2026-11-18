@@ -140,8 +140,13 @@ Estado = **color + forma + palabra**, siempre los tres. La palabra es texto real
 | `payment-in-progress` | En curso | `reserved` | cuadrado (igual que `billing-in-progress`; el Resumen del restaurante) |
 | `payment-pending` | Pendiente | `limited` | rombo (igual que `billing-pending`) |
 | `payment-paid` | Pagado | `ok` | punto (igual que `billing-paid`) |
+| `reliability-high` | Alta | `ok` | punto (confiabilidad de la disponibilidad, informe de IA, Sprint 4) |
+| `reliability-medium` | Media | `limited` | rombo (pide atención, como una advertencia) |
+| `reliability-low` | Baja | `error` | punto + ícono de alerta (algo que corregir) |
 
-Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `REVIEW_STATUS` hace lo mismo con el estado de aprobación de un restaurante (`pending`, `approved`, `rejected`, `suspended`); `BILLING_STATUS` lo hace con el cobro de un mes (`in_progress`, `pending`, `paid`) en el panel del administrador, que cobra; `PAYMENT_STATUS` es el mismo estado visto por el restaurante, que paga (misma forma y color, la palabra es «Pagado»). Quien paga nunca lee «Cobrado» ni «A cobrar». `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit.
+Los cuatro estados de reserva (Sprint 3) son los mismos en la app del comensal. `REVIEW_STATUS` hace lo mismo con el estado de aprobación de un restaurante (`pending`, `approved`, `rejected`, `suspended`); `BILLING_STATUS` lo hace con el cobro de un mes (`in_progress`, `pending`, `paid`) en el panel del administrador, que cobra; `PAYMENT_STATUS` es el mismo estado visto por el restaurante, que paga (misma forma y color, la palabra es «Pagado»). Quien paga nunca lee «Cobrado» ni «A cobrar». `RESERVATION_STATUS` pasa del estado de la API (`active`, `completed`, `expired`, `cancelled`) al del kit. `RELIABILITY_STATUS` hace lo mismo con `reliability.level` del informe de IA (`high`, `medium`, `low`; con `null` no se muestra estado).
+
+**`AiIcon`** (`sparkles`, 16 o 20): el concepto «Generado con IA». Siempre junto a sus palabras («Generado con IA · hace 12 min»), nunca solo y nunca en naranja.
 
 ```tsx
 <StatusChip status="occupied" />

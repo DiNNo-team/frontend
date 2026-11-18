@@ -1,4 +1,4 @@
-import { ChartNoAxesColumn, CirclePause, ClipboardCheck, History, LayoutGrid, Store, Wallet, type LucideIcon } from 'lucide-react'
+import { ChartNoAxesColumn, CirclePause, ClipboardCheck, History, LayoutGrid, Sparkles, Store, Wallet, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -14,6 +14,8 @@ export interface NavItem {
 export const NAV_ITEMS_RESTAURANT: NavItem[] = [
   { to: '/mesas', label: 'Mesas', icon: LayoutGrid },
   { to: '/resumen', label: 'Resumen', icon: ChartNoAxesColumn },
+  // The smart report (Sprint 4): the same `sparkles` as the kit's AiIcon. Not for a suspended restaurant (§12.16).
+  { to: '/informe', label: 'Informe', icon: Sparkles },
   { to: '/restaurante', label: 'Restaurante', icon: Store },
   { to: '/bitacora', label: 'Bitácora', icon: History },
 ]
