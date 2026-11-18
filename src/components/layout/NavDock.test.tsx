@@ -21,6 +21,13 @@ describe('NavDock', () => {
     expect(screen.queryByRole('link', { name: /Solicitudes/ })).not.toBeInTheDocument()
   })
 
+  it('keeps the theme switch for sm and up only, and the items as wide as their word on a phone', () => {
+    renderDock()
+    // jsdom has no media queries: the classes are the contract (measured at 320–768 px in the browser).
+    expect(screen.getByRole('button', { name: 'Cambiar a tema oscuro' })).toHaveClass('hidden', 'sm:flex')
+    for (const link of screen.getAllByRole('link')) expect(link).toHaveClass('min-w-12', 'whitespace-nowrap', 'md:w-24')
+  })
+
   it('a suspended restaurant keeps Cuenta and Resumen, without «Informe» (§12.16: the report is only for approved ones)', () => {
     renderDock({ items: NAV_ITEMS_SUSPENDED }, '/suspendido')
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Cuenta', 'Resumen'])
