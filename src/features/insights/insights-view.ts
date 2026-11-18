@@ -89,10 +89,13 @@ export function authorMark(narrative: Pick<InsightsNarrative, 'source'>): string
   return narrative.source === 'llm' ? INSIGHTS_TEXT.generatedWithAi : INSIGHTS_TEXT.generatedAutomatically
 }
 
-/** Why the text came from templates, for a report with enough data; `null` when there is nothing to explain. */
+/**
+ * The notice of a report with enough data whose text came from templates because of the model (`llm_*`); `null` when there
+ * is nothing to explain (the model wrote it, or there were few data: then there are no recommendations at all).
+ */
 export function fallbackNotice(fallback: NarrativeFallback | null): string | null {
   if (fallback === null || fallback === 'insufficient_data') return null
-  return INSIGHTS_TEXT.fallbackNotice[fallback]
+  return INSIGHTS_TEXT.fallbackNotice
 }
 
 export type RecommendationsView = { kind: 'list'; items: string[] } | { kind: 'paragraph'; text: string }

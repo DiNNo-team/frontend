@@ -174,10 +174,10 @@ describe('who wrote it and why', () => {
     expect(authorMark({ source: 'template' })).toBe('Generado automáticamente')
   })
 
-  it('explains each template fallback with enough data, and nothing otherwise', () => {
-    expect(fallbackNotice('llm_disabled')).toMatch(/no está activo/)
-    expect(fallbackNotice('llm_unavailable')).toMatch(/no respondió/)
-    expect(fallbackNotice('llm_invalid')).toMatch(/revisión/)
+  it('says the same for every llm_* reason, and nothing with few data or the model', () => {
+    for (const fallback of ['llm_disabled', 'llm_unavailable', 'llm_invalid'] as const) {
+      expect(fallbackNotice(fallback)).toBe('Recomendaciones básicas: el asistente de IA no estuvo disponible')
+    }
     expect(fallbackNotice('insufficient_data')).toBeNull()
     expect(fallbackNotice(null)).toBeNull()
   })

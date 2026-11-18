@@ -1,6 +1,6 @@
-import { formatDecimal, formatHour } from '@/features/summary/format'
+import { formatDayMonth, formatDecimal, formatHour } from '@/features/summary/format'
 import { getApiErrorMessage } from '@/lib/api-client'
-import type { NarrativeFallback, ReliabilityLevel } from './types'
+import type { ReliabilityLevel } from './types'
 
 // Texts of «Informe de la semana» (CLAUDE.md §12.16 of the backend). Everything the screen says is here; backend `message`s
 // are never shown. The rates are over RESOLVED reservations (completed + cancelled + expired), not over created ones like
@@ -18,7 +18,7 @@ export function dayName(dayOfWeek: number): string {
 export const INSIGHTS_TEXT = {
   title: 'Informe de la semana',
   description: 'Tus últimos 7 días con DiNNo, hoy incluido, y qué puedes mejorar.',
-  refresh: 'Actualizar',
+  refresh: 'Actualizar informe',
   refreshing: 'Generando…',
   retry: 'Intentar de nuevo',
   loading: 'Cargando tu informe',
@@ -82,12 +82,47 @@ export const INSIGHTS_TEXT = {
   // Recommendations
   recommendationsTitle: 'Qué hacer esta semana',
   aiDisclaimer: 'Lo redactó la IA solo con tus números, sin datos de tus comensales. Revísalo antes de actuar.',
-  fallbackNotice: {
-    llm_disabled: 'Recomendaciones básicas: el asistente de IA no está activo.',
-    llm_unavailable: 'Recomendaciones básicas: el asistente de IA no respondió a tiempo. Actualiza en unos minutos.',
-    llm_invalid: 'Recomendaciones básicas: el texto del asistente de IA no pasó nuestra revisión.',
-  } satisfies Record<Exclude<NarrativeFallback, 'insufficient_data'>, string>,
+  /** The same words for every `llm_*` reason: the person does not need to know which one it was. */
+  fallbackNotice: 'Recomendaciones básicas: el asistente de IA no estuvo disponible',
+  updatedAgo: (ago: string) => `Actualizado ${ago}`,
+
+  // Page
+  periodRange: (from: string, to: string) => {
+    const [fromDay, fromMonth] = [Number(from.slice(8)), from.slice(5, 7)]
+    return fromMonth === to.slice(5, 7) ? `Del ${fromDay} al ${formatDayMonth(to)} · hoy incluido` : `Del ${formatDayMonth(from)} al ${formatDayMonth(to)} · hoy incluido`
+  },
+  errorTitle: 'No pudimos cargar tu informe',
+  rateLimitedRefresh: 'Hiciste muchas solicitudes seguidas. Espera un momento y vuelve a actualizar. Sigues viendo el informe anterior.',
+
+  // Headline
+  checkInKicker: 'Check-in',
+  tilesLabel: 'Más datos de la semana',
+  reservationsCreatedLabel: 'reservas creadas',
+  completedLabel: 'con check-in',
+  cancelledLabel: 'canceladas',
+  expiredLabel: 'vencieron sin check-in',
+  averagePartySizeLabel: 'personas por reserva',
+  noData: 'Sin datos',
+
+  // Reliability
+  reliabilityHelpLabel: 'Qué significa',
+  reliabilityNow: (level: string) => `Confiabilidad: ${level}`,
+
+  // Week chart
+  legendActive: 'Siguen activas',
+  columnReservations: 'Reservas creadas',
+  columnManual: 'Mesas a mano',
+  weekChartLabel: 'Reservas de cada día de la semana, por cómo terminaron',
+  chartHeaders: ['Día', 'Reservas y cambios de mesas'] as [string, string],
+  shortDay: (date: string, isToday: boolean) => {
+    if (isToday) return 'Hoy'
+    const [year, month, day] = date.split('-').map(Number)
+    const weekday = SHORT_DAYS[(new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7]
+    return `${weekday} ${day}`
+  },
 } as const
+
+const SHORT_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] as const
 
 /** The text of any error of the report: account texts for 401/403, the 429 of the kit, or the load error. */
 export function describeInsightsError(error: unknown): string {

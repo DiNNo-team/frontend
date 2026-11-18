@@ -1,5 +1,16 @@
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { insightsApi } from './api'
+
+/** The current time, renewed every minute, so «hace X min» moves on its own while the screen stays open. */
+export function useMinuteClock(): Date {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  return now
+}
 
 export const insightsQueryKey = ['insights'] as const
 

@@ -16,7 +16,7 @@ function renderDock(props: Parameters<typeof NavDock>[0] = {}, path = '/') {
 describe('NavDock', () => {
   it('shows the restaurant sections by default, each with its word', () => {
     renderDock()
-    expect(NAV_ITEMS_RESTAURANT.map((item) => item.label)).toEqual(['Mesas', 'Resumen', 'Restaurante', 'Bitácora'])
+    expect(NAV_ITEMS_RESTAURANT.map((item) => item.label)).toEqual(['Mesas', 'Resumen', 'Informe', 'Restaurante', 'Bitácora'])
     for (const link of screen.getAllByRole('link')) expect(link).toHaveTextContent(/\S/)
     expect(screen.queryByRole('link', { name: /Solicitudes/ })).not.toBeInTheDocument()
   })
