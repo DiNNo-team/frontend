@@ -5,6 +5,19 @@
 
 ---
 
+## 17 nov 2026 · Jacobo · Azure listo para el despliegue de la web (Sprint 4) · para revisar: Sebastián
+
+- **Qué hice (solo en Azure y en GitHub, sin cambios de código):** lo que necesitaba `.github/workflows/web-ci-cd.yml` de Sebastián para publicar. El workflow y `public/staticwebapp.config.json` son los suyos, sin cambios. Detalle en CLAUDE.md §11, «Despliegue».
+- **Static Web App:** `swa-dinno`, plan Free, en `rg-dinno` (westus2). **URL de la web en Azure:** https://brave-grass-07093571e.3.azurestaticapps.net.
+- **Identidad de OIDC:** `id-gh-frontend`, con el rol Contributor **solo** sobre `swa-dinno` y una credencial federada para el entorno `Production` del repo (el `environment: production` del job `deploy`). Ninguna clave en GitHub.
+- **Variables del repositorio** (no secretos): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP` (`rg-dinno`), `AZURE_STATIC_WEB_APP_NAME` (`swa-dinno`), y los `VITE_*` del build. `VITE_API_URL` apunta al backend de Azure: https://ca-dinno-backend.icyrock-d101225d.westus2.azurecontainerapps.io.
+- **Desde ya, cada push a `main` publica en Azure** (con `AZURE_CLIENT_ID` definida, el job `deploy` deja de saltarse).
+- **El backend de Azure ya acepta la web:** `CORS_ORIGINS` tiene la URL de arriba y `http://localhost:5173`.
+- **Falta, para el login con Google y el mapa:** agregar la URL en Firebase → Authentication → Dominios autorizados (Sebastián) y en la restricción de la llave de Maps `dinno-web` (Santiago).
+- **Vercel sigue igual** hasta que Azure quede como la web oficial, y sigue usando el backend de Render: lo que se haga en una web no aparece en la otra (son bases distintas).
+
+---
+
 ## 17 nov 2026 · Elizabeth · Nueva pantalla Resumen del restaurante y revisión de textos del administrador (Sprint 4) · rama `feat/sprint4-admin-panel`
 
 - **Qué cambia:** `/resumen` del restaurante se rediseñó con el diseño de `docs/design/restaurant-summary/` (capturas de lo implementado en `implementado/`). Los bloques, el calendario accesible y los estados están en el CLAUDE.md, «Resumen del restaurante». Sin datos de comensales. Sin recomendaciones automáticas (eso es de la IA).
