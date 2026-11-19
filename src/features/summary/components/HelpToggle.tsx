@@ -3,7 +3,7 @@ import { Info } from 'lucide-react'
 import { Alert, Button } from '@/components/ui'
 
 interface HelpToggleProps {
-  /** The button's words: «Cómo se cobra». */
+  /** The button's words: «Cómo se calcula». */
   label: string
   title?: string
   children: ReactNode
