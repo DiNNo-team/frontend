@@ -44,7 +44,7 @@ describe('SummaryPage · comensales y pago', () => {
     expect(hero.getByText('Tarifa por comensal')).toBeInTheDocument()
     expect(hero.getByText('Costo por comensal')).toBeInTheDocument()
     expect(hero.getByText('Cierre del periodo')).toBeInTheDocument()
-    expect(hero.getByText('Solo pagas los check-ins. Las reservas canceladas o vencidas no tienen costo.')).toBeInTheDocument()
+    expect(hero.getByText('Pagas por cada comensal que llega: las personas de la reserva por la tarifa por comensal, al validar el check-in. Las reservas canceladas o vencidas no tienen costo.')).toBeInTheDocument()
   })
 
   it('does not claim a per-guest formula when the period has older check-ins with a flat amount', async () => {

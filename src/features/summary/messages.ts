@@ -43,7 +43,7 @@ export const SUMMARY_TEXT = {
   periodClose: 'Cierre del periodo',
   previousMonthPayment: (month: string, amount: number) => `${month} · ${formatCop(amount)}`,
   previousMonthNone: (month: string) => `${month} · sin check-ins`,
-  paymentNote: 'Solo pagas los check-ins. Las reservas canceladas o vencidas no tienen costo.',
+  paymentNote: 'Pagas por cada comensal que llega: las personas de la reserva por la tarifa por comensal, al validar el check-in. Las reservas canceladas o vencidas no tienen costo.',
   // Bloque 2: calendario y detalle del día
   calendarHint: 'Selecciona un día para ver su detalle',
   calendarDayOf: (day: number, days: number) => `Día ${day} de ${days}`,
