@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router'
 import { EmptyState, PageHeader } from '@/components/ui'
 import { BlockState } from '@/features/admin-overview/components/BlockState'
+import { InsightsLauncher } from '@/features/insights/InsightsLauncher'
 import { CalendarSection } from './components/CalendarSection'
 import { DemandBlock } from './components/DemandBlock'
 import { GuestsAndPayment } from './components/GuestsAndPayment'
@@ -77,7 +78,8 @@ export default function SummaryPage() {
 
   return (
     <>
-      <PageHeader title={SUMMARY_TEXT.title} description={SUMMARY_TEXT.description} />
+      {/* «Ver informe de la semana» (Sergio, Sprint 4): the button and its dialog live in features/insights. */}
+      <PageHeader title={SUMMARY_TEXT.title} description={SUMMARY_TEXT.description} actions={<InsightsLauncher />} />
       <PeriodSelector
         key={PARAM_BY_PRESET[preset]}
         preset={preset}

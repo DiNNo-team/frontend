@@ -313,11 +313,32 @@ describe('authentication routes', () => {
     expect(screen.getByRole('link', { name: 'Resumen' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('loads «Informe» on demand for an approved restaurant and shows it in the dock', async () => {
-    renderAt('/informe', SIGNED_IN)
+  it('sends the old /informe link to Resumen with the report open', async () => {
+    const { router } = renderAt('/informe', SIGNED_IN)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Informe de la semana' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Informe' })).toHaveAttribute('aria-current', 'page')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/resumen'))
+    expect(router.state.location.search).toBe('?informe=1')
+    expect(await screen.findByRole('dialog', { name: 'Informe de la semana' })).toBeInTheDocument()
+  })
+
+  it('shows «Ver informe de la semana» in the header of Resumen for an approved restaurant', async () => {
+    const { router, user } = renderAt('/resumen', SIGNED_IN)
+
+    await user.click(await screen.findByRole('button', { name: 'Ver informe de la semana' }))
+    expect(await screen.findByRole('dialog', { name: 'Informe de la semana' })).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?informe=1')
+  })
+
+  it('a suspended restaurant reads Resumen without the button of the report', async () => {
+    mocks.restaurantGet.mockResolvedValue({
+      id: 'r1', name: 'Casa 72', category: 'colombian', address: 'Calle 72 # 10-34', latitude: 4.65, longitude: -74.05, schedules: [],
+      activeReservationsCount: 0, approvalStatus: 'suspended', rejectionReason: null, contactPhone: null, suspensionReason: 'Pagos pendientes de octubre',
+    })
+    renderAt('/resumen?informe=1', SIGNED_IN)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Resumen' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ver informe de la semana' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('keeps a suspended restaurant out of «Informe» (its dock has no such item)', async () => {

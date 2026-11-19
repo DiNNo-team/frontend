@@ -119,6 +119,7 @@ function SegmentedDemo() {
 function FeedbackDemo() {
   const toast = useToast()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [largeOpen, setLargeOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [capacity, setCapacity] = useState(4)
@@ -160,6 +161,9 @@ function FeedbackDemo() {
         <Button variant="outline" icon={Plus} onClick={() => setDialogOpen(true)}>
           Abrir diálogo
         </Button>
+        <Button variant="outline" onClick={() => setLargeOpen(true)}>
+          Diálogo lg con velo
+        </Button>
         <Button variant="danger" icon={Ban} onClick={() => setConfirmOpen(true)}>
           Desactivar mesa
         </Button>
@@ -187,6 +191,24 @@ function FeedbackDemo() {
             decrementLabel="Quitar una persona"
             incrementLabel="Agregar una persona"
           />
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={largeOpen}
+        onOpenChange={setLargeOpen}
+        size="lg"
+        veil="blur"
+        title="Informe de la semana"
+        description="Del 12 al 18 de noviembre · hoy incluido"
+        headerActions={
+          <Button variant="outline" icon={RotateCcw}>
+            Actualizar informe
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <EmptyState title="Contenido de lectura" description="El encabezado queda fijo y este cuerpo hace scroll dentro del panel." />
         </div>
       </Dialog>
 

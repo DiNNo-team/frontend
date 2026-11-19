@@ -1,29 +1,31 @@
-import { formatDayMonth, formatDecimal, formatHour } from '@/features/summary/format'
+import { formatDayMonth, formatDecimal } from '@/features/summary/format'
 import { getApiErrorMessage } from '@/lib/api-client'
-import type { ReliabilityLevel } from './types'
 
-// Texts of «Informe de la semana» (CLAUDE.md §12.16 of the backend). Everything the screen says is here; backend `message`s
+// Texts of «Informe de la semana» (CLAUDE.md §12.16 of the backend). Everything the dialog says is here; backend `message`s
 // are never shown. The rates are over RESOLVED reservations (completed + cancelled + expired), not over created ones like
-// «Resumen», so every rate text says «de las resueltas»: otherwise the two screens would seem to contradict each other.
+// «Resumen», so every rate text says «de las resueltas»: otherwise the report would seem to contradict the screen behind it.
 
 const count = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`
 
-/** ISO day 1 = Monday … 7 = Sunday, in lower case for the middle of a sentence. */
-const DAY_NAMES = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] as const
-
-export function dayName(dayOfWeek: number): string {
-  return DAY_NAMES[dayOfWeek - 1] ?? ''
-}
-
 export const INSIGHTS_TEXT = {
+  // Launcher (header of Resumen) and dialog
+  open: 'Ver informe de la semana',
+  close: 'Cerrar informe',
   title: 'Informe de la semana',
   description: 'Tus últimos 7 días con DiNNo, hoy incluido, y qué puedes mejorar.',
+  periodRange: (from: string, to: string) => {
+    const [fromDay, fromMonth] = [Number(from.slice(8)), from.slice(5, 7)]
+    return fromMonth === to.slice(5, 7) ? `Del ${fromDay} al ${formatDayMonth(to)} · hoy incluido` : `Del ${formatDayMonth(from)} al ${formatDayMonth(to)} · hoy incluido`
+  },
   refresh: 'Actualizar informe',
   refreshing: 'Generando…',
   retry: 'Intentar de nuevo',
   loading: 'Cargando tu informe',
   loadError: 'No pudimos cargar tu informe. Revisa tu conexión e intenta de nuevo.',
+  errorTitle: 'No pudimos cargar tu informe',
   refreshError: 'No pudimos actualizar tu informe. Sigues viendo el anterior.',
+  rateLimitedRefresh: 'Hiciste muchas solicitudes seguidas. Espera un momento y vuelve a actualizar. Sigues viendo el informe anterior.',
+  updatedAgo: (ago: string) => `Actualizado ${ago}`,
 
   // Who wrote it (always visible: the text is generated automatically, §12.16)
   generatedWithAi: 'Generado con IA',
@@ -43,7 +45,8 @@ export const INSIGHTS_TEXT = {
   insufficientProgress: (resolved: number, minResolved: number) => `Llevas ${resolved} de ${minResolved} reservas resueltas`,
   resolvedHelp: 'Una reserva resuelta es la que terminó con check-in, se canceló o venció sin check-in.',
 
-  // Headline: check-in rate
+  // Headline: check-in rate and its four figures
+  checkInKicker: 'Check-in',
   checkInRateLabel: 'de las reservas resueltas terminó en check-in',
   noShowRateLabel: 'de las reservas resueltas venció sin check-in',
   cancellationRateLabel: 'de las reservas resueltas se canceló',
@@ -53,49 +56,7 @@ export const INSIGHTS_TEXT = {
   deltaSame: 'Igual que la semana anterior',
   deltaNone: 'La semana anterior no tuvo suficientes reservas para comparar',
   medianToCheckIn: (minutes: number) => `Los comensales llegan en ${formatDecimal(minutes)} min (mediana)`,
-  averagePartySize: (people: number) => `${formatDecimal(people)} personas por reserva en promedio`,
-  reservationsCreated: (created: number) => count(created, 'reserva creada', 'reservas creadas'),
   activeNow: (active: number) => `${count(active, 'reserva sigue activa', 'reservas siguen activas')} y aún no cuenta`,
-
-  // Reliability
-  reliabilityTitle: 'Confiabilidad de tu disponibilidad',
-  reliabilityHelp:
-    'Mide si los comensales pueden confiar en las mesas que muestras: sube cuando validas el código al recibir a cada comensal y cuando actualizas tus mesas a mano.',
-  reliabilityLevel: { high: 'Alta', medium: 'Media', low: 'Baja' } satisfies Record<ReliabilityLevel, string>,
-
-  // The week, day by day
-  weekTitle: 'La semana día a día',
-  today: 'Hoy',
-  legendCompleted: 'Con check-in',
-  legendCancelled: 'Canceladas',
-  legendExpired: 'Vencieron sin check-in',
-  legendManual: 'Actualizaste tus mesas a mano',
-  legendNoManual: 'Sin cambios de mesas a mano',
-  daysWithManualUpdates: (days: number, total: number) => `Actualizaste tus mesas a mano en ${days} de ${total} días`,
-  topSlot: (dayOfWeek: number, hour: number, reservations: number) =>
-    `Tu franja con más reservas: ${dayName(dayOfWeek)} a las ${formatHour(hour)} (${count(reservations, 'reserva', 'reservas')})`,
-  noTopSlot: 'Aún no hay una franja con más reservas',
-  dayDetail: (created: number, completed: number, cancelled: number, expired: number, manual: number) =>
-    `${count(created, 'reserva', 'reservas')}: ${completed} con check-in, ${count(cancelled, 'cancelada', 'canceladas')}, ` +
-    `${expired} ${expired === 1 ? 'venció' : 'vencieron'} sin check-in · ${count(manual, 'cambio', 'cambios')} de mesas a mano`,
-
-  // Recommendations
-  recommendationsTitle: 'Qué hacer esta semana',
-  aiDisclaimer: 'Lo redactó la IA solo con tus números, sin datos de tus comensales. Revísalo antes de actuar.',
-  /** The same words for every `llm_*` reason: the person does not need to know which one it was. */
-  fallbackNotice: 'Recomendaciones básicas: el asistente de IA no estuvo disponible',
-  updatedAgo: (ago: string) => `Actualizado ${ago}`,
-
-  // Page
-  periodRange: (from: string, to: string) => {
-    const [fromDay, fromMonth] = [Number(from.slice(8)), from.slice(5, 7)]
-    return fromMonth === to.slice(5, 7) ? `Del ${fromDay} al ${formatDayMonth(to)} · hoy incluido` : `Del ${formatDayMonth(from)} al ${formatDayMonth(to)} · hoy incluido`
-  },
-  errorTitle: 'No pudimos cargar tu informe',
-  rateLimitedRefresh: 'Hiciste muchas solicitudes seguidas. Espera un momento y vuelve a actualizar. Sigues viendo el informe anterior.',
-
-  // Headline
-  checkInKicker: 'Check-in',
   tilesLabel: 'Más datos de la semana',
   reservationsCreatedLabel: 'reservas creadas',
   completedLabel: 'con check-in',
@@ -105,24 +66,17 @@ export const INSIGHTS_TEXT = {
   noData: 'Sin datos',
 
   // Reliability
+  reliabilityTitle: 'Confiabilidad de tu disponibilidad',
   reliabilityHelpLabel: 'Qué significa',
-  reliabilityNow: (level: string) => `Confiabilidad: ${level}`,
+  reliabilityHelp:
+    'Mide si los comensales pueden confiar en las mesas que muestras: sube cuando validas el código al recibir a cada comensal y cuando actualizas tus mesas a mano.',
 
-  // Week chart
-  legendActive: 'Siguen activas',
-  columnReservations: 'Reservas creadas',
-  columnManual: 'Mesas a mano',
-  weekChartLabel: 'Reservas de cada día de la semana, por cómo terminaron',
-  chartHeaders: ['Día', 'Reservas y cambios de mesas'] as [string, string],
-  shortDay: (date: string, isToday: boolean) => {
-    if (isToday) return 'Hoy'
-    const [year, month, day] = date.split('-').map(Number)
-    const weekday = SHORT_DAYS[(new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7]
-    return `${weekday} ${day}`
-  },
+  // Recommendations
+  recommendationsTitle: 'Qué hacer esta semana',
+  aiDisclaimer: 'Lo redactó la IA solo con tus números, sin datos de tus comensales. Revísalo antes de actuar.',
+  /** The same words for every `llm_*` reason: the person does not need to know which one it was. */
+  fallbackNotice: 'Recomendaciones básicas: el asistente de IA no estuvo disponible',
 } as const
-
-const SHORT_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] as const
 
 /** The text of any error of the report: account texts for 401/403, the 429 of the kit, or the load error. */
 export function describeInsightsError(error: unknown): string {

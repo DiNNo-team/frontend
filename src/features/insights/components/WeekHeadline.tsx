@@ -61,7 +61,7 @@ export function NotEnoughData({ report, missing }: { report: RestaurantInsights;
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <h2 className="text-h2 text-fg">{INSIGHTS_TEXT.insufficientTitle}</h2>
+        <h3 className="text-h3 text-fg">{INSIGHTS_TEXT.insufficientTitle}</h3>
         <p className="text-body text-fg">{INSIGHTS_TEXT.insufficientMissing(missing)}</p>
       </div>
       <div className="flex flex-col gap-2">
