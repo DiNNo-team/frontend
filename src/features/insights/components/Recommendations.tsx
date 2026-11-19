@@ -1,4 +1,4 @@
-import { AiIcon, Alert, Card } from '@/components/ui'
+import { AiIcon, Alert } from '@/components/ui'
 import { authorMark, fallbackNotice, generatedAgoText, recommendationsView } from '../insights-view'
 import { INSIGHTS_TEXT } from '../messages'
 import type { InsightsNarrative } from '../types'
@@ -22,11 +22,11 @@ export function Recommendations({ narrative, generatedAt, now }: Recommendations
   const notice = fromModel ? null : fallbackNotice(narrative.fallback)
 
   return (
-    <Card as="section" aria-labelledby="recommendations-title" className="flex flex-col gap-4">
+    <section aria-labelledby="recommendations-title" className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <h2 id="recommendations-title" className="text-h2 text-fg">
+        <h3 id="recommendations-title" className="text-h3 text-fg">
           {INSIGHTS_TEXT.recommendationsTitle}
-        </h2>
+        </h3>
         <p className="inline-flex items-center gap-1.5 text-sec font-bold text-fg">
           {fromModel && <AiIcon />}
           {mark}
@@ -48,6 +48,6 @@ export function Recommendations({ narrative, generatedAt, now }: Recommendations
         <p className="max-w-3xl text-body break-words text-fg">{view.text}</p>
       )}
       {fromModel && <p className="text-label text-fg-2">{INSIGHTS_TEXT.aiDisclaimer}</p>}
-    </Card>
+    </section>
   )
 }

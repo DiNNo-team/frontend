@@ -5,6 +5,19 @@
 
 ---
 
+## 18 nov 2026 · Sergio · El informe de IA pasa a un pop-up en `/resumen` (Sprint 4, Task 2.1.2) · rama `feat/sprint4-informe-modal` · para revisar: Sebastián (kit y dock) y Elizabeth (Resumen)
+
+- **Qué cambia:** «Informe» sale del dock. En `/resumen`, el botón «Ver informe de la semana» (con `AiIcon`, `outline`, en las acciones del `PageHeader`) abre el informe en un pop-up centrado. `/resumen?informe=1` lo abre directo y **`/informe` ahora redirige ahí**. Detalle en CLAUDE.md §11, «Informe de IA»; capturas en `docs/design/insights/`.
+- **Qué muestra:** encabezado fijo (título, periodo, «Actualizar informe» y «Cerrar informe»), la tasa de check-in con sus 4 cifras y la confiabilidad, y «Qué hacer esta semana» con su marca de IA o de respaldo. **Se eliminó «La semana día a día» (`WeekChart`)** con sus textos y pruebas, y la página `InsightsPage`.
+- **API:** el GET se hace **solo al abrir el pop-up**, nunca por entrar a Resumen (cuenta para el límite de 10 por minuto). Mismos estados que antes: carga, vacío, insuficiente, error con reintento, 403 sin reintento, 429 conservando el informe, respaldo y «Generando…».
+- **Kit (Sebastián):** `Dialog` acepta `size="lg"` (~960 px, encabezado fijo, scroll interno, casi pantalla completa en el teléfono, con `headerActions` y un `IconButton` «Cerrar») y `veil="blur"` (utilidad `veil-blur` en `globals.css`: el `--overlay` de siempre con un desenfoque fijo de la página, que vuelve al velo sólido con reducir transparencia, más contraste o sin `backdrop-filter`). **El panel sigue sólido** (manual 7.2 y 12.2). Los diálogos que ya existen no cambian. En `/kit` hay una demo.
+- **Resumen (Elizabeth):** solo se agregó `actions={<InsightsLauncher />}` al `PageHeader`; la lógica no cambia. Un suspendido no ve el botón.
+- **Dock:** vuelve a 4 ítems. El botón de tema sigue oculto por debajo de `sm`: con 4 ítems cabría desde 375 px, pero no a 320 px (propuesta: un punto de corte `xs` de 360 px).
+- **Pendiente para el manual (Sebastián):** «Velo del diálogo» en el §7.1 y el tamaño `lg` en el §12.2 (redacción propuesta en el PR).
+- **Sin** variables de entorno, dependencias ni cambios de API.
+
+---
+
 ## 18 nov 2026 · Sergio · Informe de IA en la web: pantalla `/informe` (Sprint 4, Task 2.1.2) · rama `feat/sprint4-informe-ia` · para revisar: Sebastián
 
 - **Qué hay:** la pantalla «Informe de la semana» en `/informe` («Informe» en el dock, entre Resumen y Restaurante). Detalle en CLAUDE.md §11, «Informe de IA»; capturas en `docs/design/insights/`.

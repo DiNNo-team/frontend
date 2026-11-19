@@ -70,6 +70,17 @@
 @utility z-popover { z-index: calc(var(--z-modal) + 1); }
 @utility grid-tables { grid-template-columns: repeat(auto-fill, minmax(min(168px, calc(50% - 6px)), 1fr)); grid-auto-rows: 1fr; } /* dos columnas también en el teléfono */ /* grilla de mesas · manual 13.10 */
 
+/* Velo del diálogo con desenfoque (Sprint 4, aprobado por el equipo; propuesta para el manual 7.1): el --overlay de
+   siempre más un desenfoque FIJO de la página de atrás (nunca se anima; el velo solo hace su fundido de opacidad). El
+   panel del diálogo sigue sólido (manual 7.2 y 12.2) y no lleva texto encima. Respaldo: sin desenfoque, el --overlay
+   sólido de hoy, con reducir transparencia, más contraste o sin soporte de backdrop-filter. */
+@utility veil-blur {
+  backdrop-filter: blur(12px) saturate(1.2);
+  @supports not (backdrop-filter: blur(1px)) { backdrop-filter: none; }
+  @media (prefers-reduced-transparency: reduce) { backdrop-filter: none; }
+  @media (prefers-contrast: more) { backdrop-filter: none; }
+}
+
 /* Vidrio (manual 7) con su respaldo sólido. Encima, solo texto en tinta o crema. */
 @utility glass-panel {
   background: var(--glass-panel-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-float);

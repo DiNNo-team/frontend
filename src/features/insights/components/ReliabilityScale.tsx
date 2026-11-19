@@ -16,9 +16,9 @@ export function ReliabilityScale({ reliability }: { reliability: InsightsReliabi
   return (
     <section aria-labelledby="reliability-title" className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="reliability-title" className="text-h3 text-fg">
+        <h3 id="reliability-title" className="text-h3 text-fg">
           {INSIGHTS_TEXT.reliabilityTitle}
-        </h2>
+        </h3>
         <StatusChip status={RELIABILITY_STATUS[level]} />
       </div>
       <div aria-hidden="true" className="grid grid-cols-3 gap-1">

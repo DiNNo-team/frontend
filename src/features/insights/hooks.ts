@@ -20,10 +20,12 @@ export const insightsQueryKey = ['insights'] as const
  */
 export const INSIGHTS_STALE_TIME_MS = 5 * 60_000
 
-export function useInsightsQuery() {
+/** `enabled`: the report is asked only while its dialog is open, never just for entering Resumen. */
+export function useInsightsQuery({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: insightsQueryKey,
     queryFn: () => insightsApi.getInsights({ refresh: false }),
+    enabled,
     staleTime: INSIGHTS_STALE_TIME_MS,
     refetchOnWindowFocus: false,
   })
