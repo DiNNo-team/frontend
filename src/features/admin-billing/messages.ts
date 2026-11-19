@@ -12,7 +12,7 @@ export const CHECK_INS_PAGE_SIZE = 50
 
 export const BILLING_TEXT = {
   title: 'Cobros',
-  description: 'Lo que se cobra a cada restaurante por los check-ins de cada mes.',
+  description: 'Lo que se cobra a cada restaurante cada mes: los comensales de sus check-ins por la tarifa por comensal. Los meses anteriores muestran el monto que se guardó.',
   retry: 'Intentar de nuevo',
   listLoadError: 'No pudimos cargar los cobros. Revisa tu conexión e intenta de nuevo.',
   detailLoadError: 'No pudimos cargar este cobro. Revisa tu conexión e intenta de nuevo.',
