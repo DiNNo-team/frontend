@@ -5,6 +5,21 @@
 
 ---
 
+## 18 nov 2026 · Elizabeth · Cobro por comensal: COP 1.500 por persona (Sprint 4) · rama `feat/sprint4-tarifa-por-comensal` · para revisar: Sebastián
+
+- **Qué cambia:** el cobro pasa de una tarifa fija por check-in (COP 2.000) a **COP 1.500 por persona**: `fee_cop` = personas de la reserva × tarifa por comensal. Se calcula **solo al hacer el check-in** (crear, cancelar o vencer una reserva no cobra). Ejemplos: 1 persona = 1.500, 2 = 3.000, 4 = 6.000, 5 = 7.500.
+- **Nombres nuevos (iguales en los tres repos):** variable `CHECKIN_FEE_PER_GUEST_COP` (default 1500) y campo de API `currentFeePerGuestCop` (antes `currentFeeCop`).
+- **Contrato nuevo que consume la web:** `billing.currentFeePerGuestCop` (de `GET /v1/restaurants/me/summary`) y `currentFeePerGuestCop` (de `GET /v1/admin/overview`) reemplazan a `currentFeeCop`. `feeCop` por fila de check-in es el **total** de ese check-in (personas × tarifa), y `partySize` ya venía por fila. Contratos copiados idénticos del backend (`docs/admin-panel-contract.md`, `docs/restaurant-summary-contract.md`; §12.12 en `CLAUDE.md`).
+- **Qué pantallas cambiaron:**
+  - **Resumen del restaurante:** el bloque «Total a pagar a DiNNo» agrega «Tarifa por comensal» y dice «10 comensales × $1.500 por comensal»; el detalle del pago y el detalle del día muestran el monto de cada check-in y, debajo, «2 personas × $1.500». La columna «Tarifa» ahora es «Monto».
+  - **Cobros del administrador (detalle por restaurante):** «Tarifa por comensal: $ 1.500», «N comensales × $ 1.500 por comensal» y «2 personas × $ 1.500» por fila; columna «Monto cobrado». La tarifa vigente sale de `GET /v1/admin/overview`.
+- **Montos históricos:** la pantalla nunca recalcula. El monto de cada fila es el que guardó el backend. La fórmula «personas × tarifa» solo aparece cuando coincide **exactamente** (`lib/per-guest-fee.ts`); una fila o un periodo con check-ins anteriores (2.000 fijos) muestra su monto solo, sin afirmar que se cobró por persona («N check-ins, cada uno con el monto de su momento»).
+- **Sin cambios:** diseño, kit, modo claro y oscuro, y la regla de que quien paga nunca lee «cobro»/«cobrado» en el Resumen (lo fija `messages.test.ts`).
+- **Mocks:** `VITE_USE_MOCKS=true` usa 1.500 por persona (los montos del mock suman personas × tarifa). Las pruebas se ajustaron y se agregaron casos del histórico mezclado.
+- **Backend:** variable `CHECKIN_FEE_COP` → `CHECKIN_FEE_PER_GUEST_COP` (default 1500; quien despliegue en Azure la define en el Container App y elimina la vieja). Sin migración. Los PR a `develop` los abre Elizabeth; **el backend y la web se despliegan juntos**, porque el campo cambió de nombre.
+
+---
+
 ## 18 nov 2026 · Sergio · Informe de IA en la web: pantalla `/informe` (Sprint 4, Task 2.1.2) · rama `feat/sprint4-informe-ia` · para revisar: Sebastián
 
 - **Qué hay:** la pantalla «Informe de la semana» en `/informe` («Informe» en el dock, entre Resumen y Restaurante). Detalle en CLAUDE.md §11, «Informe de IA»; capturas en `docs/design/insights/`.
