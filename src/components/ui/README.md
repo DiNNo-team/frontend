@@ -292,9 +292,27 @@ toast.show({ type: 'error', message: 'No pudimos conectarnos. Revisa tu conexió
 
 ## Dialog y ConfirmDialog
 
-`Dialog`: modal sólido. Se puede abrir desde un ítem del menú ⋯: al cerrar, el foco vuelve al botón ⋯ que abrió el menú. `title` (Título 3), `description`, contenido, `footer` con las acciones (**el primario va de último**: queda a la derecha en escritorio y arriba en móvil). `size`: `sm` 480 | `md` 560. `preventClose` mientras guarda (Esc y clic afuera no cierran). El foco queda atrapado y vuelve al botón que lo abrió.
+`Dialog`: modal sólido. Se puede abrir desde un ítem del menú ⋯: al cerrar, el foco vuelve al botón ⋯ que abrió el menú. `title` (Título 3), `description`, contenido, `footer` con las acciones (**el primario va de último**: queda a la derecha en escritorio y arriba en móvil). `size`: `sm` 480 | `md` 560 | `lg` ~960 (abajo). `veil`: `solid` | `blur` (abajo). `preventClose` mientras guarda (Esc y clic afuera no cierran). El foco queda atrapado y vuelve al botón que lo abrió.
 
 Si las acciones viven dentro de tu propio `<form>` (para que Enter envíe), no uses `footer`: pon `<DialogFooter>` al final del formulario.
+
+**`size="lg"` (~960 px, Sprint 4):** para contenido de lectura (el informe de la semana). El panel sigue **sólido**. El encabezado queda fijo: título (Título 2), `description` (por ejemplo, el periodo), `headerActions` y un `IconButton` «Cerrar» (`closeLabel`); el cuerpo hace scroll dentro del panel. En el teléfono el panel ocupa casi toda la pantalla y las acciones bajan a su propia línea, con «Cerrar» siempre junto al título. El foco empieza en el panel (no en «Cerrar», para que su tooltip no se abra y el primer Esc cierre).
+
+**`veil="blur"`:** el velo de siempre (`--overlay`) más un desenfoque fijo de la página de atrás (utilidad `veil-blur`); nunca se anima, solo hace el fundido de opacidad. Con reducir transparencia, más contraste o sin soporte de `backdrop-filter`, vuelve al velo sólido. Por defecto `veil="solid"`: los diálogos que ya existen no cambian.
+
+```tsx
+<Dialog
+  open={open}
+  onOpenChange={setOpen}
+  size="lg"
+  veil="blur"
+  title="Informe de la semana"
+  description="Del 12 al 18 de noviembre · hoy incluido"
+  headerActions={<Button variant="outline" icon={RefreshCw}>Actualizar informe</Button>}
+>
+  …bloques…
+</Dialog>
+```
 
 ```tsx
 <Dialog open={open} onOpenChange={setOpen} title="Agregar mesa" preventClose={saving}>

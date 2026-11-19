@@ -84,8 +84,9 @@ export const routes: RouteObject[] = [
                   { path: '/mesas', element: <TablesPage /> },
                   { path: '/restaurante', element: <RestaurantPage /> },
                   { path: '/bitacora', element: <ActivityLogPage /> },
-                  // Smart report (Sprint 4, §12.16): only an approved restaurant; a suspended one gets 403 RESTAURANT_SUSPENDED.
-                  { path: '/informe', lazy: lazyPage(() => import('@/features/insights/InsightsPage')) },
+                  // The weekly report (§12.16) is a dialog over Resumen now: old links open it there. Only an approved
+                  // restaurant reaches this redirect; a suspended one is sent to its own screen by the guard.
+                  { path: '/informe', element: <Navigate to="/resumen?informe=1" replace /> },
                 ],
               },
             ],
