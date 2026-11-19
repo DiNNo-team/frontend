@@ -20,7 +20,12 @@ import type {
 // Empty: ?mockEmpty · errors: ?mockError=admin-overview, admin-metrics, admin-billing, admin-detail, admin-activity or
 // admin-mark · somebody marked it first: ?mockConflict · slower: ?mockLatency=3000 (shared).
 
-const FEE = 2000
+const FEE_PER_GUEST = 1500
+
+/** People of the check-in at `position` of a restaurant: the same one in the list, the totals and the detail. */
+const guestsOf = (index: number, position: number) => 1 + ((position * 3 + index) % 6)
+/** What the first `checkIns` check-ins of a restaurant kept: people × the fee per guest, each. */
+const amountOf = (index: number, checkIns: number) => Array.from({ length: checkIns }, (_, position) => guestsOf(index, position) * FEE_PER_GUEST).reduce((a, b) => a + b, 0)
 const ROWS = MOCK_PANEL_ROWS
 const SUSPENDED_INDEX = MOCK_SUSPENDED_INDEX
 /** Month factor by how long ago it was: 0 is the month in progress. */
@@ -58,13 +63,13 @@ function seedPayments(): Map<string, Payment> {
   for (let index = 0; index < ROWS.length; index += 1) {
     for (const month of lastMonths(shiftMonth(now, -1), 12)) {
       if (month < FIRST_MONTH || monthsAgo(month) < 1) continue
-      const amount = checkInsOf(index, month) * FEE
+      const amount = amountOf(index, checkInsOf(index, month))
       const last = monthsAgo(month) === 1
       if (amount === 0 || (last && index >= 3)) continue
       const mismatch = index === 1 && monthsAgo(month) === 2
       map.set(key(index, month), {
         paidAt: new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 3, 16)).toISOString(),
-        snapshot: { amountCop: amount + (mismatch ? FEE : 0), checkIns: checkInsOf(index, month) + (mismatch ? 1 : 0) },
+        snapshot: { amountCop: amount + (mismatch ? FEE_PER_GUEST : 0), checkIns: checkInsOf(index, month) + (mismatch ? 1 : 0) },
       })
     }
   }
@@ -90,7 +95,7 @@ function billingItem(index: number, month: string): AdminBillingItem {
     name: ROWS[index][0],
     approvalStatus: isSuspended(index) ? 'suspended' : 'approved',
     checkIns,
-    amountCop: checkIns * FEE,
+    amountCop: amountOf(index, checkIns),
     status: statusOf(index, month),
     paidAt: payments.get(key(index, month))?.paidAt ?? null,
   }
@@ -135,7 +140,7 @@ function detailOf(index: number, month: string, page: number, pageSize: number):
     const day = 1 + ((position * 7 + index) % days)
     const hour = 12 + ((position * 5 + index) % 10)
     const checkedInAt = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1, day, hour + 5, (position * 13) % 60)).toISOString()
-    return { checkInId: `mock-check-in-${index}-${month}-${position}`, checkedInAt, partySize: 1 + ((position * 3 + index) % 6), feeCop: FEE }
+    return { checkInId: `mock-check-in-${index}-${month}-${position}`, checkedInAt, partySize: guestsOf(index, position), feeCop: guestsOf(index, position) * FEE_PER_GUEST }
   }).sort((a, b) => Date.parse(b.checkedInAt) - Date.parse(a.checkedInAt))
   const payment = payments.get(key(index, month))
   return {
@@ -233,7 +238,7 @@ function activityItem(index: number, month: string): AdminActivityItem {
     approvedAt: index % 3 === 0 ? null : new Date(Date.now() - (40 + index * 9) * 86_400_000).toISOString(),
     createdAt: new Date(Date.now() - (60 + index * 9) * 86_400_000).toISOString(),
     checkIns,
-    amountCop: checkIns * FEE,
+    amountCop: amountOf(index, checkIns),
     lastTableActivityAt: index % 6 === 5 ? null : new Date(Date.now() - (index + 1) * 3_600_000 * 7).toISOString(),
   }
 }
@@ -245,7 +250,8 @@ export const mockPanelApi: PanelApi = {
     const monthly = lastMonths(month, 12).map((entry) => {
       const items = ROWS.map((_, index) => checkInsOf(index, entry))
       const checkIns = entry < FIRST_MONTH ? 0 : items.reduce((a, b) => a + b, 0)
-      return { month: entry, revenueCop: checkIns * FEE, checkIns }
+      const revenueCop = entry < FIRST_MONTH ? 0 : ROWS.reduce((total, _, index) => total + amountOf(index, checkInsOf(index, entry)), 0)
+      return { month: entry, revenueCop, checkIns }
     })
     const current = monthly[monthly.length - 1]
     let collectedCop = 0
@@ -267,7 +273,7 @@ export const mockPanelApi: PanelApi = {
       collectedCop,
       pendingCop,
       restaurants: { pending: 4, approved: ROWS.length - 1, suspended: 1, rejected: 1 },
-      currentFeeCop: FEE,
+      currentFeePerGuestCop: FEE_PER_GUEST,
       serverTime: new Date().toISOString(),
     } satisfies AdminOverview
   },
@@ -300,7 +306,7 @@ export const mockPanelApi: PanelApi = {
     await simulate('admin-mark')
     const index = findIndex(id)
     if (month === currentMonth()) throw new ApiError({ status: 409, code: 'PERIOD_NOT_CLOSED' })
-    const amount = checkInsOf(index, month) * FEE
+    const amount = amountOf(index, checkInsOf(index, month))
     if (amount === 0) throw new ApiError({ status: 409, code: 'NOTHING_TO_BILL' })
     if (payments.has(key(index, month)) || mockParams().has('mockConflict')) throw new ApiError({ status: 409, code: 'PERIOD_ALREADY_PAID' })
     payments.set(key(index, month), { paidAt: new Date().toISOString(), snapshot: { amountCop: amount, checkIns: checkInsOf(index, month) } })

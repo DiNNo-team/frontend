@@ -16,7 +16,10 @@ async function simulate(operation: 'summary-load' | 'billing-load') {
   mockFailIfAsked(operation)
 }
 
-const FEE = 2000
+/** Fee per guest, COP: each check-in kept its people × this. */
+const FEE_PER_GUEST = 1500
+/** People of the check-ins the mock invents for the stretch before and the months before. */
+const MOCK_PARTY = 2
 const DAY_MS = 86_400_000
 const RESERVATIONS_BY_DAY = [0, 1, 0, 2, 0, 1, 3, 4, 0, 3, 2, 0, 0, 0, 1, 1, 0]
 /** The check-ins of the design, by day of the month: time, table and people. Other days repeat a generic one. */
@@ -61,7 +64,7 @@ function checkInsOn(date: string): BillingItem[] {
     checkedInAt: new Date(`${date}T${time}:00-05:00`).toISOString(),
     partySize: party,
     tableIdentifier: table,
-    feeCop: FEE,
+    feeCop: party * FEE_PER_GUEST,
   }))
 }
 
@@ -119,18 +122,18 @@ export const mockSummaryApi: SummaryApi = {
     const currentMonth = bogotaToday().slice(0, 7)
     const lastMonth = range.to.slice(0, 7)
     const monthStatus = (month: string): PaymentStatus => (month >= currentMonth ? 'in_progress' : paymentStatus('paid'))
-    const paymentOf = (month: string, checkIns: number): PaymentMonth => ({ month, status: monthStatus(month), checkIns, amountCop: checkIns * FEE })
+    const paymentOf = (month: string, checkIns: number): PaymentMonth => ({ month, status: monthStatus(month), checkIns, amountCop: checkIns * MOCK_PARTY * FEE_PER_GUEST })
     const previousMonth = shiftMonth(lastMonth, -1)
     const previousMonthCheckIns = empty ? 0 : 4
     return {
       period: period(range),
-      billing: { checkIns: completed, amountCop: completed * FEE, currentFeeCop: FEE, guests: sum('guests') },
+      billing: { checkIns: completed, amountCop: sum('guests') * FEE_PER_GUEST, currentFeePerGuestCop: FEE_PER_GUEST, guests: sum('guests') },
       previousComparable: {
         period: { ...before, timezone: 'America/Bogota' },
         reservationsCreated: noPrevious ? 0 : 15,
         checkIns: previousCheckIns,
         guests: noPrevious ? 0 : 9,
-        amountCop: previousCheckIns * FEE,
+        amountCop: (noPrevious ? 0 : 9) * FEE_PER_GUEST,
       },
       reservations: { created, completed, cancelled, expired, active: 0 },
       rates: {
@@ -172,7 +175,7 @@ export const mockSummaryApi: SummaryApi = {
     return {
       period: period(range),
       totalCheckIns: all.length,
-      amountCop: all.length * FEE,
+      amountCop: all.reduce((total, item) => total + item.feeCop, 0),
       items: all.slice(start, start + pageSize),
       page,
       pageSize,

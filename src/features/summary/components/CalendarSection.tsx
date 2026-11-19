@@ -43,7 +43,7 @@ export function CalendarSection({ summary }: { summary: RestaurantSummary }) {
           onMonthChange={(next) => setChoice({ key, day: own.day, month: next })}
         />
       </Card>
-      <DayDetail day={day} />
+      <DayDetail day={day} feePerGuestCop={summary.billing.currentFeePerGuestCop} />
     </div>
   )
 }

@@ -33,8 +33,11 @@ export const SUMMARY_TEXT = {
   arrivalRate: 'tasa de llegada',
   partyPerReservation: 'personas por reserva',
   paymentKicker: 'Total a pagar a DiNNo',
-  paymentFormula: (checkIns: number, fee: number) => `${count(checkIns, 'check-in', 'check-ins')} × tarifa de ${formatCop(fee)}`,
-  paymentMixedFees: (checkIns: number) => `${count(checkIns, 'check-in', 'check-ins')}, cada uno con la tarifa de su momento`,
+  paymentFormula: (guests: number, fee: number) => `${count(guests, 'comensal', 'comensales')} × ${formatCop(fee)} por comensal`,
+  paymentMixedFees: (checkIns: number) => `${count(checkIns, 'check-in', 'check-ins')}, cada uno con el monto de su momento`,
+  feePerGuest: 'Tarifa por comensal',
+  /** «2 personas × $1.500»: shown beside the amount of a check-in charged per guest. */
+  feeFormula: (people: number, fee: number) => `${count(people, 'persona', 'personas')} × ${formatCop(fee)}`,
   paymentNone: 'Todavía no hay check-ins en este periodo',
   costPerGuest: 'Costo por comensal',
   periodClose: 'Cierre del periodo',
@@ -117,7 +120,7 @@ export const SUMMARY_TEXT = {
   columnWhen: 'Fecha y hora',
   columnTable: 'Mesa',
   columnParty: 'Personas',
-  columnFee: 'Tarifa',
+  columnFee: 'Monto',
   detailEmpty: 'No hay check-ins en este periodo',
   detailEmptyDescription: 'Cuando valides el código de un comensal, aparecerá aquí.',
   detailLoadError: 'No pudimos cargar el detalle del pago. Revisa tu conexión e intenta de nuevo.',
@@ -127,7 +130,7 @@ export const SUMMARY_TEXT = {
   itemsLabel: 'check-ins',
   feeHelpLabel: 'Cómo se calcula',
   feeHelp:
-    'Cada check-in guarda la tarifa que había cuando se hizo. Por eso el total de un periodo no cambia si la tarifa cambia después. Solo pagas cuando un comensal llega y validas su código: las cancelaciones y los vencimientos no tienen costo.',
+    'El monto de un check-in es el número de personas de la reserva por la tarifa por comensal que había cuando se hizo. Cada check-in guarda su monto, así que el total de un periodo no cambia si la tarifa cambia después; los check-ins anteriores a la tarifa por comensal conservan su monto de entonces. Solo pagas cuando un comensal llega y validas su código: las cancelaciones y los vencimientos no tienen costo.',
 } as const
 
 /** The text for a report that could not load, by access or network; `fallback` otherwise. */

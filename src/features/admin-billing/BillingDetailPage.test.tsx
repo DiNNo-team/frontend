@@ -28,7 +28,8 @@ describe('BillingDetailPage', () => {
   it('shows the amount, how it adds up and why it is charged, with no data of the diner', async () => {
     renderDetail(CLOSED)
     expect(await screen.findByRole('heading', { level: 1, name: 'Casa 16' })).toBeInTheDocument()
-    expect(screen.getByText(/check-ins × \$ 2\.000/)).toBeInTheDocument()
+    expect(await screen.findByText(/comensales × \$ 1\.500 por comensal/)).toBeInTheDocument()
+    expect(screen.getByText('Tarifa por comensal: $ 1.500')).toBeInTheDocument()
     expect(screen.getByText(/Las reservas canceladas o vencidas no se cobran/)).toBeInTheDocument()
     expect(screen.queryByText(/@/)).not.toBeInTheDocument()
   })
@@ -36,7 +37,7 @@ describe('BillingDetailPage', () => {
   it('marks the month as paid after the confirmation, says so, and then offers to undo it', async () => {
     const { user } = renderDetail(CLOSED)
     await user.click(await screen.findByRole('button', { name: 'Marcar como cobrado' }))
-    const dialog = await screen.findByRole('dialog', { name: /como cobrado por \$ 12\.000/ })
+    const dialog = await screen.findByRole('dialog', { name: /como cobrado por \$ 40.500/ })
     await user.click(dialog.querySelector('button:last-of-type') as HTMLElement)
     expect(await screen.findByText(/de Casa 16 marcado como cobrado/)).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'Deshacer cobro' })).toBeInTheDocument()

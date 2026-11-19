@@ -70,7 +70,7 @@ export default function SummaryPage() {
             </>
           )}
         </BlockState>
-        <PaymentDetail key={`${period.from}-${period.to}`} period={period} />
+        <PaymentDetail key={`${period.from}-${period.to}`} period={period} feePerGuestCop={data?.billing.currentFeePerGuestCop} />
       </div>
     )
   }

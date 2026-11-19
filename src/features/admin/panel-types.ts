@@ -33,7 +33,8 @@ export interface AdminOverview {
   collectedCop: number
   pendingCop: number
   restaurants: { pending: number; approved: number; suspended: number; rejected: number }
-  currentFeeCop: number
+  /** Today's fee per guest, COP (informative: each check-in kept its own total). */
+  currentFeePerGuestCop: number
   serverTime: string
 }
 
@@ -81,6 +82,7 @@ export interface AdminBillingCheckIn {
   checkInId: string
   checkedInAt: string
   partySize: number
+  /** The total charged for this check-in (people × the per-guest fee of the day; older ones kept a flat amount). */
   feeCop: number
 }
 

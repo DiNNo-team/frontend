@@ -7,7 +7,7 @@ import SummaryPage from './SummaryPage'
 import type { RestaurantSummary } from './types'
 
 // VITE_USE_MOCKS=true in tests: the sample of the design (docs/design/restaurant-summary), «today» is 15 Nov 2026. In «Este mes»
-// (1–15 Nov) the sample has 5 check-ins (8 Nov ×2, 10 Nov ×2, 11 Nov ×1) at $2.000. Controls by URL as in dev.
+// (1–15 Nov) the sample has 5 check-ins (8 Nov ×2, 10 Nov ×2, 11 Nov ×1) at $1.500 per guest. Controls by URL as in dev.
 
 function renderSummary(path = '/resumen', browserSearch = '') {
   window.history.replaceState({}, '', `/${browserSearch}`)
@@ -39,11 +39,21 @@ describe('SummaryPage · comensales y pago', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Resumen' })).toBeInTheDocument()
     expect(screen.getByText('Reservas, comensales y pago del periodo.')).toBeInTheDocument()
     expect(hero.getByText('Total a pagar a DiNNo')).toBeInTheDocument()
-    expect(hero.getByText('$10.000')).toBeInTheDocument()
-    expect(hero.getByText('5 check-ins × tarifa de $2.000')).toBeInTheDocument()
+    expect(hero.getByText('$15.000')).toBeInTheDocument()
+    expect(hero.getByText('10 comensales × $1.500 por comensal')).toBeInTheDocument()
+    expect(hero.getByText('Tarifa por comensal')).toBeInTheDocument()
     expect(hero.getByText('Costo por comensal')).toBeInTheDocument()
     expect(hero.getByText('Cierre del periodo')).toBeInTheDocument()
     expect(hero.getByText('Solo pagas los check-ins. Las reservas canceladas o vencidas no tienen costo.')).toBeInTheDocument()
+  })
+
+  it('does not claim a per-guest formula when the period has older check-ins with a flat amount', async () => {
+    withSummary({ billing: { checkIns: 5, amountCop: 11000, currentFeePerGuestCop: 1500, guests: 10 } })
+    renderSummary()
+    const hero = await section('Comensales con reserva DiNNo')
+    expect(await hero.findByText('$11.000')).toBeInTheDocument()
+    expect(hero.getByText('5 check-ins, cada uno con el monto de su momento')).toBeInTheDocument()
+    expect(hero.queryByText(/× \$1\.500 por comensal/)).not.toBeInTheDocument()
   })
 
   it('never says «A cobrar», «cobro» or «Cobrado» anywhere on the screen', async () => {
@@ -56,7 +66,7 @@ describe('SummaryPage · comensales y pago', () => {
   it('the cost per guest is the amount over the guests, and is not shown with 0 guests', async () => {
     renderSummary()
     const hero = await section('Comensales con reserva DiNNo')
-    // 5 check-ins: 2 + 2 + 2 + 3 (8 Nov ×2 mesa 04, 10 Nov ×2, 11 Nov ×1 mesa 04) → guests of the sample, $10.000 over them.
+    // 5 check-ins: 2 + 2 + 2 + 3 (8 Nov ×2 mesa 04, 10 Nov ×2, 11 Nov ×1 mesa 04) → guests of the sample, $15.000 over them.
     expect(hero.getByText('Costo por comensal').closest('div')).toHaveTextContent(/\$[\d.]+/)
     renderSummary('/resumen', '?mockEmpty')
     expect(await screen.findAllByText('Todavía no hay check-ins en este periodo')).not.toHaveLength(0)
@@ -86,7 +96,7 @@ describe('SummaryPage · comensales y pago', () => {
     renderSummary()
     const hero = await section('Comensales con reserva DiNNo')
     expect(await hero.findByText('Pagado')).toBeInTheDocument()
-    expect(hero.getByText('Octubre · $8.000')).toBeInTheDocument()
+    expect(hero.getByText('Octubre · $12.000')).toBeInTheDocument()
     expect(hero.getByText('En curso')).toBeInTheDocument()
   })
 
@@ -101,7 +111,7 @@ describe('SummaryPage · comensales y pago', () => {
     const hero = await section('Comensales con reserva DiNNo')
     await hero.findByText('Total a pagar a DiNNo')
     expect(hero.queryByText('Cierre del periodo')).not.toBeInTheDocument()
-    expect(hero.getByText('Octubre · $8.000')).toBeInTheDocument()
+    expect(hero.getByText('Octubre · $12.000')).toBeInTheDocument()
   })
 })
 
@@ -142,7 +152,7 @@ describe('SummaryPage · calendario y detalle del día', () => {
     const detail = await section('Detalle del día')
     expect(await detail.findByText('11:56 a. m. · Mesa 04')).toBeInTheDocument()
     expect(detail.getByText('3:47 p. m. · Mesa 04')).toBeInTheDocument()
-    expect(detail.getByText('Valor del día').closest('p')).toHaveTextContent('$4.000')
+    expect(detail.getByText('Valor del día').closest('p')).toHaveTextContent('$6.000')
     expect(detail.getByText('canceladas o vencidas')).toBeInTheDocument()
   })
 
@@ -259,10 +269,30 @@ describe('SummaryPage · horas de mayor demanda', () => {
 })
 
 describe('SummaryPage · detalle del pago', () => {
+  it('shows each amount with «personas × tarifa» beside it when it was charged per guest', async () => {
+    renderSummary()
+    const detail = await section('Detalle del pago')
+    expect((await detail.findAllByText('$3.000')).length).toBeGreaterThan(0)
+    expect(detail.getAllByText('2 personas × $1.500').length).toBeGreaterThan(0)
+  })
+
+  it('shows an older check-in with its stored amount alone, never as people × fee', async () => {
+    const original = mockSummaryApi.getBilling.bind(mockSummaryApi)
+    vi.spyOn(mockSummaryApi, 'getBilling').mockImplementation(async (...args) => {
+      const statement = await original(...args)
+      const [first, ...rest] = statement.items
+      return first ? { ...statement, items: [{ ...first, partySize: 4, feeCop: 2000 }, ...rest] } : statement
+    })
+    renderSummary()
+    const detail = await section('Detalle del pago')
+    expect((await detail.findAllByText('$2.000')).length).toBeGreaterThan(0)
+    expect(detail.queryByText('4 personas × $1.500')).not.toBeInTheDocument()
+  })
+
   it('shows three rows, the total of the period and «Ver los N check-ins»', async () => {
     renderSummary()
     const detail = await section('Detalle del pago')
-    expect(await detail.findByText('Total del periodo: 5 check-ins · $10.000')).toBeInTheDocument()
+    expect(await detail.findByText('Total del periodo: 5 check-ins · $15.000')).toBeInTheDocument()
     expect(detail.getAllByRole('row')).toHaveLength(4)
     expect(detail.getByRole('button', { name: 'Ver los 5 check-ins' })).toHaveAttribute('aria-expanded', 'false')
   })
@@ -282,7 +312,7 @@ describe('SummaryPage · detalle del pago', () => {
     const toggle = detail.getByRole('button', { name: 'Cómo se calcula' })
     await user.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(detail.getByText(/Cada check-in guarda la tarifa que había cuando se hizo/)).toBeInTheDocument()
+    expect(detail.getByText(/El monto de un check-in es el número de personas de la reserva por la tarifa por comensal/)).toBeInTheDocument()
   })
 
   it('with no check-ins it says when they will show up', async () => {

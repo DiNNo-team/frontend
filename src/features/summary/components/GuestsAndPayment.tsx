@@ -2,6 +2,7 @@ import { Card, StatusChip } from '@/components/ui'
 import { PAYMENT_STATUS } from '@/components/ui/status'
 import { monthName } from '../../admin/month'
 import { closingDay, costPerGuest, describeComparable, percentChange } from '../calendar'
+import { matchesPerGuestTotal } from '@/lib/per-guest-fee'
 import { formatCop, formatDecimal } from '../format'
 import { changeText, SUMMARY_TEXT } from '../messages'
 import type { RestaurantSummary } from '../types'
@@ -43,8 +44,8 @@ function Comparison({ summary }: { summary: RestaurantSummary }) {
  */
 export function GuestsAndPayment({ summary }: { summary: RestaurantSummary }) {
   const { billing, reservations, rates, payment } = summary
-  const { guests, checkIns, amountCop, currentFeeCop } = billing
-  const exact = checkIns * currentFeeCop === amountCop
+  const { guests, checkIns, amountCop, currentFeePerGuestCop } = billing
+  const exact = matchesPerGuestTotal(guests, amountCop, currentFeePerGuestCop)
   const perGuest = costPerGuest(amountCop, guests)
   const previous = payment.previousMonth
   return (
@@ -75,11 +76,15 @@ export function GuestsAndPayment({ summary }: { summary: RestaurantSummary }) {
         </div>
         <p className="text-h1 text-fg tabular-nums">{formatCop(amountCop)}</p>
         {checkIns > 0 ? (
-          <p className="text-sec text-fg-2 tabular-nums">{exact ? SUMMARY_TEXT.paymentFormula(checkIns, currentFeeCop) : SUMMARY_TEXT.paymentMixedFees(checkIns)}</p>
+          <p className="text-sec text-fg-2 tabular-nums">{exact ? SUMMARY_TEXT.paymentFormula(guests, currentFeePerGuestCop) : SUMMARY_TEXT.paymentMixedFees(checkIns)}</p>
         ) : (
           <p className="text-sec text-fg-2">{SUMMARY_TEXT.paymentNone}</p>
         )}
         <dl className="flex flex-col gap-2 border-t border-line pt-3 text-body text-fg">
+          <div className="flex items-center justify-between gap-3">
+            <dt>{SUMMARY_TEXT.feePerGuest}</dt>
+            <dd className="font-bold tabular-nums">{formatCop(currentFeePerGuestCop)}</dd>
+          </div>
           {perGuest !== null && (
             <div className="flex items-center justify-between gap-3">
               <dt>{SUMMARY_TEXT.costPerGuest}</dt>
