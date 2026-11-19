@@ -24,9 +24,9 @@ export function Recommendations({ narrative, generatedAt, now }: Recommendations
   return (
     <Card as="section" aria-labelledby="recommendations-title" className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <h2 id="recommendations-title" className="text-h2 text-fg">
+        <h3 id="recommendations-title" className="text-h3 text-fg">
           {INSIGHTS_TEXT.recommendationsTitle}
-        </h2>
+        </h3>
         <p className="inline-flex items-center gap-1.5 text-sec font-bold text-fg">
           {fromModel && <AiIcon />}
           {mark}

@@ -313,11 +313,11 @@ describe('authentication routes', () => {
     expect(screen.getByRole('link', { name: 'Resumen' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('loads «Informe» on demand for an approved restaurant and shows it in the dock', async () => {
-    renderAt('/informe', SIGNED_IN)
+  it('sends the old /informe link to Resumen with the report open', async () => {
+    const { router } = renderAt('/informe', SIGNED_IN)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Informe de la semana' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Informe' })).toHaveAttribute('aria-current', 'page')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/resumen'))
+    expect(router.state.location.search).toBe('?informe=1')
   })
 
   it('keeps a suspended restaurant out of «Informe» (its dock has no such item)', async () => {
