@@ -16,7 +16,9 @@ function renderDock(props: Parameters<typeof NavDock>[0] = {}, path = '/') {
 describe('NavDock', () => {
   it('shows the restaurant sections by default, each with its word', () => {
     renderDock()
-    expect(NAV_ITEMS_RESTAURANT.map((item) => item.label)).toEqual(['Mesas', 'Resumen', 'Informe', 'Restaurante', 'Bitácora'])
+    expect(NAV_ITEMS_RESTAURANT.map((item) => item.label)).toEqual(['Mesas', 'Resumen', 'Restaurante', 'Bitácora'])
+    // The weekly report opens from Resumen, in a dialog; it is not a section of the dock.
+    expect(NAV_ITEMS_RESTAURANT.some((item) => item.to === '/informe')).toBe(false)
     for (const link of screen.getAllByRole('link')) expect(link).toHaveTextContent(/\S/)
     expect(screen.queryByRole('link', { name: /Solicitudes/ })).not.toBeInTheDocument()
   })
@@ -28,7 +30,7 @@ describe('NavDock', () => {
     for (const link of screen.getAllByRole('link')) expect(link).toHaveClass('min-w-12', 'whitespace-nowrap', 'md:w-24')
   })
 
-  it('a suspended restaurant keeps Cuenta and Resumen, without «Informe» (§12.16: the report is only for approved ones)', () => {
+  it('a suspended restaurant keeps Cuenta and Resumen', () => {
     renderDock({ items: NAV_ITEMS_SUSPENDED }, '/suspendido')
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Cuenta', 'Resumen'])
     expect(NAV_ITEMS_SUSPENDED.some((item) => item.to === '/informe')).toBe(false)
