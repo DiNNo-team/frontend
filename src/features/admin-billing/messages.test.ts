@@ -15,15 +15,24 @@ describe('the action a month offers', () => {
 })
 
 describe('the formula under the amount', () => {
-  it('says N × fee when every check-in has the same fee and it adds up', () => {
-    const items = [{ feeCop: 2000 }, { feeCop: 2000 }] as never
-    expect(chargeFormula({ totalCheckIns: 12, amountCop: 24000, items })).toBe('12 check-ins × $ 2.000')
-    expect(chargeFormula({ totalCheckIns: 1, amountCop: 2000, items: [{ feeCop: 2000 }] as never })).toBe('1 check-in × $ 2.000')
+  const perGuest = [
+    { partySize: 2, feeCop: 3000 },
+    { partySize: 4, feeCop: 6000 },
+  ] as never
+
+  it('says guests × fee per guest when every check-in is on the page and the amount is exactly that', () => {
+    expect(chargeFormula({ totalCheckIns: 2, amountCop: 9000, items: perGuest }, 1500)).toBe('6 comensales × $ 1.500 por comensal')
+    expect(chargeFormula({ totalCheckIns: 1, amountCop: 1500, items: [{ partySize: 1, feeCop: 1500 }] as never }, 1500)).toBe('1 comensal × $ 1.500 por comensal')
   })
 
-  it('says each check-in kept its own fee when they differ or do not add up', () => {
-    expect(chargeFormula({ totalCheckIns: 2, amountCop: 3500, items: [{ feeCop: 2000 }, { feeCop: 1500 }] as never })).toMatch(/cada uno con la tarifa/)
-    expect(chargeFormula({ totalCheckIns: 12, amountCop: 25000, items: [{ feeCop: 2000 }] as never })).toMatch(/cada uno con la tarifa/)
+  it('only says each check-in kept the amount it was charged when the month has older check-ins (flat amount)', () => {
+    const mixed = [{ partySize: 2, feeCop: 3000 }, { partySize: 4, feeCop: 2000 }] as never
+    expect(chargeFormula({ totalCheckIns: 2, amountCop: 5000, items: mixed }, 1500)).toBe('2 check-ins, cada uno con el monto que se le cobró ese día')
+  })
+
+  it('does not claim a formula when the list is partial or the fee is unknown', () => {
+    expect(chargeFormula({ totalCheckIns: 12, amountCop: 9000, items: perGuest }, 1500)).toMatch(/cada uno con el monto/)
+    expect(chargeFormula({ totalCheckIns: 2, amountCop: 9000, items: perGuest })).toMatch(/cada uno con el monto/)
   })
 })
 

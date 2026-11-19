@@ -17,12 +17,13 @@ import {
   type DataTableColumn,
 } from '@/components/ui'
 import { formatCapacity } from '@/lib/format'
+import { matchesPerGuestFee } from '@/lib/per-guest-fee'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { formatBogotaDateTime } from '@/features/summary/format'
 import { formatDateTime } from '@/lib/format'
 import { formatAdminCop } from '../admin/format'
 import { bogotaMonthOf, monthName, monthTitle, parseMonth } from '../admin/month'
-import { useAdminBillingDetailQuery, useMarkMonthPaid, useMarkMonthPending } from '../admin/panel-hooks'
+import { useAdminBillingDetailQuery, useAdminOverviewQuery, useMarkMonthPaid, useMarkMonthPending } from '../admin/panel-hooks'
 import type { AdminBillingCheckIn } from '../admin/panel-types'
 import {
   BILLING_TEXT,
@@ -61,6 +62,8 @@ export default function BillingDetailPage() {
   const [dialog, setDialog] = useState<'mark' | 'undo' | null>(null)
   const [dialogError, setDialogError] = useState<string>()
   const detail = query.data
+  // Today's fee per guest, only to describe the check-ins that were charged that way; the amounts are always the stored ones.
+  const feePerGuestCop = useAdminOverviewQuery(month).data?.currentFeePerGuestCop
   const busy = markPaid.isPending || markPending.isPending
 
   const back = () => navigate(`/admin/cobros?mes=${month}`)
@@ -90,7 +93,18 @@ export default function BillingDetailPage() {
   const columns: DataTableColumn<AdminBillingCheckIn>[] = [
     { key: 'when', header: BILLING_TEXT.columnWhen, mobileLine: 1, className: 'tabular-nums', cell: (item) => formatBogotaDateTime(item.checkedInAt) },
     { key: 'party', header: BILLING_TEXT.columnParty, mobileLine: 2, cell: (item) => formatCapacity(item.partySize) },
-    { key: 'fee', header: BILLING_TEXT.columnFee, mobileLine: 1, className: 'tabular-nums', cell: (item) => formatAdminCop(item.feeCop) },
+    {
+      key: 'fee',
+      header: BILLING_TEXT.columnFee,
+      mobileLine: 1,
+      className: 'tabular-nums',
+      cell: (item) => (
+        <span className="flex flex-col">
+          <span>{formatAdminCop(item.feeCop)}</span>
+          {matchesPerGuestFee(item, feePerGuestCop) && <span className="text-label font-normal text-fg-2">{BILLING_TEXT.feeFormula(item.partySize, formatAdminCop(feePerGuestCop ?? 0))}</span>}
+        </span>
+      ),
+    },
   ]
 
   if (!detail) {
@@ -164,7 +178,8 @@ export default function BillingDetailPage() {
           {detail.status === 'paid' && detail.paidAt && <span className="text-sec text-fg">{BILLING_TEXT.paidOn(formatDateTime(detail.paidAt))}</span>}
         </div>
         <p className="text-figure text-fg tabular-nums">{formatAdminCop(detail.amountCop)}</p>
-        <p className="text-body text-fg tabular-nums">{detail.totalCheckIns > 0 ? chargeFormula(detail) : BILLING_TEXT.nothingToBillNote}</p>
+        <p className="text-body text-fg tabular-nums">{detail.totalCheckIns > 0 ? chargeFormula(detail, feePerGuestCop) : BILLING_TEXT.nothingToBillNote}</p>
+        {feePerGuestCop !== undefined && <p className="text-sec text-fg-2 tabular-nums">{BILLING_TEXT.feePerGuest(formatAdminCop(feePerGuestCop))}</p>}
         {action === 'in-progress' && <p className="text-sec font-bold text-fg">{BILLING_TEXT.inProgressNote}</p>}
         <div className="flex flex-col gap-1 border-t border-line pt-3">
           <h2 className="text-h3 text-fg">{BILLING_TEXT.whyTitle}</h2>

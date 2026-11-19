@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Skeleton } from '@/components/ui'
 import { formatTableName } from '@/lib/format'
+import { matchesPerGuestFee } from '@/lib/per-guest-fee'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { dayValue, type CalendarDay } from '../calendar'
 import { formatBogotaTime, formatCop, formatLongDay } from '../format'
@@ -23,7 +24,7 @@ function Tile({ value, label, tone }: { value: number; label: string; tone?: 'ok
  * asked on their own so that a failing list never takes the rest down. The region is announced when the day changes
  * (`aria-live`). It never shows who the diner was. «Valor del día» is the sum of the fees the check-ins kept.
  */
-export function DayDetail({ day }: { day: CalendarDay | null }) {
+export function DayDetail({ day, feePerGuestCop }: { day: CalendarDay | null; feePerGuestCop?: number }) {
   const query = useBillingQuery(day ? { from: day.date, to: day.date } : null, 1, DAY_PAGE_SIZE)
   const showSkeleton = useDelayedFlag(query.isPending && day !== null)
   const items = query.data?.items ?? []
@@ -72,7 +73,13 @@ export function DayDetail({ day }: { day: CalendarDay | null }) {
                   <li key={item.checkInId} className="flex flex-wrap items-baseline justify-between gap-x-3 py-2.5 text-body text-fg tabular-nums">
                     <span>{SUMMARY_TEXT.dayCheckInLine(formatBogotaTime(item.checkedInAt), formatTableName(item.tableIdentifier))}</span>
                     <span className="flex gap-3">
-                      <span className="text-fg-2">{item.partySize === 1 ? '1 persona' : `${item.partySize} personas`}</span>
+                      <span className="text-fg-2">
+                        {matchesPerGuestFee(item, feePerGuestCop)
+                          ? SUMMARY_TEXT.feeFormula(item.partySize, feePerGuestCop ?? 0)
+                          : item.partySize === 1
+                            ? '1 persona'
+                            : `${item.partySize} personas`}
+                      </span>
                       <span>{formatCop(item.feeCop)}</span>
                     </span>
                   </li>
