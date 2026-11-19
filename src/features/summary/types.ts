@@ -60,8 +60,8 @@ export interface SummaryMonth {
 
 export interface RestaurantSummary {
   period: ReportPeriod
-  /** Check-ins made in the period; `currentFeeCop` is today's fee (each check-in kept its own). `guests`: people of those check-ins. */
-  billing: { checkIns: number; amountCop: number; currentFeeCop: number; guests: number }
+  /** Check-ins made in the period; `amountCop` is the sum of what each one kept. `currentFeePerGuestCop` is today's fee per guest (informative; each check-in kept its own total). `guests`: people of those check-ins. */
+  billing: { checkIns: number; amountCop: number; currentFeePerGuestCop: number; guests: number }
   previousComparable: PreviousComparable
   /** One entry per day of the period, oldest first, zeros included. */
   byDate: SummaryDay[]
@@ -90,6 +90,7 @@ export interface BillingItem {
   checkedInAt: string
   partySize: number
   tableIdentifier: string
+  /** The total charged for this check-in (people × the per-guest fee of the day; older ones kept a flat amount). */
   feeCop: number
 }
 

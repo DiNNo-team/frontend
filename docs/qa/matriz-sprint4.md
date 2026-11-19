@@ -168,17 +168,17 @@ Actualiza los conteos al terminar cada caso.
 | IW10 | Se entiende en segundos | Una persona que no conoce DiNNo | 1. Muéstrale la pantalla 10 segundos. | Puede decir qué le muestra y qué le recomienda | | ⚠️ Por confirmar (#2) | | |
 
 ### E · Estado de cuenta (Task 1.2.4)
-**Responsable:** Sergio · **Ruta:** `GET /v1/restaurants/me/billing/check-ins` y la pantalla «Resumen» de la web. Regla: tarifa fija por check-in válido, COP 2.000 (`CHECKIN_FEE_COP`); cancelaciones y vencimientos no se cobran (§12.12).
+**Responsable:** Sergio · **Ruta:** `GET /v1/restaurants/me/billing/check-ins` y la pantalla «Resumen» de la web. Regla: tarifa por comensal, COP 1.500 (`CHECKIN_FEE_PER_GUEST_COP`); el cobro de un check-in es personas × tarifa; cancelaciones y vencimientos no se cobran (§12.12).
 
 | ID | Variante | Precondiciones | Pasos | Resultado esperado | Resultado obtenido | Estado | Evidencia | Bug |
 |---|---|---|---|---|---|---|---|---|
-| E1.1 | Check-in cobrado | Anota `totalCheckIns` y `amountCop` de hoy | 1. Haz un check-in.<br>2. Consulta otra vez. | `totalCheckIns` +1, `amountCop` +2000 y un ítem nuevo con `feeCop: 2000`, la mesa y las personas, **sin datos del comensal** | | Pendiente | | |
-| E1.2 | Total = check-ins × tarifa | Varios check-ins en el periodo | 1. Suma `feeCop` de todos los ítems. | Igual a `amountCop` | | Pendiente | | |
+| E1.1 | Check-in cobrado | Anota `totalCheckIns` y `amountCop` de hoy | 1. Haz un check-in.<br>2. Consulta otra vez. | `totalCheckIns` +1, `amountCop` + personas × 1500 y un ítem nuevo con `feeCop` = personas × 1500 (p. ej. 2 personas → 3000), la mesa y las personas, **sin datos del comensal** | | Pendiente | | |
+| E1.2 | Total = suma de lo guardado | Varios check-ins en el periodo | 1. Suma `feeCop` de todos los ítems. | Igual a `amountCop` | | Pendiente | | |
 | E2 | Cancelación no se cobra | — | 1. Reserva y cancela.<br>2. Consulta. | `totalCheckIns` y `amountCop` no cambian | | Pendiente | | |
 | E3 | Vencimiento no se cobra | Vigencia de 3 min | 1. Reserva y deja vencer.<br>2. Consulta. | No cambian | | Pendiente | | |
 | E4 | El resumen coincide | Mismo periodo | 1. Compara `billing.checkIns` y `billing.amountCop` de `/summary` con el estado de cuenta. | Iguales | | Pendiente | | |
 | E5 | Periodo inválido | — | 1. `?from=2026-11-10&to=2026-11-09`.<br>2. `?to=` un día futuro. | `400` con el mensaje de cada caso | | Pendiente | | |
-| E6 | Cambiar la tarifa no cambia lo cobrado (**solo local**) | Backend local | 1. Haz un check-in con 2000.<br>2. Reinicia con `CHECKIN_FEE_COP=1500` y haz otro.<br>3. Consulta. | El primero sigue en 2000 y el segundo en 1500; `currentFeeCop` del resumen es 1500 | | Pendiente | | |
+| E6 | Cambiar la tarifa no cambia lo cobrado (**solo local**) | Backend local | 1. Haz un check-in de 2 personas (3000).<br>2. Reinicia con `CHECKIN_FEE_PER_GUEST_COP=2000` y haz otro de 2 personas.<br>3. Consulta. | El primero sigue en 3000 y el segundo en 4000; `currentFeePerGuestCop` del resumen es 2000 | | Pendiente | | |
 | E7.1 | Comensal | Token del comensal A | 1. Consulta el estado de cuenta. | `403 DINER_ACCOUNT` | | Pendiente | | |
 | E7.2 | Restaurante pendiente | Cuenta pendiente | 1. Consulta. | `403 ACCOUNT_PENDING_APPROVAL` | | Pendiente | | |
 
@@ -268,7 +268,7 @@ Una fila por red. **Pasa** si `scripts/qa/humo-red.mjs` (en el backend) termina 
 | D3 | Microreserva | Personas, reserva, código y temporizador | | Pendiente | | |
 | D4 | Tiempo real | La reserva aparece en la web sin recargar | | Pendiente | | |
 | D5 | Check-in | Cumplida, mesa Ocupada, registro facturable y notificación | | Pendiente | | |
-| D6 | Estado de cuenta | Check-ins del periodo y valor con la tarifa fija | | Pendiente | | |
+| D6 | Estado de cuenta | Check-ins del periodo y valor con la tarifa por comensal | | Pendiente | | |
 | D7 | IA | Resultado, datos que usa y respaldo cuando falla | | Pendiente | | |
 | D8 | Seguridad | Exceso de peticiones rechazado y ruta privada sin sesión rechazada | | Pendiente | | |
 | D9 | Escenario alternativo | Código ya usado, reserva vencida o usuario sin permiso | | Pendiente | | |

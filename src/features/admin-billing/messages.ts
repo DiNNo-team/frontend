@@ -1,4 +1,5 @@
 import { ApiError, getApiErrorMessage } from '@/lib/api-client'
+import { matchesPerGuestTotal } from '@/lib/per-guest-fee'
 import { formatAdminCop } from '../admin/format'
 import { capitalize, monthName } from '../admin/month'
 import type { AdminBillingDetail } from '../admin/panel-types'
@@ -35,15 +36,18 @@ export const BILLING_TEXT = {
   emptyTitle: 'Aún no hay check-ins este mes',
   emptyDescription: 'Cuando los restaurantes reciban comensales con reserva, su cobro aparecerá aquí.',
   // Detail
-  chargeFormula: (count: number, fee: string) => `${count} ${count === 1 ? 'check-in' : 'check-ins'} × ${fee}`,
-  chargeMixed: (count: number) => `${count} ${count === 1 ? 'check-in' : 'check-ins'}, cada uno con la tarifa que tenía ese día`,
+  chargeFormula: (guests: number, fee: string) => `${guests} ${guests === 1 ? 'comensal' : 'comensales'} × ${fee} por comensal`,
+  chargeMixed: (count: number) => `${count} ${count === 1 ? 'check-in' : 'check-ins'}, cada uno con el monto que se le cobró ese día`,
+  feePerGuest: (fee: string) => `Tarifa por comensal: ${fee}`,
+  /** «2 personas × $ 1.500»: shown beside the amount of a check-in charged per guest. */
+  feeFormula: (people: number, fee: string) => `${people} ${people === 1 ? 'persona' : 'personas'} × ${fee}`,
   whyTitle: 'Cómo se calcula el cobro',
-  why: 'Cada check-in es un comensal que llegó con su reserva de DiNNo. Las reservas canceladas o vencidas no se cobran.',
+  why: 'Cada check-in cobra las personas de la reserva por la tarifa por comensal que había ese día. Los check-ins anteriores a esa tarifa conservan el monto que se les cobró. Las reservas canceladas o vencidas no se cobran.',
   checkInsTitle: 'Check-ins del mes',
   checkInsCaption: 'Check-ins del mes',
   columnWhen: 'Fecha y hora',
   columnParty: 'Personas',
-  columnFee: 'Tarifa',
+  columnFee: 'Monto cobrado',
   checkInsEmpty: 'Aún no hay check-ins este mes',
   checkInsEmptyDescription: 'Un check-in aparece aquí cuando el restaurante valida el código de un comensal.',
   checkInsLabel: 'check-ins',
@@ -102,11 +106,17 @@ export function chargeAction(detail: Pick<AdminBillingDetail, 'status' | 'amount
   return detail.amountCop > 0 ? 'mark-paid' : 'nothing'
 }
 
-/** «12 check-ins × $ 2.000» when every check-in kept the same fee and it adds up to the amount; otherwise says each has its own. */
-export function chargeFormula(detail: Pick<AdminBillingDetail, 'totalCheckIns' | 'amountCop' | 'items'>): string {
-  const fee = detail.items[0]?.feeCop
-  const sameFee = fee !== undefined && detail.items.every((item) => item.feeCop === fee) && detail.totalCheckIns * fee === detail.amountCop
-  return sameFee ? BILLING_TEXT.chargeFormula(detail.totalCheckIns, formatAdminCop(fee)) : BILLING_TEXT.chargeMixed(detail.totalCheckIns)
+/**
+ * «30 comensales × $ 1.500 por comensal» only when every check-in of the month is in `items` and the amount is exactly
+ * their people × today's fee per guest; otherwise (older check-ins kept a flat amount, or the list is partial) it only says
+ * each check-in kept the amount it was charged.
+ */
+export function chargeFormula(detail: Pick<AdminBillingDetail, 'totalCheckIns' | 'amountCop' | 'items'>, feePerGuestCop?: number): string {
+  const guests = detail.items.reduce((total, item) => total + item.partySize, 0)
+  const complete = detail.items.length === detail.totalCheckIns
+  return complete && feePerGuestCop !== undefined && matchesPerGuestTotal(guests, detail.amountCop, feePerGuestCop)
+    ? BILLING_TEXT.chargeFormula(guests, formatAdminCop(feePerGuestCop))
+    : BILLING_TEXT.chargeMixed(detail.totalCheckIns)
 }
 
 export const markedText = (month: string, name: string) => BILLING_TEXT.markedToast(capitalize(monthName(month)), name)
