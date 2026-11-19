@@ -1,5 +1,5 @@
 import { RefreshCw } from 'lucide-react'
-import { Alert, Button, Card, Dialog, EmptyState, Skeleton } from '@/components/ui'
+import { Alert, Button, Dialog, EmptyState, Skeleton } from '@/components/ui'
 import { useDelayedFlag } from '@/lib/use-delayed-flag'
 import { useInsightsQuery, useMinuteClock, useRefreshInsights } from '../hooks'
 import { generatedAgoText, insightsScreenState, isRateLimited, type InsightsScreenState } from '../insights-view'
@@ -60,23 +60,27 @@ function Body({ state, now, showSkeleton, onRetry }: BodyProps) {
       )
     case 'insufficient':
       return (
-        <Card as="section" aria-label={INSIGHTS_TEXT.insufficientTitle} className="flex flex-col gap-4">
+        <section aria-label={INSIGHTS_TEXT.insufficientTitle} className="flex flex-col gap-4">
           <NotEnoughData report={state.report} missing={state.missing} />
           <UpdatedAgo report={state.report} now={now} />
-        </Card>
+        </section>
       )
     case 'ready-llm':
     case 'ready-template': {
       const { report } = state
+      // Inside the solid panel the two blocks are sections split by a line, not glass cards: a `glass-card` on a solid
+      // surface vanishes in light and shows its edge in dark, and its padding would add to the panel's.
       return (
-        <div className="flex flex-col gap-5">
-          <Card as="section" aria-label={INSIGHTS_TEXT.checkInKicker} className="grid gap-6 lg:grid-cols-hero">
+        <div className="flex flex-col gap-6">
+          <section aria-label={INSIGHTS_TEXT.checkInKicker} className="grid gap-6 lg:grid-cols-hero">
             <WeekHeadline report={report} />
             <div className="border-t border-line pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
               <ReliabilityScale reliability={report.reliability} />
             </div>
-          </Card>
-          <Recommendations narrative={report.narrative} generatedAt={report.generatedAt} now={now} />
+          </section>
+          <div className="border-t border-line pt-6">
+            <Recommendations narrative={report.narrative} generatedAt={report.generatedAt} now={now} />
+          </div>
         </div>
       )
     }
