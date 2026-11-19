@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Ban, Ellipsis, Moon, Pencil, Phone, Plus, Sun, X } from 'lucide-react'
 import {
+  AiIcon,
   Button,
   Card,
   IconButton,
@@ -164,6 +165,19 @@ export default function KitPage() {
                 {STATUS_META[status].shape}
               </span>
             ))}
+          </Row>
+        </KitSection>
+
+        <KitSection title="AiIcon" note="«Generado con IA» (sparkles). Siempre junto a sus palabras, nunca solo ni en naranja.">
+          <Row>
+            <span className="inline-flex items-center gap-1.5 text-sec font-bold text-fg">
+              <AiIcon />
+              Generado con IA · hace 12 min
+            </span>
+            <span className="inline-flex items-center gap-2 text-h3 text-fg">
+              <AiIcon size={20} />
+              Qué hacer esta semana
+            </span>
           </Row>
         </KitSection>
 

@@ -5,6 +5,55 @@
 
 ---
 
+## 18 nov 2026 · Sergio · Informe de IA en la web: pantalla `/informe` (Sprint 4, Task 2.1.2) · rama `feat/sprint4-informe-ia` · para revisar: Sebastián
+
+- **Qué hay:** la pantalla «Informe de la semana» en `/informe` («Informe» en el dock, entre Resumen y Restaurante). Detalle en CLAUDE.md §11, «Informe de IA»; capturas en `docs/design/insights/`.
+- **Endpoint:** `GET /v1/restaurants/me/insights` (`?refresh=true` solo desde «Actualizar informe»), contrato en §12.16, **copiado idéntico del backend en este PR**. Solo un restaurante aprobado: un suspendido no ve la ruta ni el ítem del dock (el backend le responde `403 RESTAURANT_SUSPENDED`). La app del comensal no cambia.
+- **Respuesta (ejemplo):**
+```json
+{ "period": { "from": "2026-11-12", "to": "2026-11-18", "timezone": "America/Bogota" },
+  "previousPeriod": { "from": "2026-11-05", "to": "2026-11-11", "timezone": "America/Bogota" },
+  "generatedAt": "2026-11-18T15:02:11.000Z", "dataSufficiency": "enough", "minResolved": 10,
+  "metrics": { "reservationsCreated": 42, "active": 3, "resolved": 39, "completed": 26, "cancelled": 4, "expired": 9,
+    "checkIns": 26, "checkInRate": 0.6667, "noShowRate": 0.2308, "cancellationRate": 0.1026,
+    "medianMinutesToCheckIn": 9.5, "averagePartySize": 2.83,
+    "topSlots": [{ "dayOfWeek": 5, "hour": 13, "reservations": 8 }],
+    "daily": [{ "date": "2026-11-12", "created": 6, "completed": 4, "cancelled": 1, "expired": 1, "manualUpdates": 3 }],
+    "manualUpdates": 24, "manualUpdatesPerDay": 3.43, "daysWithManualUpdates": 6, "daysWithoutManualUpdates": 1 },
+  "previous": { "reservationsCreated": 35, "resolved": 33, "checkInRate": 0.5758 },
+  "reliability": { "level": "medium", "reasons": ["Tasa de check-in del 67 %", "Actualizaste tus mesas a mano en 6 de 7 días"] },
+  "narrative": { "text": "…", "source": "llm", "fallback": null } }
+```
+  (`daily` trae siempre 7 días; aquí se muestra uno.)
+- **Estados:** carga (skeletons) · vacío (sin reservas esta semana ni la anterior) · «Aún no hay suficientes reservas» con «Te faltan N» (`minResolved − resolved`) y sin tasas, nivel ni recomendaciones · listo con IA («Generado con IA · hace X min») · listo con plantillas («Recomendaciones básicas: el asistente de IA no estuvo disponible») · error con «Intentar de nuevo» · 401/403 con el texto de la cuenta y sin reintento · 429 con el texto del kit, sin reintento y conservando el informe que había. **Todo se decide por campos, nunca por el texto.**
+- **Las tasas son sobre las reservas resueltas**, no sobre las creadas como en `/resumen`: por eso cada tasa dice «de las reservas resueltas».
+- **Cambios frente al boceto A (`docs/ia-diseno.md` del backend y el análisis del 18 nov):**
+  - El gráfico semanal va en **filas horizontales**, no en columnas: así cabe la única animación permitida (`animate-grow-x`), y en el teléfono cada barra ocupa su propia línea de ancho completo.
+  - Los cambios de mesas a mano se marcan con el ícono de **Bitácora** (`history`), no con un punto: el punto verde ya es «Con check-in».
+  - El botón dice «Actualizar informe» (verbo + objeto, manual 14).
+  - «Canceladas» usa `dark:bg-fg-2` en oscuro (con `bg-line` desaparecía sobre la tarjeta). `/resumen` sigue con `bg-line` y tiene el mismo problema en oscuro (**Elizabeth:** si quieres, lo igualamos).
+- **Kit (aviso a Sebastián, autorizado por él):** `reliability-high` / `-medium` / `-low` en `STATUS_META` con `RELIABILITY_STATUS`, `AiIcon` (`sparkles`, también en `/kit`) y «Informe» en `NAV_ITEMS_RESTAURANT`. Documentado en `components/ui/README.md`.
+- **Dock (`NavDock`, aprobado por Sebastián):** con cinco ítems no cabía en un teléfono y «Mesas» quedaba fuera de la pantalla. Por debajo de `sm` ya no muestra el botón de tema (está en el menú de usuario) y cada ítem mide lo que su palabra (mínimo 48 px); desde `md` vuelven los 96 px fijos. Medido a 320, 375, 390, 430, 640 y 768 px en claro y oscuro: nada queda fuera.
+- **Reutiliza de `features/summary` (Elizabeth), sin modificarlos:** `BarTrack`, `ChartTable`, `HelpToggle`, `formatHour`, `formatDecimal`, `formatDayMonth`, `formatLongDay` y `bogotaToday`. Si cambian, revisen `/informe`.
+- **Pendiente con Santiago:** `narrative.recommendations: string[]` (la web ya lo acepta como opcional) y el formato de hora: el texto de plantillas escribe «13:00» y la pantalla «1:00 p. m.».
+- **QA:** las filas IW de `docs/qa/matriz-sprint4.md` se hacen el jueves sobre Azure (necesitan la llave del modelo en Key Vault y Casa 72 con 10 o más reservas resueltas).
+- **Sin** variables de entorno, dependencias ni cambios de API nuevos.
+
+---
+
+## 17 nov 2026 · Jacobo · Azure listo para el despliegue de la web (Sprint 4) · para revisar: Sebastián
+
+- **Qué hice (solo en Azure y en GitHub, sin cambios de código):** lo que necesitaba `.github/workflows/web-ci-cd.yml` de Sebastián para publicar. El workflow y `public/staticwebapp.config.json` son los suyos, sin cambios. Detalle en CLAUDE.md §11, «Despliegue».
+- **Static Web App:** `swa-dinno`, plan Free, en `rg-dinno` (westus2). **URL de la web en Azure:** https://brave-grass-07093571e.3.azurestaticapps.net.
+- **Identidad de OIDC:** `id-gh-frontend`, con el rol Contributor **solo** sobre `swa-dinno` y una credencial federada para el entorno `Production` del repo (el `environment: production` del job `deploy`). Ninguna clave en GitHub.
+- **Variables del repositorio** (no secretos): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP` (`rg-dinno`), `AZURE_STATIC_WEB_APP_NAME` (`swa-dinno`), y los `VITE_*` del build. `VITE_API_URL` apunta al backend de Azure: https://ca-dinno-backend.icyrock-d101225d.westus2.azurecontainerapps.io.
+- **Desde ya, cada push a `main` publica en Azure** (con `AZURE_CLIENT_ID` definida, el job `deploy` deja de saltarse).
+- **El backend de Azure ya acepta la web:** `CORS_ORIGINS` tiene la URL de arriba y `http://localhost:5173`.
+- **Falta, para el login con Google y el mapa:** agregar la URL en Firebase → Authentication → Dominios autorizados (Sebastián) y en la restricción de la llave de Maps `dinno-web` (Santiago).
+- **Vercel sigue igual** hasta que Azure quede como la web oficial, y sigue usando el backend de Render: lo que se haga en una web no aparece en la otra (son bases distintas).
+
+---
+
 ## 17 nov 2026 · Elizabeth · Nueva pantalla Resumen del restaurante y revisión de textos del administrador (Sprint 4) · rama `feat/sprint4-admin-panel`
 
 - **Qué cambia:** `/resumen` del restaurante se rediseñó con el diseño de `docs/design/restaurant-summary/` (capturas de lo implementado en `implementado/`). Los bloques, el calendario accesible y los estados están en el CLAUDE.md, «Resumen del restaurante». Sin datos de comensales. Sin recomendaciones automáticas (eso es de la IA).

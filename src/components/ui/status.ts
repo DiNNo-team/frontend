@@ -30,6 +30,10 @@ export type Status =
   | 'payment-in-progress'
   | 'payment-pending'
   | 'payment-paid'
+  // Sprint 4 (smart report): reliability of the restaurant's availability (backend CLAUDE.md §12.16).
+  | 'reliability-high'
+  | 'reliability-medium'
+  | 'reliability-low'
 
 export type StatusTone = 'ok' | 'reserved' | 'busy' | 'inactive' | 'limited' | 'error'
 
@@ -77,6 +81,18 @@ export const STATUS_META: Record<Status, StatusMeta> = {
   'payment-in-progress': { tone: 'reserved', shape: 'square', label: 'En curso' },
   'payment-pending': { tone: 'limited', shape: 'diamond', label: 'Pendiente' },
   'payment-paid': { tone: 'ok', shape: 'dot', label: 'Pagado' },
+  // Reliability of the availability: high is fine (dot), medium asks for attention (diamond, like a warning, manual 3.5) and
+  // low is a problem to fix (dot + alert). Never orange.
+  'reliability-high': { tone: 'ok', shape: 'dot', label: 'Alta' },
+  'reliability-medium': { tone: 'limited', shape: 'diamond', label: 'Media' },
+  'reliability-low': { tone: 'error', shape: 'dot-alert', label: 'Baja' },
+}
+
+/** Kit status of each reliability level of the smart report (`high` · `medium` · `low`). */
+export const RELIABILITY_STATUS: Record<'high' | 'medium' | 'low', Status> = {
+  high: 'reliability-high',
+  medium: 'reliability-medium',
+  low: 'reliability-low',
 }
 
 /** Kit status of each approval state of a restaurant (`pending` · `approved` · `rejected`). */
