@@ -1,6 +1,9 @@
 <div align="center">
 
-<img src="src/assets/brand/logo-light.svg" alt="Logo de DiNNo" height="72" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="src/assets/brand/logo-dark.svg">
+  <img src="src/assets/brand/logo-light.svg" alt="Logo de DiNNo" height="72" />
+</picture>
 
 # 📍 DiNNo · Frontend web
 
