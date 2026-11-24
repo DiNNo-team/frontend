@@ -5,7 +5,7 @@
   <img src="src/assets/brand/logo-light.svg" alt="Logo de DiNNo" height="72" />
 </picture>
 
-# 📍 DiNNo · Frontend web
+<h1><img src="docs/images/app-icon.png" alt="Ícono de la app DiNNo" height="56" align="absmiddle" />&nbsp; DiNNo · Frontend web</h1>
 
 ### **Dile no a la espera.**
 
