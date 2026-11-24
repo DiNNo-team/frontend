@@ -390,7 +390,7 @@ flowchart LR
 | `deploy` | Solo push o ejecución manual sobre **`main`**, después de `checks` | Verifica que `VITE_API_URL` sea `https://`, compila con `npm run build`, inicia sesión en Azure y sube `dist/` |
 
 - **Rama que despliega: `main`.** El trabajo diario entra a `develop` por pull request, y `develop` pasa a `main` por otro.
-- **Autenticación OIDC:** el job entra a Azure con una credencial federada (`azure/login`) sin guardar contraseñas ni llaves en GitHub; el token de despliegue se lee en ese momento con `az staticwebapp secrets list` y se oculta en el log. El job se omite mientras no estén definidas las variables de Azure del repositorio.
+- **Autenticación OIDC:** el job entra a Azure con una credencial federada (`azure/login`) sin guardar contraseñas ni llaves en GitHub; el token de despliegue se lee en ese momento con `az staticwebapp secrets list` y se oculta en el log.
 - **Variables del repositorio:** los identificadores de Azure y los `VITE_*` del build son variables de GitHub, no secretos.
 
 ### `public/staticwebapp.config.json`
@@ -400,9 +400,6 @@ flowchart LR
 | `navigationFallback` | Cualquier ruta sirve `/index.html` (la SPA no da 404 al recargar), salvo `/assets/*` y archivos estáticos |
 | Cabeceras de seguridad | `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` (cámara y geolocalización solo del propio sitio) y `Cross-Origin-Opener-Policy` |
 | Caché | `/assets/*` con caché larga e inmutable; `/index.html` sin caché |
-
-> [!NOTE]
-> El repo conserva un `vercel.json` con la misma regla de reescritura de rutas, de cuando la web se publicaba en Vercel.
 
 ---
 
