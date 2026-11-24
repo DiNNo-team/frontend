@@ -408,10 +408,10 @@ flowchart LR
 | Nombre | Rol en el proyecto | GitHub |
 |---|---|---|
 | Elizabeth Correa Suárez | Backend base y de mesas, edición del restaurante, integración y demo; revisión de backend | [@Eliza-05](https://github.com/Eliza-05) |
-| Juan Sebastian Ortega Muñoz | Kit visual y pantallas de mesas, reservas y tiempo real; revisión de web y mobile | _pendiente_ |
-| Santiago Carmona | Registro del restaurante | _pendiente_ |
+| Juan Sebastian Ortega Muñoz | Kit visual y pantallas de mesas, reservas y tiempo real; revisión de web y mobile | [@Juanseom](https://github.com/Juanseom) |
+| Santiago Carmona | Registro del restaurante | [@Carmo0982](https://github.com/Carmo0982) |
 | Jacobo Diaz | Autenticación y pantalla del restaurante | [@Jacobo2025](https://github.com/Jacobo2025) |
-| Sergio Alejandro Idarraga Torres | Estado Abierto/Cerrado, bitácora e informe de IA | _pendiente_ |
+| Sergio Alejandro Idarraga Torres | Estado Abierto/Cerrado, bitácora e informe de IA | [@ALEJO21005](https://github.com/ALEJO21005) |
 
 ---
 
