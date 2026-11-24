@@ -417,6 +417,6 @@ flowchart LR
 
 <div align="center">
 
-**DiNNo** · *Dile no a la espera.*
+**DiNNo** · *Dile no a la espera.* 🧡
 
 </div>
